@@ -14,9 +14,18 @@ Spring Boot 3 + MyBatis-Plus + MySQL + Redis。
 - 悬赏发令/广场/揭榜/会话/成果
 - 执事堂双审、结算/取消/互评
 - 超时取消退款、截止提醒 Job
-- 管理端：登录、工作台、用户启停封禁/调账、发令与成果审核、强制关闭
+- 成长等级/兑体力/奖品兑换（奖品内存种子）
+- 站内消息列表与已读
+- 侠士端纠纷发起/详情/我的
+- 职司 defs / 申请 / 我的职司与申请
+- 英雄谱（声望/侠义/完令）与盟主申请
+- 管理端：登录、工作台、用户/邀请、悬赏审核、钱庄、纠纷终裁、告示、职司/盟主、系统配置、审计
+- 运营配置 CRUD：等级 / 英雄谱规则 / 成长参数 / 赏银建议、清单模板、令状字段、奖品与兑换单、职司 defs
+- 管理员完整 RBAC（D-003）：四角色权限、`@RequireAdminPerm` 拦截、`/admin/admins|roles|menus`
+- v1.7：注册赠银 500 / 邀新奖 100；充值提现默认关（`42004`）；`GET /messages/unread-count`
+- v1.8：再发一令（`republish-draft` / `republish`，`source_bounty_id`，终态复制新建进待审）
 
-后续批次（未实现）：成长兑换、英雄谱/盟主、职司申请、纠纷、站内消息列表、完整后台 RBAC/配置 CRUD。
+后续简化项：真实短信/支付、纠纷资金完整回滚、英雄谱物化表。
 
 ## 环境要求
 
@@ -27,10 +36,32 @@ Spring Boot 3 + MyBatis-Plus + MySQL + Redis。
 
 ## 初始化数据库
 
-```bash
-mysql -uroot -p < src/main/resources/db/schema.sql
-mysql -uroot -p < src/main/resources/db/data.sql
+统一用已登录的 `mysql>` 执行 `SOURCE`（路径用正斜杠；后续增量补丁也按此方式）。
+
+先登录：
+
+```powershell
+& "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -uroot -p --default-character-set=utf8mb4
 ```
+
+全新安装：
+
+```sql
+SOURCE F:/Jinanghu_Ling/backend/src/main/resources/db/schema.sql;
+SOURCE F:/Jinanghu_Ling/backend/src/main/resources/db/data.sql;
+```
+
+已有库增量补丁（按需、按顺序）：
+
+```sql
+SOURCE F:/Jinanghu_Ling/backend/src/main/resources/db/patch_admin_phase2.sql;
+SOURCE F:/Jinanghu_Ling/backend/src/main/resources/db/patch_ops_config.sql;
+SOURCE F:/Jinanghu_Ling/backend/src/main/resources/db/patch_rbac.sql;
+SOURCE F:/Jinanghu_Ling/backend/src/main/resources/db/patch_wallet_v17.sql;
+SOURCE F:/Jinanghu_Ling/backend/src/main/resources/db/patch_bounty_republish.sql;
+```
+
+全新安装在 `schema.sql` + `data.sql` 之后，仍需执行 `patch_rbac.sql`（或后续并入 data）以写入四角色/权限/菜单种子；`data.sql` 已含 v1.7 钱庄开关种子时可不重复执行 `patch_wallet_v17.sql`。
 
 如需执事堂联调，给某侠士授职（替换用户 ID）：
 
@@ -74,7 +105,7 @@ mvn -DskipTests spring-boot:run
 | 角色 | 说明 |
 |------|------|
 | 侠士 | 邀请码 `JHOPEN1` / `JHOPEN2` 注册；短信验证码固定 `123456` |
-| 管理员 | `admin` / `admin123`（dev 启动时自动创建/重置） |
+| 管理员 | 接口 `POST /api/v1/admin/auth/login`，账号 `admin` / `admin123`（勿用侠士端 `/api/v1/auth/login`） |
 | 执事 | 注册后按上文 SQL 授 `DECREE_REVIEWER` / `FEAT_REVIEWER` |
 
 ## 主闭环手测路径

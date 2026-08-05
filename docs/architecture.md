@@ -1,11 +1,11 @@
 # 系统架构文档（Architecture）
 
-> 由 **架构师 AI（@architect）** 维护。输入：`docs/requirements.md`（v1.6）。
+> 由 **架构师 AI（@architect）** 维护。输入：`docs/requirements.md`（**v1.8.0**）。
 
-**版本**：v1.0  
+**版本**：v1.0.4  
 **状态**：已确认（可进入后端/前端实现）  
 **最后更新**：2026-08-05  
-**变更说明**：基于 MVP 架构建议落盘：模块化单体、单前端三区、账本式模拟钱庄。
+**变更说明**：v1.0.4 对齐需求 v1.8.0：再发一令（复制新建、`source_bounty_id`、终态约束）。
 
 ---
 
@@ -49,7 +49,7 @@
 |--------|------|------|
 | `auth` | 邀请注册、验证码/密码登录、JWT 签发与校验 | user, Redis |
 | `user` | 侠士资料、实名占位、启用/封禁状态 | DB |
-| `wallet` | 模拟钱庄：余额、冻结、结算、退款、提现、调账、流水 | DB（账本） |
+| `wallet` | 模拟钱庄：余额、冻结、结算、退款、发放类入账、提现（可关）、调账、流水 | DB（账本） |
 | `bounty` | 悬赏令、结构化令状、状态机、揭榜、探子清单快照 | user, wallet, cms |
 | `collab` | 悬赏会话消息、成果提交与版本 | bounty |
 | `review` | 发令审核、成果审核、回避、管理员改判 | bounty, office, collab |
@@ -129,8 +129,8 @@ erDiagram
 
 | 表名 | 说明 | 关键字段 / 索引 |
 |------|------|------------------|
-| `bounty` | 悬赏令主表 | `publisher_id`, `type`(求租/出租), `status`, `city`, `district`, `difficulty`, `reward_amount`, `deadline_at`, `frozen_biz_no`; IDX(`status`,`city`,`deadline_at`) |
-| `bounty_warrant` | 结构化令状快照 | `bounty_id`, `template_code`, `fields_json` |
+| `bounty` | 悬赏令主表 | `publisher_id`, `type`(求租/出租), `title`, `status`, `city`, `district`, `difficulty`, `reward_amount`, `deadline_at`, `task_tags_json`, `frozen_biz_no`, **`source_bounty_id`**（可空，再发来源）；IDX(`status`,`city`,`deadline_at`)；IDX(`source_bounty_id`) |
+| `bounty_warrant` | 结构化令状快照 | `bounty_id`, `template_code`, `fields_json`（见 §3.2.2.1） |
 | `bounty_checklist` | 本单探子清单快照 | `bounty_id`, `item_code`, `item_name`, `required`, `sort` |
 | `bounty_claim` | 揭榜关系 | `bounty_id`, `user_id`, `stamina_cost`, `status`; **UK(`bounty_id`,`user_id`)** |
 | `bounty_message` | 协作会话消息 | `bounty_id`, `sender_id`, `content`, `created_at`; IDX(`bounty_id`,`id`) |
@@ -155,6 +155,30 @@ erDiagram
 | 已取消 | `CANCELLED` | 含超时退款 |
 | 纠纷中 | `IN_DISPUTE` | 冻结结算结果待裁决 |
 
+##### 3.2.2.1 令状 `fields_json` 约定（相对 v1.0 增量）
+
+发令主信息与结构化令状分离存储，避免字段职责重叠：
+
+| 层级 | 存放 | 示例 |
+|------|------|------|
+| 悬赏主信息 | `bounty` 表列 / 创建 API 顶层 | `title`、`type`、`difficulty`、`taskTags`、`rewardAmount`、`deadlineAt` |
+| 结构化令状 | `bounty_warrant.fields_json` | 区域、租金预算/租金、户型、入住日、是否接受中介等 |
+| 探子清单 | `bounty_checklist` 快照 | 验核项，**不是**发令自由文本 |
+
+**自由文本（需求 v1.6.1 → v1.6.2）**：
+
+| 项 | 约定 |
+|----|------|
+| 存储 key | **`extra`**（唯一） |
+| 展示名 `label` | **补充说明**（定稿；**禁止**使用「令外叮嘱」） |
+| 必填 | 否 |
+| 用途 | 结构化填不下的额外交代（通勤、宠物、楼层、忌西晒、联系时段等） |
+| 展示 | 发令页始终展示；详情页空值可隐藏 |
+| 禁止平行 key | 不得再引入 `remark` / `note` / `description` / `otherRequirements` / `需求说明` 等同义自由文本键 |
+
+模板权威源：运行时 `GET /meta/warrant-templates` 的 `key`/`label`；字段级契约见 `docs/api.md` §5.2。  
+探子清单项「周边配套备注」属**验核交付**，与 `extra`（发令需求补充）职责不同，勿合并。
+
 #### 3.2.3 治理与运营
 
 | 表名 | 说明 |
@@ -170,25 +194,58 @@ erDiagram
 | `reward_product` / `redeem_order` | 奖品与兑换订单 |
 | `rank_snapshot` | 英雄谱物化快照（声望/侠义/完令） |
 | `sys_config` | 系统参数（揭榜日限、体力、费率、提醒等） |
-| `site_message` | 站内消息 |
-| `admin_user` / `admin_role` / `admin_permission` / `admin_user_role` | 后台 RBAC |
+| `site_message` | 站内消息（`read_flag` + IDX(`user_id`,`read_flag`,`id`) 支撑未读计数） |
+| `admin_user` / `admin_role` / `admin_permission` / `admin_role_permission` / `admin_user_role` / `admin_menu` | 后台 RBAC（见 §3.2.4） |
 | `audit_log` | 敏感操作审计 |
+
+#### 3.2.4 管理员 RBAC 表结构（D-003）
+
+```mermaid
+erDiagram
+  admin_user ||--o{ admin_user_role : has
+  admin_role ||--o{ admin_user_role : assigned
+  admin_role ||--o{ admin_role_permission : grants
+  admin_permission ||--o{ admin_role_permission : granted_by
+  admin_menu ||--o| admin_menu : parent
+```
+
+| 表名 | 说明 | 关键字段 / 约束 |
+|------|------|------------------|
+| `admin_user` | 后台账号 | `id`, `username` UK, `password_hash`, `display_name`, `status`(`ACTIVE`/`DISABLED`), `created_at`, `updated_at` |
+| `admin_role` | 角色 | `id`, `code` UK（`SUPER_ADMIN`/`OPS_ADMIN`/`ARBITER`/`OBSERVER`）, `name`, `builtin` TINYINT, `description`, `status` |
+| `admin_permission` | 权限码字典 | `id`, `code` UK（如 `user:read`）, `name`, `module`, `type`(`API`/`MENU`/`BUTTON`) |
+| `admin_role_permission` | 角色↔权限 | `role_id`, `permission_id`；**UK(`role_id`,`permission_id`)** |
+| `admin_user_role` | 账号↔角色 | `admin_id`, `role_id`；**UK(`admin_id`,`role_id`)** |
+| `admin_menu` | 菜单树 | `id`, `parent_id`(0=根), `type`(`DIR`/`MENU`/`BUTTON`), `name`, `path`, `component`, `icon`, `sort`, `visible`, `permission_code`, `status` |
+
+**种子与规则**：
+
+1. 预置四角色；`SUPER_ADMIN` → 权限仅存一条 code=`*`（或运行时短路为全放行，库中可存 `*` 对应 permission 行）。  
+2. `OPS_ADMIN` / `ARBITER` / `OBSERVER` 默认权限集见 `api.md` §16.0.2；**禁止**写入 `*`。  
+3. 至少 1 个超管账号；删除/降权时校验「系统仍有 ACTIVE 超管」。  
+4. 有效权限 = 用户所有角色权限码并集；含 `*` 则全量。  
+5. 菜单可见性：节点 `permission_code` 为空则登录即可；非空则需持有该码或 `*`。  
+6. L0 RBAC 表与侠士 `user_office` **物理隔离**，无外键互通。
 
 ### 3.3 钱庄账本约定
 
 | 流水类型 `type` | 方向 | 说明 |
 |-----------------|------|------|
-| `RECHARGE` | +余额 | 模拟充值 |
+| `REGISTER_GRANT` | +余额 | 注册赠银（默认 500；`biz_no=REG_GRANT:{userId}`） |
+| `INVITE_REWARD` | +余额 | 邀新奖励入邀请人（默认 100；`biz_no=INV_REWARD:{inviteeId}`，同邀请人关系一次） |
+| `RECHARGE` | +余额 | 模拟充值（须 `wallet.rechargeEnabled=true`） |
 | `FREEZE` | 余额→冻结 | 发令托管 |
 | `UNFREEZE_REFUND` | 冻结→余额 | 驳回/超时/取消退款 |
 | `SETTLE_PAY` | -冻结 | 结算扣托管 |
 | `SETTLE_INCOME` | +余额 | 揭榜人入账 |
 | `PLATFORM_FEE` | 平台账户 + | 服务费 10% |
-| `WITHDRAW` | -余额 | 模拟提现 |
-| `ADJUST` | ± | 管理员手工调账（必审记） |
+| `WITHDRAW` | -余额 | 模拟提现（须 `wallet.withdrawEnabled=true`） |
+| `ADJUST` | ± | 管理员手工调账/发放（必审记） |
 
 - 业务幂等键：`biz_no` 全局唯一；同一业务动作重试不重复入账。
 - 账户用 `version` 乐观锁；资金变更与业务状态同一本地事务。
+- **注册路径**：创建用户 + 开户 + `REGISTER_GRANT`（+ 可选 `INVITE_REWARD`）+ 站内消息，同一本地事务。
+- **MVP 开关**（`sys_config`，默认 false）：`wallet.rechargeEnabled`、`wallet.withdrawEnabled`；关闭时 C 端隐藏入口，用户 API 返回 `42004`，**接口不删**。金额可配：`wallet.registerGrantAmount`（500）、`wallet.inviteRewardAmount`（100）。
 
 ### 3.4 结算公式（落库快照）
 
@@ -236,6 +293,18 @@ erDiagram
 
 **职司回避**：不可审核本人发布的令、本人揭榜的令（服务端强制）。
 
+#### 5.2.1 管理员 RBAC 拦截（对齐 api §16.0.4）
+
+| 步骤 | 行为 |
+|------|------|
+| 1 | 解析 JWT，`PrincipalType=ADMIN`；否则拒访 `/admin/**` |
+| 2 | 加载 `admin_user` 状态 + 角色权限并集（可缓存于请求上下文；角色变更后旧 Token 仍可用至过期，或权限热加载） |
+| 3 | 方法所需权限码 ∈ 并集 **或** 并集含 `*` → 放行；否则 **`40300`** |
+| 4 | `*` **仅**允许出现在 `SUPER_ADMIN` 角色；其它角色配置校验拒绝 |
+| 5 | 登录/`me`/`logout` 不做业务权限码校验 |
+
+实现建议：注解 `@RequireAdminPerm("bounty:review")` + 路径默认映射表；与 L1 `hall` 拦截器分离。
+
 ### 5.3 敏感数据
 
 - 密码 BCrypt；JWT 密钥环境变量注入  
@@ -271,7 +340,8 @@ erDiagram
 
 ### 6.3 消息 / 异步
 
-- **不做 MQ**；站内消息落 `site_message`，前端轮询或进入页拉取。
+- **不做 MQ**；站内消息落 `site_message`，前端登录后拉未读数 + 可短轮询；进入列表/详情拉取正文。
+- **未读角标**：`GET /messages/unread-count` → `COUNT(*) WHERE user_id=? AND read_flag=0`；标记已读更新 `read_flag`。
 - 协作会话：`bounty_message` + REST 分页拉取（P1 可升级 WebSocket）。
 
 ### 6.4 定时任务
@@ -328,6 +398,19 @@ erDiagram
 - 超时：`CANCELLED` + 全额解冻退回  
 - 结算后 7 日内可纠纷 → `IN_DISPUTE` → 管理员终裁执行资金调整
 
+### 7.6 注册赠银与邀新（v1.7）
+
+1. 注册事务内：开 `wallet_account` → `REGISTER_GRANT` 入账新用户 →（若有邀请人）`INVITE_REWARD` 入账邀请人 → 写 `site_message`。  
+2. 幂等靠 `biz_no`；重复注册请求不得二次入账。  
+3. 充值/提现开关关闭不影响发放类与托管结算。
+
+### 7.7 再发一令（v1.8）
+
+1. 校验：当前用户 = 原令主；原 `status ∈ {REJECTED,CANCELLED,COMPLETED}`；否则拒绝。  
+2. **新建** `bounty`（新 ID），`source_bounty_id = 原 id`；复制主信息/令状/清单快照（允许请求覆盖赏银、截止、标题等）；**不**复制揭榜/会话/成果/评价。  
+3. `wallet.freeze(新赏银)` → 新单 `PENDING_REVIEW`。  
+4. **原单状态与资金不动**（禁止把终态改回待审/张贴中）。
+
 ---
 
 ## 8. 架构决策记录（ADR）
@@ -343,6 +426,10 @@ erDiagram
 | ADR-07 | 异步 | MQ / Scheduled | **Scheduled + DB 扫描** | 任务种类少、量级小 |
 | ADR-08 | 管理员账号 | 与侠士同表 / 分表 | **admin 分表** | L0 与 C 端隔离更清晰 |
 | ADR-09 | 英雄谱 | 实时算 / 物化快照 | **定时物化 + Redis 缓存** | 读多写少、列表稳定 |
+| ADR-10 | 令状自由文本 | 多备注字段 / 单一 `extra` | **单一 key=`extra`，label=补充说明** | 需求 v1.6.2；防与清单备注、主标题职责重叠 |
+| ADR-11 | 管理员通配符 `*` | 全员 `*` / 废除 `*` / 仅超管 | **保留 `*`，仅 `SUPER_ADMIN`** | 修复 D-003；运维简单且多角色可验 |
+| ADR-12 | MVP 银两入口 | 删除充值提现 / 永久隐藏 / 配置开关 | **配置开关默认关，接口保留** | 需求 v1.7.1；后续真实支付可再开 |
+| ADR-13 | 终态再发 | 原单复活 / 复制新建 | **复制新建 + `source_bounty_id`** | 需求 v1.8；审计清晰、资金隔离 |
 
 ---
 
@@ -353,7 +440,24 @@ erDiagram
 | P0-A 侠士端闭环 | auth/user/wallet/bounty/collab/settle/growth/rank/office/cms/notify |
 | P0-B 武林盟完整后台 | admin + 各模块管理 API |
 | 权限 L0/L1/L2 | admin RBAC / hall office / user |
+| 管理员四角色 RBAC（D-003） | §3.2.4 + §5.2.1；契约 api §16.0～16.10 |
 | 租房令状 + 赏银建议 + 探子清单 + 告示栏 | bounty + cms |
+| 令状自由文本「补充说明」(`extra`) | `bounty_warrant.fields_json.extra` + meta 模板 label |
 | 模拟钱庄与 10% 服务费 | wallet + settle |
+| 注册赠银 / 邀新奖励 / 充提开关（v1.7） | §3.3 + §7.6；api §2.3、§4 |
+| 消息未读角标（v1.7） | §6.3；api §14.2 |
+| 再发一令（v1.8） | §7.7；`bounty.source_bounty_id`；api §7.8 |
 
 接口契约见 [api.md](./api.md)。部署见 [deployment.md](./deployment.md)。
+
+---
+
+## 10. 变更记录
+
+| 版本 | 日期 | 相对上一版差异 |
+|------|------|----------------|
+| v1.0 | 2026-08-05 | 初版：模块化单体、三区前端、账本钱庄、对齐需求 v1.6 |
+| v1.0.1 | 2026-08-05 | **对齐需求 v1.6.1/v1.6.2**：① 新增 §3.2.2.1 令状 `fields_json` 约定；② 自由文本唯一 key=`extra`，label=**补充说明**（废弃「令外叮嘱」文案）；③ 明确主信息 vs 令状 vs 探子清单边界，禁止平行备注 key；④ ADR-10；⑤ `bounty` 表关键字段补 `title`/`task_tags_json` |
+| v1.0.2 | 2026-08-05 | **D-003 管理员 RBAC**：① 新增 §3.2.4 六表结构与种子规则；② §5.2.1 拦截策略；③ ADR-11（`*` 仅超管）；④ 追溯表补四角色 |
+| v1.0.3 | 2026-08-05 | **需求 v1.7.1**：① 流水增 `REGISTER_GRANT`/`INVITE_REWARD`；② 充提开关与 `42004`；③ 未读计数；④ §7.6 注册赠银流程；⑤ ADR-12 |
+| **v1.0.4** | 2026-08-05 | **需求 v1.8.0**：① `bounty.source_bounty_id`；② §7.7 再发一令流程；③ ADR-13（复制新建禁止复活） |

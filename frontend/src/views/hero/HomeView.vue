@@ -109,12 +109,15 @@ onMounted(async () => {
           class="bounty-item jh-panel"
         >
           <div class="top">
-            <span class="type">{{ bountyTypeLabel[item.type] }}</span>
-            <StatusTag :status="item.status" />
+            <div class="top-left">
+              <span class="type">{{ bountyTypeLabel[item.type] }}</span>
+              <StatusTag :status="item.status" />
+            </div>
+            <span class="difficulty">{{ difficultyLabel[item.difficulty] }}</span>
           </div>
           <h3>{{ item.title }}</h3>
           <p class="meta">
-            {{ item.district || '遵义' }} · {{ difficultyLabel[item.difficulty] }} · 揭榜 {{ item.claimCount || 0 }} 人
+            {{ item.district || '遵义' }} · 揭榜 {{ item.claimCount || 0 }} 人
           </p>
           <div class="bottom">
             <strong>{{ formatAmount(item.rewardAmount) }} 两</strong>
@@ -157,38 +160,34 @@ onMounted(async () => {
 }
 .brand-title {
   margin: 0;
-  font-size: clamp(48px, 8vw, 84px);
-  line-height: 1.05;
-  animation: rise 0.8s ease both;
+  font-size: clamp(40px, 7vw, 64px);
+  line-height: 1.1;
 }
 .slogan {
-  margin: 14px 0 8px;
+  margin: 12px 0 6px;
   font-family: var(--jh-font-display);
-  font-size: clamp(20px, 3.2vw, 28px);
-  letter-spacing: 0.06em;
+  font-size: clamp(18px, 2.8vw, 24px);
+  letter-spacing: 0.04em;
   line-height: 1.4;
-  animation: rise 0.9s ease 0.08s both;
 }
 .belief {
-  margin: 0 0 22px;
+  margin: 0 0 20px;
   font-size: 15px;
-  line-height: 1.7;
-  opacity: 0.82;
-  animation: rise 0.95s ease 0.12s both;
+  line-height: 1.6;
+  opacity: 0.85;
 }
 .cta-row {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   flex-wrap: wrap;
-  animation: rise 1s ease 0.16s both;
 }
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 12px 18px;
-  min-height: 44px;
-  border-radius: 999px;
+  padding: 10px 16px;
+  min-height: 40px;
+  border-radius: var(--jh-radius);
   border: 1px solid transparent;
 }
 .btn.primary {
@@ -235,19 +234,31 @@ onMounted(async () => {
 }
 .bounty-item {
   padding: 16px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 .bounty-item:hover {
-  transform: translateY(-2px);
+  border-color: #cbd5e1;
 }
 .top {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  gap: 12px;
   margin-bottom: 8px;
+}
+.top-left {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
 }
 .type {
   color: var(--jh-seal);
   font-size: 13px;
+}
+.difficulty {
+  flex-shrink: 0;
+  font-size: 13px;
+  color: var(--jh-muted);
 }
 h3 {
   margin: 0 0 8px;
@@ -273,17 +284,6 @@ h3 {
   justify-content: center;
   margin-top: 24px;
 }
-@keyframes rise {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
 @media (max-width: 768px) {
   .hero-band {
     padding: 28px 20px;
@@ -292,15 +292,14 @@ h3 {
     margin-inline: 0;
   }
   .brand-title {
-    font-size: clamp(40px, 12vw, 56px);
+    font-size: clamp(36px, 11vw, 48px);
   }
   .slogan {
-    font-size: clamp(18px, 5vw, 22px);
-    margin: 12px 0 6px;
+    font-size: clamp(17px, 5vw, 20px);
   }
   .belief {
     font-size: 14px;
-    margin-bottom: 18px;
+    margin-bottom: 16px;
   }
   .cta-row {
     flex-direction: column;
@@ -337,9 +336,6 @@ h3 {
   .grid {
     grid-template-columns: 1fr;
     gap: 10px;
-  }
-  .bounty-item:hover {
-    transform: none;
   }
 }
 </style>

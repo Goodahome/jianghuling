@@ -18,6 +18,10 @@ const menus = [
   { path: '/admin/notices', label: '告示管理' },
   { path: '/admin/offices', label: '职司管理' },
   { path: '/admin/lord', label: '盟主管理' },
+  { path: '/admin/ops', label: '运营参数' },
+  { path: '/admin/products', label: '奖品兑换' },
+  { path: '/admin/checklist', label: '探子清单' },
+  { path: '/admin/warrant-config', label: '令状字段' },
   { path: '/admin/system', label: '系统配置' },
 ]
 
@@ -39,10 +43,11 @@ async function logout() {
     <el-aside width="230px" class="aside desktop-aside">
       <div class="brand">武林盟</div>
       <el-menu
+        class="admin-menu"
         :default-active="route.path"
         router
-        background-color="#1f2a37"
-        text-color="#d1d5db"
+        background-color="transparent"
+        text-color="#c5ccd6"
         active-text-color="#fff"
       >
         <el-menu-item v-for="m in menus" :key="m.path" :index="m.path">{{ m.label }}</el-menu-item>
@@ -63,8 +68,13 @@ async function logout() {
       </el-main>
     </el-container>
 
-    <el-drawer v-model="drawer" direction="ltr" size="80%" title="武林盟">
-      <el-menu :default-active="route.path" router @select="drawer = false">
+    <el-drawer v-model="drawer" direction="ltr" size="80%" title="武林盟" class="admin-drawer">
+      <el-menu
+        class="admin-menu admin-menu--light"
+        :default-active="route.path"
+        router
+        @select="drawer = false"
+      >
         <el-menu-item v-for="m in menus" :key="m.path" :index="m.path">{{ m.label }}</el-menu-item>
       </el-menu>
     </el-drawer>
@@ -78,12 +88,55 @@ async function logout() {
 }
 .aside {
   background: #1f2a37;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
 }
 .brand {
   color: #fff;
   font-size: 22px;
   font-weight: 700;
-  padding: 20px 16px;
+  padding: 22px 16px 18px;
+  text-align: center;
+  letter-spacing: 0.08em;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.admin-menu {
+  border-right: none !important;
+  padding: 10px 12px 16px;
+  background: transparent !important;
+}
+.admin-menu :deep(.el-menu-item) {
+  height: 44px;
+  line-height: 44px;
+  margin: 4px 0;
+  padding: 0 12px !important;
+  justify-content: center;
+  text-align: center;
+  border-radius: 8px;
+  color: #c5ccd6;
+  font-size: 14px;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.admin-menu :deep(.el-menu-item:hover) {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #fff !important;
+}
+.admin-menu :deep(.el-menu-item.is-active) {
+  background: rgba(64, 158, 255, 0.22) !important;
+  color: #fff !important;
+  font-weight: 600;
+  box-shadow: inset 3px 0 0 #409eff;
+}
+.admin-menu--light :deep(.el-menu-item) {
+  color: #303133;
+}
+.admin-menu--light :deep(.el-menu-item:hover) {
+  background: #f2f6fc !important;
+  color: #303133 !important;
+}
+.admin-menu--light :deep(.el-menu-item.is-active) {
+  background: #ecf5ff !important;
+  color: #409eff !important;
+  box-shadow: inset 3px 0 0 #409eff;
 }
 .header {
   display: flex;

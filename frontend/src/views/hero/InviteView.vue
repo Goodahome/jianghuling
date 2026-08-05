@@ -7,10 +7,16 @@ const code = ref('')
 const link = ref('')
 const remain = ref(0)
 const records = ref<Record<string, unknown>[]>([])
+const loading = ref(false)
 
 async function load() {
-  const data = await listMyInvites({ page: 1, pageSize: 50 })
-  records.value = data.list || []
+  loading.value = true
+  try {
+    const data = await listMyInvites({ page: 1, pageSize: 50 })
+    records.value = data.list || []
+  } finally {
+    loading.value = false
+  }
 }
 
 async function onCreate() {
@@ -36,15 +42,24 @@ onMounted(load)
       <h1 class="brand-title">邀请同道</h1>
       <p class="jh-muted">受每日额度限制 · 被邀请人凭码注册</p>
       <div class="jh-panel block">
-        <el-button type="primary" class="jh-btn-seal" @click="onCreate">生成邀请码</el-button>
+        <el-button type="primary" class="jh-btn-seal" :loading="loading" @click="onCreate">
+          生成邀请码
+        </el-button>
         <p v-if="code">邀请码：<strong>{{ code }}</strong> · 今日剩余 {{ remain }}</p>
         <p v-if="link">链接：{{ link }}</p>
         <el-button v-if="code || link" @click="copy">复制</el-button>
       </div>
-      <el-table :data="records" class="jh-panel">
-        <el-table-column prop="code" label="邀请码" />
-        <el-table-column prop="inviteeNickname" label="被邀请人" />
-        <el-table-column prop="createdAt" label="时间" />
+      <el-table v-loading="loading" :data="records" class="jh-panel">
+        <el-table-column prop="code" label="邀请码" min-width="100" />
+        <el-table-column prop="status" label="状态" width="90" />
+        <el-table-column prop="usedCount" label="已用" width="70" />
+        <el-table-column prop="quota" label="配额" width="70" />
+        <el-table-column prop="inviteeId" label="被邀请人ID" width="110">
+          <template #default="{ row }">
+            {{ row.inviteeId ?? '—' }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="createdAt" label="时间" min-width="160" />
       </el-table>
     </div>
   </section>

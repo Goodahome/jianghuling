@@ -2,6 +2,7 @@ package com.jianghu.ling.wallet.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.jianghu.ling.cms.service.ConfigService;
 import com.jianghu.ling.common.api.PageResult;
 import com.jianghu.ling.common.error.BizException;
 import com.jianghu.ling.common.error.ErrorCode;
@@ -18,6 +19,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Service
@@ -32,9 +34,17 @@ public class WalletService {
     public static final String PLATFORM_FEE = "PLATFORM_FEE";
     public static final String WITHDRAW = "WITHDRAW";
     public static final String ADJUST = "ADJUST";
+    public static final String REGISTER_GRANT = "REGISTER_GRANT";
+    public static final String INVITE_REWARD = "INVITE_REWARD";
+
+    public static final String CFG_RECHARGE_ENABLED = "wallet.rechargeEnabled";
+    public static final String CFG_WITHDRAW_ENABLED = "wallet.withdrawEnabled";
+    public static final String CFG_REGISTER_GRANT = "wallet.registerGrantAmount";
+    public static final String CFG_INVITE_REWARD = "wallet.inviteRewardAmount";
 
     private final WalletAccountMapper accountMapper;
     private final WalletLedgerMapper ledgerMapper;
+    private final ConfigService configService;
 
     public WalletAccount getOrCreate(Long userId) {
         WalletAccount account = accountMapper.selectOne(new LambdaQueryWrapper<WalletAccount>()
@@ -60,6 +70,34 @@ public class WalletService {
         return account;
     }
 
+    public boolean isRechargeEnabled() {
+        return configService.getBoolean(CFG_RECHARGE_ENABLED, false);
+    }
+
+    public boolean isWithdrawEnabled() {
+        return configService.getBoolean(CFG_WITHDRAW_ENABLED, false);
+    }
+
+    public BigDecimal registerGrantAmount() {
+        return configService.getDecimal(CFG_REGISTER_GRANT, "500").setScale(2, RoundingMode.HALF_UP);
+    }
+
+    public BigDecimal inviteRewardAmount() {
+        return configService.getDecimal(CFG_INVITE_REWARD, "100").setScale(2, RoundingMode.HALF_UP);
+    }
+
+    public Map<String, Object> walletFeatures() {
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("rechargeEnabled", isRechargeEnabled());
+        data.put("withdrawEnabled", isWithdrawEnabled());
+        data.put("registerGrantAmount", registerGrantAmount());
+        data.put("inviteRewardAmount", inviteRewardAmount());
+        data.put("currencyLabel", "两");
+        data.put("simulated", true);
+        data.put("hint", "模拟银两，由平台发放与悬赏流转");
+        return data;
+    }
+
     public Map<String, Object> accountView(Long userId) {
         WalletAccount account = getOrCreate(userId);
         Map<String, Object> map = new HashMap<>();
@@ -67,35 +105,37 @@ public class WalletService {
         map.put("frozen", account.getFrozen());
         map.put("currency", "两");
         map.put("simulated", true);
+        map.put("rechargeEnabled", isRechargeEnabled());
+        map.put("withdrawEnabled", isWithdrawEnabled());
         return map;
     }
 
     @Transactional
     public Map<String, Object> recharge(Long userId, BigDecimal amount, String bizNo) {
+        if (!isRechargeEnabled()) {
+            throw new BizException(ErrorCode.WALLET_FEATURE_DISABLED);
+        }
         assertPositive(amount);
         WalletLedger existing = findByBizNo(bizNo);
         if (existing != null) {
-            Map<String, Object> view = accountView(userId);
-            view.put("bizNo", existing.getBizNo());
-            return view;
+            return rechargeView(userId, existing.getBizNo());
         }
         WalletAccount account = getOrCreate(userId);
         account.setBalance(account.getBalance().add(amount));
         updateAccount(account);
         writeLedger(bizNo, userId, RECHARGE, amount, account, "WALLET", null, "模拟充值");
-        Map<String, Object> view = accountView(userId);
-        view.put("bizNo", bizNo);
-        return view;
+        return rechargeView(userId, bizNo);
     }
 
     @Transactional
     public Map<String, Object> withdraw(Long userId, BigDecimal amount, String bizNo) {
+        if (!isWithdrawEnabled()) {
+            throw new BizException(ErrorCode.WALLET_FEATURE_DISABLED);
+        }
         assertPositive(amount);
         WalletLedger existing = findByBizNo(bizNo);
         if (existing != null) {
-            Map<String, Object> view = accountView(userId);
-            view.put("bizNo", existing.getBizNo());
-            return view;
+            return rechargeView(userId, existing.getBizNo());
         }
         WalletAccount account = getOrCreate(userId);
         if (account.getBalance().compareTo(amount) < 0) {
@@ -104,7 +144,49 @@ public class WalletService {
         account.setBalance(account.getBalance().subtract(amount));
         updateAccount(account);
         writeLedger(bizNo, userId, WITHDRAW, amount.negate(), account, "WALLET", null, "模拟提现");
+        return rechargeView(userId, bizNo);
+    }
+
+    /** 注册赠银：biz_no=REG_GRANT:{userId} */
+    @Transactional
+    public void grantRegisterBonus(Long userId) {
+        BigDecimal amount = registerGrantAmount();
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+            return;
+        }
+        String bizNo = "REG_GRANT:" + userId;
+        if (findByBizNo(bizNo) != null) {
+            return;
+        }
+        WalletAccount account = getOrCreate(userId);
+        account.setBalance(account.getBalance().add(amount));
+        updateAccount(account);
+        writeLedger(bizNo, userId, REGISTER_GRANT, amount, account, "USER", userId, "注册赠银");
+    }
+
+    /** 邀新奖励入邀请人：biz_no=INV_REWARD:{inviteeId}，同一被邀请人仅一次 */
+    @Transactional
+    public void grantInviteReward(Long inviterId, Long inviteeId) {
+        if (inviterId == null || inviterId <= 0 || inviteeId == null) {
+            return;
+        }
+        BigDecimal amount = inviteRewardAmount();
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+            return;
+        }
+        String bizNo = "INV_REWARD:" + inviteeId;
+        if (findByBizNo(bizNo) != null) {
+            return;
+        }
+        WalletAccount account = getOrCreate(inviterId);
+        account.setBalance(account.getBalance().add(amount));
+        updateAccount(account);
+        writeLedger(bizNo, inviterId, INVITE_REWARD, amount, account, "USER", inviteeId, "邀新奖励");
+    }
+
+    private Map<String, Object> rechargeView(Long userId, String bizNo) {
         Map<String, Object> view = accountView(userId);
+        view.put("ledgerBizNo", bizNo);
         view.put("bizNo", bizNo);
         return view;
     }
@@ -131,14 +213,29 @@ public class WalletService {
         if (findByBizNo(bizNo) != null) {
             return;
         }
-        WalletAccount account = getOrCreate(userId);
-        if (account.getFrozen().compareTo(amount) < 0) {
-            throw new BizException(ErrorCode.WALLET_FREEZE_FAIL);
+        // 同一业务已解冻退款则幂等跳过（避免重复驳回/强制关闭报错）
+        if (refType != null && refId != null && findRefundByRef(refType, refId) != null) {
+            return;
         }
-        account.setFrozen(account.getFrozen().subtract(amount));
-        account.setBalance(account.getBalance().add(amount));
+        WalletAccount account = getOrCreate(userId);
+        if (account.getFrozen() == null || account.getFrozen().compareTo(BigDecimal.ZERO) <= 0) {
+            // 无冻结余额：视为已退或不需退，不抛错
+            return;
+        }
+        // 仅退当前可退冻结额，避免多单冻结时或状态不一致导致「冻结或解冻失败」
+        BigDecimal refund = amount.min(account.getFrozen());
+        account.setFrozen(account.getFrozen().subtract(refund));
+        account.setBalance(account.getBalance().add(refund));
         updateAccount(account);
-        writeLedger(bizNo, userId, UNFREEZE_REFUND, amount, account, refType, refId, remark);
+        writeLedger(bizNo, userId, UNFREEZE_REFUND, refund, account, refType, refId, remark);
+    }
+
+    private WalletLedger findRefundByRef(String refType, Long refId) {
+        return ledgerMapper.selectOne(new LambdaQueryWrapper<WalletLedger>()
+                .eq(WalletLedger::getRefType, refType)
+                .eq(WalletLedger::getRefId, refId)
+                .eq(WalletLedger::getType, UNFREEZE_REFUND)
+                .last("LIMIT 1"));
     }
 
     @Transactional

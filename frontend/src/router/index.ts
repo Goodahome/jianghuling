@@ -28,6 +28,7 @@ const routes: RouteRecordRaw[] = [
       { path: 'messages', name: 'messages', component: () => import('@/views/hero/MessagesView.vue'), meta: { auth: true, title: '站内消息' } },
       { path: 'invites', name: 'invites', component: () => import('@/views/hero/InviteView.vue'), meta: { auth: true, title: '邀请同道' } },
       { path: 'disputes', name: 'disputes', component: () => import('@/views/hero/DisputeListView.vue'), meta: { auth: true, title: '我的纠纷' } },
+      { path: 'disputes/:id', name: 'dispute-detail', component: () => import('@/views/hero/DisputeDetailView.vue'), meta: { auth: true, title: '纠纷详情' } },
     ],
   },
   {
@@ -36,9 +37,21 @@ const routes: RouteRecordRaw[] = [
     meta: { auth: true, hall: true },
     children: [
       { path: '', name: 'hall-home', component: () => import('@/views/hall/HallHomeView.vue'), meta: { title: '执事堂' } },
-      { path: 'bounty-reviews', name: 'hall-bounty-reviews', component: () => import('@/views/hall/BountyReviewView.vue'), meta: { title: '令审' } },
-      { path: 'submission-reviews', name: 'hall-submission-reviews', component: () => import('@/views/hall/SubmissionReviewView.vue'), meta: { title: '验功' } },
-      { path: 'actions', name: 'hall-actions', component: () => import('@/views/hall/MyActionsView.vue'), meta: { title: '操作记录' } },
+      { path: 'bounty-reviews', name: 'hall-bounty-reviews', component: () => import('@/views/hall/BountyReviewView.vue'), meta: { title: '令审', office: 'DECREE_REVIEWER' } },
+      {
+        path: 'bounty-reviews/:id',
+        name: 'hall-bounty-review-detail',
+        component: () => import('@/views/hall/BountyReviewDetailView.vue'),
+        meta: { title: '令审详情', office: 'DECREE_REVIEWER' },
+      },
+      { path: 'submission-reviews', name: 'hall-submission-reviews', component: () => import('@/views/hall/SubmissionReviewView.vue'), meta: { title: '验功', office: 'FEAT_REVIEWER' } },
+      {
+        path: 'submission-reviews/:id',
+        name: 'hall-submission-review-detail',
+        component: () => import('@/views/hall/SubmissionReviewDetailView.vue'),
+        meta: { title: '验功详情', office: 'FEAT_REVIEWER' },
+      },
+      { path: 'actions', name: 'hall-actions', component: () => import('@/views/hall/MyActionsView.vue'), meta: { title: '履职记录' } },
     ],
   },
   {
@@ -61,6 +74,10 @@ const routes: RouteRecordRaw[] = [
       { path: 'notices', name: 'admin-notices', component: () => import('@/views/admin/NoticesAdminView.vue'), meta: { title: '告示管理' } },
       { path: 'offices', name: 'admin-offices', component: () => import('@/views/admin/OfficesAdminView.vue'), meta: { title: '职司管理' } },
       { path: 'lord', name: 'admin-lord', component: () => import('@/views/admin/LordAdminView.vue'), meta: { title: '盟主管理' } },
+      { path: 'ops', name: 'admin-ops', component: () => import('@/views/admin/OpsConfigView.vue'), meta: { title: '运营参数' } },
+      { path: 'products', name: 'admin-products', component: () => import('@/views/admin/ProductsAdminView.vue'), meta: { title: '奖品兑换' } },
+      { path: 'checklist', name: 'admin-checklist', component: () => import('@/views/admin/ChecklistAdminView.vue'), meta: { title: '探子清单' } },
+      { path: 'warrant-config', name: 'admin-warrant-config', component: () => import('@/views/admin/WarrantConfigAdminView.vue'), meta: { title: '令状字段' } },
       { path: 'system', name: 'admin-system', component: () => import('@/views/admin/SystemView.vue'), meta: { title: '系统配置' } },
     ],
   },
@@ -93,21 +110,30 @@ router.beforeEach(async (to) => {
     return true
   }
 
+  const auth = useAuthStore()
+
+  // 公开页刷新后也要恢复用户资料（昵称、职司等）
+  if (getToken() && !auth.me) {
+    try {
+      await auth.fetchMe()
+    } catch {
+      await auth.logout()
+      if (to.meta.auth || to.meta.hall) {
+        return { name: 'login', query: { redirect: to.fullPath } }
+      }
+    }
+  }
+
   if (to.meta.auth || to.meta.hall) {
     if (!getToken()) {
       return { name: 'login', query: { redirect: to.fullPath } }
     }
-    const auth = useAuthStore()
-    if (!auth.me) {
-      try {
-        await auth.fetchMe()
-      } catch {
-        await auth.logout()
-        return { name: 'login', query: { redirect: to.fullPath } }
-      }
-    }
     if (to.meta.hall && !auth.hasOffice) {
       return { name: 'offices' }
+    }
+    const needOffice = to.meta.office as string | undefined
+    if (needOffice && !auth.hasOfficeCode(needOffice)) {
+      return { name: 'hall-home' }
     }
   }
 

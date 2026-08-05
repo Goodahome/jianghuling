@@ -1,0 +1,129 @@
+﻿{
+    "ADM-LOGIN":  {
+                      "detail":  {
+                                     "code":  0
+                                 },
+                      "pass":  true
+                  },
+    "D-003-RBAC":  {
+                       "detail":  {
+                                      "adminsCode":  0,
+                                      "note":  "SUPER may still be [*]; check roles/admins APIs exist",
+                                      "rolesCode":  0,
+                                      "mePerms":  [
+                                                      "*"
+                                                  ],
+                                      "permissions":  [
+                                                          null
+                                                      ]
+                                  },
+                       "pass":  true
+                   },
+    "ADM-DASH":  {
+                     "detail":  {
+                                    "code":  0
+                                },
+                     "pass":  true
+                 },
+    "ADM-INVITE":  {
+                       "detail":  {
+                                      "code":  0,
+                                      "invite":  "SHLCEYSG"
+                                  },
+                       "pass":  true
+                   },
+    "REG-USERS":  {
+                      "detail":  {
+                                     "R":  40001,
+                                     "rMsg":  "ä¸è½ä¸ºç©º",
+                                     "pMsg":  "ok",
+                                     "idR":  null,
+                                     "P":  0,
+                                     "idP":  5
+                                 },
+                      "pass":  false
+                  },
+    "SQL-GRANT":  {
+                      "detail":  {
+                                     "msg":  "",
+                                     "idP":  5,
+                                     "idR":  null
+                                 },
+                      "pass":  false
+                  },
+    "OFFICE-ME":  {
+                      "detail":  {
+                                     "pOffices":  [
+
+                                                  ],
+                                     "rOffices":  [
+                                                      null
+                                                  ]
+                                 },
+                      "pass":  false
+                  },
+    "CREATE-BOUNTY":  {
+                          "detail":  {
+                                         "status":  "PENDING_REVIEW",
+                                         "code":  0,
+                                         "id":  3
+                                     },
+                          "pass":  true
+                      },
+    "AC-S4":  {
+                  "detail":  {
+                                 "code":  40310,
+                                 "message":  "èå¸æ æææªæäº"
+                             },
+                  "pass":  true
+              },
+    "HALL-APPROVE":  {
+                         "detail":  {
+                                        "status":  "PENDING_REVIEW",
+                                        "code":  40100,
+                                        "msg":  "未登录或Token无效"
+                                    },
+                         "pass":  false
+                     },
+    "AC-S4-FEAT":  {
+                       "detail":  {
+                                      "claim":  40100,
+                                      "featCode":  40100,
+                                      "sub":  40100,
+                                      "subId":  null,
+                                      "featMsg":  "未登录或Token无效"
+                                  },
+                       "pass":  false
+                   },
+    "HALL-FEAT-OK":  {
+                         "detail":  {
+                                        "code":  40100,
+                                        "msg":  "未登录或Token无效"
+                                    },
+                         "pass":  false
+                     },
+    "ADM-DISPUTE":  {
+                        "detail":  {
+                                       "verMsg":  "æå¡å\u0085é¨éè¯¯",
+                                       "verdict":  50000,
+                                       "dispute":  40002,
+                                       "settle":  40001,
+                                       "dspId":  null
+                                   },
+                        "pass":  false
+                    },
+    "AC-W1-REGRESS":  {
+                          "detail":  {
+                                         "ok":  true
+                                     },
+                          "pass":  false
+                      },
+    "meta":  {
+                 "suffix":  41416,
+                 "idC":  null,
+                 "bountyId":  3,
+                 "idR":  null,
+                 "ts":  "2026-08-05T15:58:29",
+                 "idP":  5
+             }
+}

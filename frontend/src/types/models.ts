@@ -50,6 +50,8 @@ export interface WalletAccount {
   frozen: number
   currency: string
   simulated: boolean
+  rechargeEnabled?: boolean
+  withdrawEnabled?: boolean
 }
 
 export interface WalletLedger {
@@ -84,6 +86,7 @@ export interface WarrantFieldDef {
 
 export interface WarrantTemplate {
   type: BountyType
+  code?: string
   name: string
   fields: WarrantFieldDef[]
 }
@@ -126,6 +129,8 @@ export interface BountyListItem {
   claimCount: number
   publisherNickname?: string
   createdAt: string
+  sourceBountyId?: number | null
+  canRepublish?: boolean
 }
 
 export interface ChecklistItem {
@@ -146,6 +151,20 @@ export interface BountyDetail extends BountyListItem {
   description?: string
 }
 
+export interface RepublishDraft {
+  sourceBountyId: number
+  type: BountyType
+  title: string
+  difficulty: Difficulty
+  rewardAmount: number
+  deadlineAt?: string | null
+  taskTags: string[]
+  warrantFields: Record<string, unknown>
+  checklistItemCodes: string[]
+  suggestMin?: number
+  minReward?: number
+}
+
 export interface BountyMessage {
   id: number
   bountyId: number
@@ -157,6 +176,7 @@ export interface BountyMessage {
 
 export interface SubmissionItemInput {
   itemCode: string
+  itemName?: string
   done: boolean
   text?: string
   mediaUrls?: string[]

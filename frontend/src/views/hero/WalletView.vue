@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getWalletAccount, listLedgers, recharge, withdraw } from '@/api/wallet'
 import type { WalletAccount, WalletLedger } from '@/types/models'
@@ -12,6 +12,10 @@ const total = ref(0)
 const loading = ref(false)
 const amount = ref(100)
 const query = reactive({ page: 1, pageSize: 10 })
+
+const canRecharge = computed(() => account.value?.rechargeEnabled === true)
+const canWithdraw = computed(() => account.value?.withdrawEnabled === true)
+const showOps = computed(() => canRecharge.value || canWithdraw.value)
 
 async function loadAccount() {
   account.value = await getWalletAccount()
@@ -29,12 +33,14 @@ async function loadLedgers() {
 }
 
 async function onRecharge() {
+  if (!canRecharge.value) return
   await recharge(amount.value, clientRequestId('recharge'))
   ElMessage.success('模拟充值成功')
   await Promise.all([loadAccount(), loadLedgers()])
 }
 
 async function onWithdraw() {
+  if (!canWithdraw.value) return
   await withdraw(amount.value, clientRequestId('withdraw'))
   ElMessage.success('模拟提现成功')
   await Promise.all([loadAccount(), loadLedgers()])
@@ -50,6 +56,7 @@ onMounted(async () => {
     <div class="jh-container">
       <h1 class="brand-title">模拟钱庄</h1>
       <p class="jh-muted">单位：两 · 非真实货币 · 发令将冻结赏银</p>
+      <p class="jh-muted tip">银两主要由注册赠送、邀新奖励、管理员发放与悬赏流转构成。</p>
 
       <div class="stats">
         <div class="jh-panel stat">
@@ -62,10 +69,13 @@ onMounted(async () => {
         </div>
       </div>
 
-      <div class="jh-panel ops">
+      <!-- 充值/提现：能力保留，默认关；由账户 rechargeEnabled/withdrawEnabled 控制展示 -->
+      <div v-if="showOps" class="jh-panel ops">
         <el-input-number v-model="amount" :min="1" :step="50" />
-        <el-button type="primary" class="jh-btn-seal" @click="onRecharge">模拟充值</el-button>
-        <el-button @click="onWithdraw">模拟提现</el-button>
+        <el-button v-if="canRecharge" type="primary" class="jh-btn-seal" @click="onRecharge">
+          模拟充值
+        </el-button>
+        <el-button v-if="canWithdraw" @click="onWithdraw">模拟提现</el-button>
       </div>
 
       <div class="jh-panel table-wrap" v-loading="loading">
@@ -102,6 +112,9 @@ onMounted(async () => {
 h1 {
   margin: 0 0 6px;
   font-size: 36px;
+}
+.tip {
+  margin: 4px 0 0;
 }
 .stats {
   display: grid;

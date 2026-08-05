@@ -90,6 +90,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             if (path.equals("/api/v1/bounties") || path.matches("/api/v1/bounties/\\d+")) {
                 return true;
             }
+            // 英雄谱公开；/ranks/me 需登录
+            if (path.matches("/api/v1/ranks/(REPUTATION|CHIVALRY|COMPLETED)")) {
+                return true;
+            }
         }
         return false;
     }

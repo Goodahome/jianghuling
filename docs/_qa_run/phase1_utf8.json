@@ -1,0 +1,20 @@
+﻿{
+    "labels":  {
+                   "rentBudgetMin":  "预算下限(元/月)",
+                   "acceptAgency":  "是否接受中介",
+                   "layout":  "户型",
+                   "district":  "区域",
+                   "rentBudgetMax":  "预算上限(元/月)",
+                   "expectMoveInDate":  "期望入住",
+                   "extra":  "补充说明"
+               },
+    "AC_W5_pass":  true,
+    "extraLabel":  "补充说明",
+    "AC_W1_pass":  true,
+    "hasLingWai":  false,
+    "missing":  [
+
+                ],
+    "hasForbiddenKey":  false,
+    "rawContainsBuChong":  true
+}

@@ -48,20 +48,20 @@ Jinanghu_Ling
 
 ## 快速开始
 
-在 Cursor 对话中按角色依次调用，例如：
+在 Cursor 对话中按角色依次调用。完整交接与缺陷分流见 **[docs/handoff.md](docs/handoff.md)**。
 
 ```text
-@pm 我要做一个江湖互助平台，请生成 docs/requirements.md
+@pm 更新需求后，请给出 handoff 接力口令
 ```
 
 ```text
-@architect 请基于 docs/requirements.md 输出 architecture.md 和 api.md
+@qa 我测到一个问题：……请按 docs/handoff.md 分流并给出应 @ 的执行口令
 ```
 
 ```text
-@backend 请按 docs 生成 Spring Boot 工程骨架与 P0 接口
+@architect 请基于 docs/requirements.md 同步 architecture.md 和 api.md
 ```
 
 ```text
-@frontend 请按 docs/api.md 生成 Vue 页面
+@backend / @frontend 按最新 docs 与缺陷卡修复
 ```

@@ -1,5 +1,5 @@
 ---
-description: 后端 AI —— 基于需求与架构生成 Spring Boot 代码
+description: 后端 AI —— 严格按 docs/api.md 实现，禁止私自改字段
 globs: backend/**/*
 alwaysApply: false
 ---
@@ -10,29 +10,26 @@ alwaysApply: false
 
 ## 职责
 
-- 读取 `docs/requirements.md`、`docs/architecture.md`、`docs/api.md`
-- 按接口契约实现 Controller / Service / Repository
-- 保证分层清晰、可测试、可维护
+- 读取 `docs/requirements.md`、`docs/architecture.md`、**`docs/api.md`**
+- DTO / VO / 错误码 **必须与 api.md 一致**（路径、字段名、枚举、code）
+- Meta 模板（令状/清单）的 `key`/`label` 与 api 约定及产品文案一致
 
 ## 技术约定
 
 - Java 17+ / Spring Boot 3.x
-- 包结构建议：`controller` / `service` / `repository` / `domain` / `dto` / `config` / `security`
-- 统一响应：`{ code, message, data }`
-- 参数校验用 Bean Validation；异常用全局异常处理
-- 持久化优先 MyBatis-Plus 或 Spring Data JPA（与 architecture.md 一致）
+- 包结构：`controller` / `service` / `repository` / `domain` / `dto` / `config` / `security`
+- 统一响应：`{ code, message, data }`；JSON **camelCase**
+- Bean Validation + 全局异常；持久化与 architecture 一致
 
-## 实现顺序
+## 契约红线（必守）
 
-1. 工程骨架与配置
-2. 领域模型与表结构/迁移
-3. 鉴权与用户模块
-4. P0 业务接口
-5. 单元/集成测试骨架
+1. **禁止**未改 api.md 就新增/改名响应字段或改枚举值  
+2. 若实现需要不同字段：先说明原因，请用户 `@architect` 改 api.md，再编码  
+3. 改完接口后做 **字段自检**：对照 api.md 示例逐项核对  
+4. 令状等动态字段：只认模板 `key`，不要另造一套平行命名  
 
 ## 工作约束
 
-- 严格对齐 `docs/api.md`，不擅自改路径或字段
-- 不硬编码密钥；敏感配置走环境变量
-- 不在 Controller 写业务逻辑
-- 改动接口时同步更新 `docs/api.md`
+- 不硬编码密钥；敏感配置走环境变量  
+- 不在 Controller 写业务逻辑  
+- 改动接口时同步更新 `docs/api.md`（或明确转交 architect）  

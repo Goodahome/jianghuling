@@ -42,7 +42,9 @@ onMounted(load)
           {{ o.name }} · {{ o.status }}
         </el-tag>
         <div style="margin-top: 12px">
-          <RouterLink to="/hall"><el-button type="primary" class="jh-btn-seal">进入执事堂</el-button></RouterLink>
+          <RouterLink to="/hall">
+            <el-button type="primary" class="jh-btn-seal">进入执事堂</el-button>
+          </RouterLink>
         </div>
       </div>
       <el-input v-model="statement" type="textarea" :rows="2" placeholder="申请陈述" class="block" />
@@ -51,9 +53,16 @@ onMounted(load)
         <p class="jh-muted">{{ d.description }} · 门槛等级 {{ d.minLevel }} · 名额 {{ d.quota }}</p>
         <el-button :disabled="!d.canApply" @click="onApply(d.code)">申请</el-button>
       </div>
-      <div v-if="apps.length" class="jh-panel block">
+      <div class="jh-panel block">
         <h2>申请记录</h2>
-        <pre>{{ apps }}</pre>
+        <el-empty v-if="!apps.length" description="暂无申请" />
+        <el-table v-else :data="apps">
+          <el-table-column prop="officeCode" label="职司" width="140" />
+          <el-table-column prop="officeName" label="名称" />
+          <el-table-column prop="status" label="状态" width="100" />
+          <el-table-column prop="createdAt" label="时间" min-width="160" />
+          <el-table-column prop="rejectReason" label="驳回原因" min-width="140" />
+        </el-table>
       </div>
     </div>
   </section>

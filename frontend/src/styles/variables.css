@@ -3,14 +3,14 @@
   --jh-ink-soft: #2d3a4a;
   --jh-seal: #b23a2d;
   --jh-seal-dark: #8f2d23;
-  --jh-mist: #e8eef3;
-  --jh-paper: #f7f5f2;
-  --jh-line: rgba(28, 36, 48, 0.12);
-  --jh-muted: #6b7585;
+  --jh-mist: #eef0f2;
+  --jh-paper: #f4f4f5;
+  --jh-line: #e5e7eb;
+  --jh-muted: #6b7280;
   --jh-ok: #2f6b4f;
   --jh-warn: #a66b1f;
-  --jh-radius: 10px;
+  --jh-radius: 6px;
   --jh-font-display: 'ZCOOL XiaoWei', 'Noto Serif SC', 'Songti SC', serif;
   --jh-font-body: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  --jh-shadow: 0 12px 40px rgba(28, 36, 48, 0.08);
+  --jh-shadow: none;
 }

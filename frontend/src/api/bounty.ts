@@ -4,6 +4,7 @@ import type {
   BountyDetail,
   BountyListItem,
   BountyMessage,
+  RepublishDraft,
   SettlementPreview,
   Submission,
   SubmissionItemInput,
@@ -34,8 +35,38 @@ export function createBounty(data: {
   taskTags: string[]
   warrantFields: Record<string, unknown>
   checklistItemCodes: string[]
+  sourceBountyId?: number | null
 }) {
   return http<BountyDetail>({ url: '/bounties', method: 'POST', data })
+}
+
+export function getRepublishDraft(id: number | string) {
+  return http<RepublishDraft>({ url: `/bounties/${id}/republish-draft`, method: 'GET' })
+}
+
+export function republishBounty(
+  id: number | string,
+  data: {
+    title?: string
+    difficulty?: Difficulty
+    rewardAmount?: number
+    confirmLowReward?: boolean
+    deadlineAt: string
+    taskTags?: string[]
+    warrantFields?: Record<string, unknown>
+    checklistItemCodes?: string[]
+  },
+) {
+  return http<{
+    id: number
+    sourceBountyId: number
+    status: string
+    canRepublish: boolean
+  }>({
+    url: `/bounties/${id}/republish`,
+    method: 'POST',
+    data,
+  })
 }
 
 export function listMyPublished(params: PageQuery & { status?: BountyStatus }) {

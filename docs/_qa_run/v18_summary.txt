@@ -1,0 +1,32 @@
+V18 / §9.6 + §9.7 QA 签收摘要
+日期: 2026-08-05
+脚本: docs/_qa_run/run_v18.ps1
+明细: docs/_qa_run/v18_results.json
+
+=== §9.6 再发一令 ===
+ADM=PASS
+REG=PASS
+CREATE=PASS
+V18-06-DENY-PENDING=PASS (43007)
+REJECT=PASS (canRepublish=true)
+V18-06-DENY-NONOWNER=PASS (43007)
+V18-DRAFT=PASS
+V18-02-DIAG=PASS (需传 deadlineAt)
+V18-02-NEW-ID=PASS (src=7 → new=8)
+V18-03-PENDING-FREEZE=PASS (frozen 200, bal 300)
+V18-02-SRC-UNCHANGED=PASS (REJECTED)
+V18-05-SOURCE-FIELD=PASS
+V18-01-FE-ENTRY=PASS (静态)
+REGRESS-LOOP=PASS (COMPLETED fee=20 dist=180)
+V18-COMPLETED-CAN=PASS
+
+注: POST /bounties/{id}/republish 空 body 不足；draft.deadlineAt=null，须显式传未来 deadlineAt（及必要时 confirmLowReward）。属契约/产品设计，非阻断缺陷。
+
+=== §9.7 执事堂体验 ===
+V181-01-VISUAL=PASS
+V181-02-LIST-SHAPE=PASS
+V181-03-CLICK-DETAIL=PASS
+V181-04-BACK=PASS
+V181-05-REVIEW=PASS
+
+结论: §9.6 Pass；§9.7 Pass；主闭环回归 Pass

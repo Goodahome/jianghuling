@@ -2,13 +2,17 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { cancelBounty, claimBounty, getBounty } from '@/api/bounty'
+import { cancelBounty, claimBounty, getBounty, listEvaluations } from '@/api/bounty'
+import { getWarrantTemplates } from '@/api/meta'
 import { useAuthStore } from '@/stores/auth'
-import type { BountyDetail } from '@/types/models'
+import type { BountyDetail, WarrantFieldDef, WarrantTemplate } from '@/types/models'
 import {
   bountyTypeLabel,
   difficultyLabel,
   formatAmount,
+  formatWarrantValue,
+  isWarrantValueEmpty,
+  warrantFieldFallbackLabel,
 } from '@/utils/labels'
 import StatusTag from '@/components/StatusTag.vue'
 
@@ -18,6 +22,8 @@ const auth = useAuthStore()
 const loading = ref(false)
 const claiming = ref(false)
 const detail = ref<BountyDetail | null>(null)
+const warrantTemplates = ref<WarrantTemplate[]>([])
+const evaluations = ref<Record<string, unknown>[]>([])
 
 const canClaim = computed(() => {
   if (!detail.value || !auth.isLoggedIn) return false
@@ -25,10 +31,66 @@ const canClaim = computed(() => {
   return ['OPEN', 'IN_COLLAB'].includes(detail.value.status)
 })
 
+const canDispute = computed(() => {
+  if (!detail.value || !auth.isLoggedIn) return false
+  if (!(detail.value.isPublisher || detail.value.claimedByMe)) return false
+  return detail.value.status === 'COMPLETED' || detail.value.status === 'IN_DISPUTE'
+})
+
+const warrantFieldDefs = computed((): WarrantFieldDef[] => {
+  const type = detail.value?.type
+  if (!type) return []
+  const tpl = warrantTemplates.value.find((t) => t.type === type || (t as { code?: string }).code === type)
+  return tpl?.fields || []
+})
+
+/** 按模板顺序展示中文标签；空可选字段不展示 */
+const warrantRows = computed(() => {
+  const fields = detail.value?.warrantFields || {}
+  const defs = warrantFieldDefs.value
+  const rows: { key: string; label: string; text: string }[] = []
+  const seen = new Set<string>()
+
+  for (const def of defs) {
+    seen.add(def.key)
+    const val = fields[def.key]
+    if (isWarrantValueEmpty(val) && !def.required) continue
+    rows.push({
+      key: def.key,
+      label: def.label || warrantFieldFallbackLabel[def.key] || def.key,
+      text: formatWarrantValue(val) || '—',
+    })
+  }
+
+  // 模板外残留字段（兼容旧数据）
+  for (const [key, val] of Object.entries(fields)) {
+    if (seen.has(key) || isWarrantValueEmpty(val)) continue
+    rows.push({
+      key,
+      label: warrantFieldFallbackLabel[key] || key,
+      text: formatWarrantValue(val),
+    })
+  }
+  return rows
+})
+
 async function load() {
   loading.value = true
   try {
-    detail.value = await getBounty(route.params.id as string)
+    const [bounty, templates] = await Promise.all([
+      getBounty(route.params.id as string),
+      getWarrantTemplates().catch(() => [] as WarrantTemplate[]),
+    ])
+    detail.value = bounty
+    warrantTemplates.value = templates
+    if (bounty.status === 'COMPLETED' || bounty.status === 'IN_DISPUTE') {
+      const evals = await listEvaluations(bounty.id).catch(() => null)
+      evaluations.value = Array.isArray(evals)
+        ? evals
+        : ((evals as { list?: Record<string, unknown>[] } | null)?.list || [])
+    } else {
+      evaluations.value = []
+    }
   } finally {
     loading.value = false
   }
@@ -66,9 +128,11 @@ onMounted(load)
     <div class="jh-container" v-if="detail">
       <div class="head jh-panel">
         <div class="tags">
-          <span>{{ bountyTypeLabel[detail.type] }}</span>
-          <StatusTag :status="detail.status" />
-          <span>{{ difficultyLabel[detail.difficulty] }}</span>
+          <div class="tags-left">
+            <span class="type">{{ bountyTypeLabel[detail.type] }}</span>
+            <StatusTag :status="detail.status" />
+          </div>
+          <span class="difficulty">{{ difficultyLabel[detail.difficulty] }}</span>
         </div>
         <h1>{{ detail.title }}</h1>
         <p class="reward">赏银 {{ formatAmount(detail.rewardAmount) }} 两 · 揭榜 {{ detail.claimCount }} 人</p>
@@ -109,19 +173,43 @@ onMounted(load)
           >
             取消悬赏
           </el-button>
+          <el-button
+            v-if="detail.canRepublish"
+            type="primary"
+            class="jh-btn-seal action-item"
+            @click="router.push({ path: '/bounties/publish', query: { republishFrom: String(detail.id) } })"
+          >
+            再发一令
+          </el-button>
+          <el-button
+            v-if="canDispute && detail.status === 'COMPLETED'"
+            class="action-item"
+            type="danger"
+            @click="router.push({ path: '/disputes', query: { bountyId: String(detail.id) } })"
+          >
+            发起纠纷
+          </el-button>
+          <el-button
+            v-if="detail.status === 'IN_DISPUTE'"
+            class="action-item"
+            @click="router.push('/disputes')"
+          >
+            查看纠纷
+          </el-button>
         </div>
       </div>
 
       <div class="cols">
         <div class="jh-panel block">
           <h2>租房令状</h2>
-          <el-descriptions :column="1" border>
+          <el-empty v-if="!warrantRows.length" description="暂无令状信息" />
+          <el-descriptions v-else :column="1" border>
             <el-descriptions-item
-              v-for="(val, key) in detail.warrantFields || {}"
-              :key="key"
-              :label="String(key)"
+              v-for="row in warrantRows"
+              :key="row.key"
+              :label="row.label"
             >
-              {{ val === true ? '是' : val === false ? '否' : val }}
+              {{ row.text }}
             </el-descriptions-item>
           </el-descriptions>
           <div v-if="detail.taskTags?.length" class="tags-row">
@@ -139,6 +227,15 @@ onMounted(load)
           </ul>
         </div>
       </div>
+
+      <div v-if="evaluations.length" class="jh-panel block evals">
+        <h2>互评</h2>
+        <div v-for="(e, idx) in evaluations" :key="idx" class="eval-item">
+          <strong>{{ e.fromNickname || e.fromUserId }} → {{ e.toNickname || e.toUserId }}</strong>
+          <span class="jh-muted"> · {{ e.score }} 分</span>
+          <p>{{ e.content || '（无文字）' }}</p>
+        </div>
+      </div>
     </div>
   </section>
 </template>
@@ -150,10 +247,24 @@ onMounted(load)
 }
 .tags {
   display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.tags-left {
+  display: flex;
   gap: 8px;
   align-items: center;
-  margin-bottom: 8px;
   color: var(--jh-seal);
+}
+.type {
+  font-size: 13px;
+}
+.difficulty {
+  flex-shrink: 0;
+  font-size: 13px;
+  color: var(--jh-muted);
 }
 h1 {
   margin: 0 0 8px;
@@ -177,6 +288,16 @@ h1 {
 }
 .block {
   padding: 18px;
+}
+.evals {
+  margin-top: 16px;
+}
+.eval-item {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--jh-line);
+}
+.eval-item:last-child {
+  border-bottom: none;
 }
 h2 {
   margin: 0 0 12px;
@@ -220,10 +341,9 @@ h2 {
     z-index: 10;
     margin: 12px -4px 0;
     padding: 10px;
-    background: rgba(255, 255, 255, 0.96);
+    background: #fff;
     border: 1px solid var(--jh-line);
-    border-radius: 12px;
-    box-shadow: 0 -4px 20px rgba(28, 36, 48, 0.08);
+    border-radius: var(--jh-radius);
   }
   .action-main,
   .action-item {

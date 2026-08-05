@@ -1,5 +1,6 @@
 package com.jianghu.ling.admin.controller;
 
+import com.jianghu.ling.admin.security.RequireAdminPerm;
 import com.jianghu.ling.admin.service.AdminDashboardService;
 import com.jianghu.ling.common.api.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ public class AdminDashboardController {
     private final AdminDashboardService adminDashboardService;
 
     @GetMapping("/overview")
+    @RequireAdminPerm("dashboard:view")
     public ApiResponse<Map<String, Object>> overview() {
         return ApiResponse.ok(adminDashboardService.overview());
     }

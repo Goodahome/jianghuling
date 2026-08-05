@@ -1,5 +1,6 @@
 package com.jianghu.ling.admin.controller;
 
+import com.jianghu.ling.admin.security.RequireAdminPerm;
 import com.jianghu.ling.admin.service.AdminBountyService;
 import com.jianghu.ling.bounty.domain.BountyMessage;
 import com.jianghu.ling.common.api.ApiResponse;
@@ -22,6 +23,7 @@ public class AdminBountyController {
     private final ReviewService reviewService;
 
     @GetMapping("/bounties")
+    @RequireAdminPerm("bounty:read")
     public ApiResponse<PageResult<Map<String, Object>>> page(
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String keyword,
@@ -31,11 +33,13 @@ public class AdminBountyController {
     }
 
     @GetMapping("/bounties/{id}")
+    @RequireAdminPerm("bounty:read")
     public ApiResponse<Map<String, Object>> detail(@PathVariable Long id) {
         return ApiResponse.ok(adminBountyService.detail(id));
     }
 
     @PostMapping("/bounties/{id}/force-close")
+    @RequireAdminPerm("bounty:write")
     public ApiResponse<Map<String, Object>> forceClose(@PathVariable Long id,
                                                        @RequestBody(required = false) Map<String, String> body) {
         String reason = body == null ? null : body.get("reason");
@@ -43,6 +47,7 @@ public class AdminBountyController {
     }
 
     @PostMapping("/bounty-reviews/{bountyId}")
+    @RequireAdminPerm("bounty:review")
     public ApiResponse<Map<String, Object>> reviewBounty(@PathVariable Long bountyId,
                                                          @Valid @RequestBody ReviewRequest req) {
         Long adminId = AuthContext.requireAdminId();
@@ -50,6 +55,7 @@ public class AdminBountyController {
     }
 
     @PostMapping("/submission-reviews/{submissionId}")
+    @RequireAdminPerm("submission:review")
     public ApiResponse<Map<String, Object>> reviewSubmission(@PathVariable Long submissionId,
                                                              @Valid @RequestBody ReviewRequest req) {
         Long adminId = AuthContext.requireAdminId();
@@ -57,6 +63,7 @@ public class AdminBountyController {
     }
 
     @GetMapping("/bounties/{id}/messages")
+    @RequireAdminPerm("bounty:read")
     public ApiResponse<PageResult<BountyMessage>> messages(
             @PathVariable Long id,
             @RequestParam(defaultValue = "1") long page,

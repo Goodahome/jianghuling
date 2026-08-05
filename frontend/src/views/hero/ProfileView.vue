@@ -6,21 +6,25 @@ import { getLevelProgress } from '@/api/growth'
 import { useAuthStore } from '@/stores/auth'
 import type { LevelProgress } from '@/types/models'
 import { formatAmount } from '@/utils/labels'
+import ImageUpload from '@/components/ImageUpload.vue'
 
 const auth = useAuthStore()
 const level = ref<LevelProgress | null>(null)
 const form = reactive({ nickname: '', bio: '', avatarUrl: '' })
 const realName = reactive({ realName: '', idNumber: '' })
+const avatarUrls = ref<string[]>([])
 
 onMounted(async () => {
   await auth.fetchMe()
   form.nickname = auth.me?.nickname || ''
   form.bio = auth.me?.bio || ''
   form.avatarUrl = auth.me?.avatarUrl || ''
+  avatarUrls.value = form.avatarUrl ? [form.avatarUrl] : []
   level.value = await getLevelProgress().catch(() => null)
 })
 
 async function saveProfile() {
+  form.avatarUrl = avatarUrls.value[0] || ''
   await updateProfile(form)
   await auth.fetchMe()
   ElMessage.success('资料已更新')
@@ -69,8 +73,8 @@ async function saveRealName() {
         <el-form-item label="简介">
           <el-input v-model="form.bio" type="textarea" :rows="3" />
         </el-form-item>
-        <el-form-item label="头像 URL">
-          <el-input v-model="form.avatarUrl" />
+        <el-form-item label="头像">
+          <ImageUpload v-model="avatarUrls" :limit="1" tip="上传一张头像图" />
         </el-form-item>
         <el-button type="primary" class="jh-btn-seal" native-type="submit">保存</el-button>
       </el-form>

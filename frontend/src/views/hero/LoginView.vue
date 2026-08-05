@@ -90,16 +90,14 @@ async function onSubmit() {
   display: grid;
   place-items: center;
   padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
-  background:
-    linear-gradient(135deg, rgba(28, 36, 48, 0.92), rgba(178, 58, 45, 0.75)),
-    url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160"><path d="M0 80h160M80 0v160" stroke="%23ffffff14" stroke-width="1"/></svg>');
+  background: var(--jh-paper);
 }
 .panel {
   width: min(420px, 100%);
   background: #fff;
-  border-radius: 16px;
+  border: 1px solid var(--jh-line);
+  border-radius: var(--jh-radius);
   padding: 28px 24px 22px;
-  box-shadow: var(--jh-shadow);
 }
 .brand-title {
   margin: 0;

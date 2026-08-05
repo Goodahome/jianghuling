@@ -100,12 +100,13 @@ async function onSubmit() {
   display: grid;
   place-items: center;
   padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
-  background: linear-gradient(160deg, #243041, #6d3a34 70%, #b23a2d);
+  background: var(--jh-paper);
 }
 .panel {
   width: min(460px, 100%);
   background: #fff;
-  border-radius: 16px;
+  border: 1px solid var(--jh-line);
+  border-radius: var(--jh-radius);
   padding: 28px 24px 22px;
 }
 .brand-title {

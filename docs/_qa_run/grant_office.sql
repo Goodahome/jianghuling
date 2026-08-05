@@ -1,0 +1,4 @@
+INSERT INTO user_office (user_id, office_code, status, start_at, end_at) VALUES
+(5, 'DECREE_REVIEWER', 'ACTIVE', NOW(), DATE_ADD(NOW(), INTERVAL 90 DAY)),
+(, 'DECREE_REVIEWER', 'ACTIVE', NOW(), DATE_ADD(NOW(), INTERVAL 90 DAY)),
+(, 'FEAT_REVIEWER', 'ACTIVE', NOW(), DATE_ADD(NOW(), INTERVAL 90 DAY));

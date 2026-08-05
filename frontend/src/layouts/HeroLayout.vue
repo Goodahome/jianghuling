@@ -2,8 +2,10 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useMessageStore } from '@/stores/message'
 
 const auth = useAuthStore()
+const messageStore = useMessageStore()
 const route = useRoute()
 const router = useRouter()
 const menuOpen = ref(false)
@@ -21,6 +23,18 @@ const nav = [
 
 const visibleNav = computed(() => nav.filter((n) => !n.auth || auth.isLoggedIn))
 const showNav = computed(() => !['login', 'register', 'invite-landing'].includes(String(route.name)))
+const unreadBadge = computed(() => {
+  const n = messageStore.unreadCount
+  if (!n || n <= 0) return ''
+  return n > 99 ? '99+' : String(n)
+})
+
+/** `/` 不能用默认前缀匹配，否则任意页面都会高亮「悬赏广场」 */
+function isNavActive(to: string) {
+  const path = route.path
+  if (to === '/') return path === '/'
+  return path === to || path.startsWith(`${to}/`)
+}
 
 watch(
   () => route.fullPath,
@@ -29,8 +43,18 @@ watch(
   },
 )
 
+watch(
+  () => auth.isLoggedIn,
+  (loggedIn) => {
+    if (loggedIn) messageStore.startPolling()
+    else messageStore.clear()
+  },
+  { immediate: true },
+)
+
 async function onLogout() {
   menuOpen.value = false
+  messageStore.clear()
   await auth.logout()
   router.push({ name: 'login' })
 }
@@ -48,6 +72,9 @@ async function onLogout() {
             :key="item.to"
             :to="item.to"
             class="nav-link"
+            :class="{ 'is-active': isNavActive(item.to) }"
+            active-class=""
+            exact-active-class=""
           >
             {{ item.label }}
           </RouterLink>
@@ -55,7 +82,10 @@ async function onLogout() {
 
         <div class="actions desktop-only">
           <template v-if="auth.isLoggedIn">
-            <RouterLink to="/messages" class="ghost">消息</RouterLink>
+            <RouterLink to="/messages" class="ghost with-badge">
+              消息
+              <span v-if="unreadBadge" class="badge">{{ unreadBadge }}</span>
+            </RouterLink>
             <RouterLink v-if="auth.hasOffice" to="/hall" class="ghost">执事堂</RouterLink>
             <RouterLink to="/profile" class="user">{{ auth.user?.nickname || '侠士' }}</RouterLink>
             <button class="link-btn" type="button" @click="onLogout">登出</button>
@@ -76,6 +106,7 @@ async function onLogout() {
           <span />
           <span />
           <span />
+          <span v-if="unreadBadge" class="menu-dot" />
         </button>
       </div>
     </header>
@@ -87,12 +118,30 @@ async function onLogout() {
         <button type="button" class="link-btn" @click="menuOpen = false">关闭</button>
       </div>
       <nav class="drawer-nav">
-        <RouterLink v-for="item in visibleNav" :key="item.to" :to="item.to" class="drawer-link">
-          {{ item.label }}
+        <RouterLink
+          v-for="item in visibleNav"
+          :key="item.to"
+          :to="item.to"
+          class="drawer-link"
+          :class="{ 'is-active': isNavActive(item.to) }"
+          active-class=""
+          exact-active-class=""
+        >
+          <span>{{ item.label }}</span>
+          <span v-if="item.to === '/messages' && unreadBadge" class="badge">{{ unreadBadge }}</span>
         </RouterLink>
-        <RouterLink v-if="auth.hasOffice" to="/hall" class="drawer-link">执事堂</RouterLink>
-        <RouterLink v-if="!auth.isLoggedIn" to="/login" class="drawer-link">登录</RouterLink>
-        <RouterLink v-if="!auth.isLoggedIn" to="/register" class="drawer-link accent">持令入江湖</RouterLink>
+        <RouterLink
+          v-if="auth.hasOffice"
+          to="/hall"
+          class="drawer-link"
+          :class="{ 'is-active': isNavActive('/hall') }"
+          active-class=""
+          exact-active-class=""
+        >
+          执事堂
+        </RouterLink>
+        <RouterLink v-if="!auth.isLoggedIn" to="/login" class="drawer-link" active-class="" exact-active-class="">登录</RouterLink>
+        <RouterLink v-if="!auth.isLoggedIn" to="/register" class="drawer-link accent" active-class="" exact-active-class="">持令入江湖</RouterLink>
         <button v-if="auth.isLoggedIn" type="button" class="drawer-link as-btn" @click="onLogout">
           登出
         </button>
@@ -104,12 +153,27 @@ async function onLogout() {
     </main>
 
     <nav v-if="showNav" class="tabbar mobile-only">
-      <RouterLink to="/" class="tab">广场</RouterLink>
-      <RouterLink to="/notices" class="tab">告示</RouterLink>
-      <RouterLink to="/ranks" class="tab">英雄谱</RouterLink>
-      <RouterLink :to="auth.isLoggedIn ? '/mine' : '/login'" class="tab">我的</RouterLink>
-      <RouterLink :to="auth.isLoggedIn ? '/wallet' : '/register'" class="tab">
-        {{ auth.isLoggedIn ? '钱庄' : '入江湖' }}
+      <RouterLink to="/" class="tab" :class="{ 'is-active': isNavActive('/') }" active-class="" exact-active-class="">广场</RouterLink>
+      <RouterLink to="/notices" class="tab" :class="{ 'is-active': isNavActive('/notices') }" active-class="" exact-active-class="">告示</RouterLink>
+      <RouterLink to="/ranks" class="tab" :class="{ 'is-active': isNavActive('/ranks') }" active-class="" exact-active-class="">英雄谱</RouterLink>
+      <RouterLink
+        :to="auth.isLoggedIn ? '/mine' : '/login'"
+        class="tab"
+        :class="{ 'is-active': isNavActive(auth.isLoggedIn ? '/mine' : '/login') }"
+        active-class=""
+        exact-active-class=""
+      >
+        我的
+      </RouterLink>
+      <RouterLink
+        :to="auth.isLoggedIn ? '/messages' : '/register'"
+        class="tab with-badge"
+        :class="{ 'is-active': isNavActive(auth.isLoggedIn ? '/messages' : '/register') }"
+        active-class=""
+        exact-active-class=""
+      >
+        {{ auth.isLoggedIn ? '消息' : '入江湖' }}
+        <span v-if="auth.isLoggedIn && unreadBadge" class="badge tab-badge">{{ unreadBadge }}</span>
       </RouterLink>
     </nav>
 
@@ -127,8 +191,7 @@ async function onLogout() {
   position: sticky;
   top: 0;
   z-index: 30;
-  backdrop-filter: blur(10px);
-  background: rgba(247, 245, 242, 0.92);
+  background: #fff;
   border-bottom: 1px solid var(--jh-line);
   padding-top: env(safe-area-inset-top);
 }
@@ -155,7 +218,7 @@ async function onLogout() {
   padding: 6px 0;
   border-bottom: 2px solid transparent;
 }
-.nav-link.router-link-active {
+.nav-link.is-active {
   color: var(--jh-seal);
   border-bottom-color: var(--jh-seal);
 }
@@ -168,12 +231,32 @@ async function onLogout() {
 .ghost {
   color: var(--jh-muted);
 }
+.with-badge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  margin-left: 4px;
+  border-radius: 9px;
+  background: var(--jh-seal);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+}
 .cta,
 .user {
   color: #fff;
   background: var(--jh-seal);
-  padding: 8px 12px;
-  border-radius: 999px;
+  padding: 7px 12px;
+  border-radius: var(--jh-radius);
   max-width: 120px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -202,12 +285,22 @@ async function onLogout() {
   gap: 5px;
   padding: 10px;
   cursor: pointer;
+  position: relative;
 }
-.menu-btn span {
+.menu-btn span:not(.menu-dot) {
   display: block;
   height: 2px;
   background: var(--jh-ink);
   border-radius: 2px;
+}
+.menu-dot {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--jh-seal);
 }
 .drawer-mask {
   position: fixed;
@@ -226,7 +319,7 @@ async function onLogout() {
   transform: translateX(100%);
   transition: transform 0.22s ease;
   padding: calc(16px + env(safe-area-inset-top)) 16px 24px;
-  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.12);
+  border-left: 1px solid var(--jh-line);
 }
 .drawer.open {
   transform: translateX(0);
@@ -243,15 +336,18 @@ async function onLogout() {
   gap: 4px;
 }
 .drawer-link {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   padding: 14px 12px;
-  border-radius: 10px;
+  border-radius: var(--jh-radius);
   font-size: 16px;
   color: var(--jh-ink);
 }
-.drawer-link.router-link-active,
+.drawer-link.is-active,
 .drawer-link.accent {
-  background: rgba(178, 58, 45, 0.08);
+  background: var(--jh-mist);
   color: var(--jh-seal);
 }
 .drawer-link.as-btn {
@@ -269,12 +365,13 @@ async function onLogout() {
   right: 0;
   bottom: 0;
   z-index: 25;
-  background: rgba(255, 255, 255, 0.96);
+  background: #fff;
   border-top: 1px solid var(--jh-line);
   padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
   grid-template-columns: repeat(5, 1fr);
 }
 .tab {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -282,9 +379,18 @@ async function onLogout() {
   font-size: 12px;
   color: var(--jh-muted);
 }
-.tab.router-link-active {
+.tab.is-active {
   color: var(--jh-seal);
   font-weight: 600;
+}
+.tab-badge {
+  position: absolute;
+  top: 2px;
+  right: calc(50% - 28px);
+  margin-left: 0;
+  min-width: 16px;
+  height: 16px;
+  font-size: 10px;
 }
 .footer {
   border-top: 1px solid var(--jh-line);

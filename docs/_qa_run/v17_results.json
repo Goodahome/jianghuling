@@ -1,0 +1,122 @@
+﻿{
+    "ADM":  {
+                "detail":  {
+                               "code":  0
+                           },
+                "pass":  true
+            },
+    "V17-01-REGISTER-GRANT":  {
+                                  "detail":  {
+                                                 "types":  [
+                                                               "REGISTER_GRANT"
+                                                           ],
+                                                 "grantBiz":  "REG_GRANT:9",
+                                                 "bal":  500.00,
+                                                 "code":  0,
+                                                 "grantAmt":  500.00
+                                             },
+                                  "pass":  true
+                              },
+    "V17-03-FLAGS":  {
+                         "detail":  {
+                                        "recharge":  false,
+                                        "withdraw":  false
+                                    },
+                         "pass":  true
+                     },
+    "V17-03-API-CLOSED":  {
+                              "detail":  {
+                                             "rc":  42004,
+                                             "rcMsg":  "å\u0085\u0085å¼/æç°ææªå¼æ¾",
+                                             "wdMsg":  "å\u0085\u0085å¼/æç°ææªå¼æ¾",
+                                             "wd":  42004
+                                         },
+                              "pass":  true
+                          },
+    "V17-04-NOT-DELETED":  {
+                               "detail":  {
+                                              "note":  "endpoints exist, return 42004"
+                                          },
+                               "pass":  true
+                           },
+    "V17-04-META":  {
+                        "detail":  {
+                                       "code":  0,
+                                       "data":  {
+                                                    "rechargeEnabled":  false,
+                                                    "withdrawEnabled":  false,
+                                                    "registerGrantAmount":  500.00,
+                                                    "inviteRewardAmount":  100.00,
+                                                    "currencyLabel":  "ä¸¤",
+                                                    "simulated":  true,
+                                                    "hint":  "æ¨¡æé¶ä¸¤ï¼ç±å¹³å°åæ¾ä¸æ¬èµæµè½¬"
+                                                }
+                                   },
+                        "pass":  true
+                    },
+    "V17-01-B-GRANT":  {
+                           "detail":  {
+                                          "uCode":  "XUSRTB",
+                                          "uInv":  0,
+                                          "regB":  0,
+                                          "balB":  500.00
+                                      },
+                           "pass":  true
+                       },
+    "V17-02-INVITE-REWARD":  {
+                                 "detail":  {
+                                                "uInvMsg":  "ok",
+                                                "rewardCnt":  1,
+                                                "rewardBiz":  "INV_REWARD:10",
+                                                "balA":  600.00,
+                                                "rewardAmt":  100.00
+                                            },
+                                 "pass":  true
+                             },
+    "V17-02-ONCE-PER-INVITEE":  {
+                                    "detail":  {
+                                                   "rewardCnt":  2,
+                                                   "balA":  700.00,
+                                                   "note":  "100 per invitee once",
+                                                   "regC":  0
+                                               },
+                                    "pass":  true
+                                },
+    "V17-05-ADMIN-ADJUST":  {
+                                "detail":  {
+                                               "adj":  0,
+                                               "adjMsg":  "ok",
+                                               "bal":  750.00
+                                           },
+                                "pass":  true
+                            },
+    "V17-06-UNREAD":  {
+                          "detail":  {
+                                         "listCnt":  1,
+                                         "before":  1,
+                                         "read":  0,
+                                         "mid":  17,
+                                         "after":  0
+                                     },
+                          "pass":  true
+                      },
+    "V17-03-FE-HIDE":  {
+                           "detail":  {
+                                          "hideUi":  true
+                                      },
+                           "pass":  true
+                       },
+    "V17-06-FE-BADGE":  {
+                            "detail":  {
+                                           "unreadStyle":  true,
+                                           "badge":  true
+                                       },
+                            "pass":  true
+                        },
+    "meta":  {
+                 "idB":  10,
+                 "idA":  9,
+                 "suffix":  12706,
+                 "ts":  "2026-08-05T16:34:41"
+             }
+}

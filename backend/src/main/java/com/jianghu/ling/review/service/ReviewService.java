@@ -101,8 +101,9 @@ public class ReviewService {
         if (!admin) {
             assertAvoidance(reviewerId, bounty);
         }
-        if (!"PENDING_REVIEW".equals(bounty.getStatus()) && !admin) {
-            throw new BizException(ErrorCode.BIZ_RULE, "当前状态不可审核");
+        // 发令审核仅对待审核状态生效（管理员也不例外，避免「通过」重复点）
+        if (!"PENDING_REVIEW".equals(bounty.getStatus())) {
+            throw new BizException(ErrorCode.BIZ_RULE, "仅待审核状态可审核通过/驳回，其它状态请用强制关闭");
         }
         if ("APPROVE".equalsIgnoreCase(result)) {
             bounty.setStatus("OPEN");

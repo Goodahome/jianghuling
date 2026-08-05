@@ -3,6 +3,20 @@ USE jianghu_ling;
 
 SET NAMES utf8mb4;
 
+DROP TABLE IF EXISTS audit_log;
+DROP TABLE IF EXISTS admin_menu;
+DROP TABLE IF EXISTS admin_user_role;
+DROP TABLE IF EXISTS admin_role_permission;
+DROP TABLE IF EXISTS admin_permission;
+DROP TABLE IF EXISTS admin_role;
+DROP TABLE IF EXISTS dispute;
+DROP TABLE IF EXISTS platform_lord;
+DROP TABLE IF EXISTS lord_application;
+DROP TABLE IF EXISTS office_application;
+DROP TABLE IF EXISTS redeem_order;
+DROP TABLE IF EXISTS reward_product;
+DROP TABLE IF EXISTS warrant_field_config;
+DROP TABLE IF EXISTS user_level_config;
 DROP TABLE IF EXISTS site_message;
 DROP TABLE IF EXISTS evaluation;
 DROP TABLE IF EXISTS settlement_item;
@@ -210,12 +224,14 @@ CREATE TABLE bounty (
   task_tags_json  VARCHAR(512)   NULL,
   frozen_biz_no   VARCHAR(64)    NULL,
   cancel_reason   VARCHAR(255)   NULL,
+  source_bounty_id BIGINT        NULL COMMENT '再发来源悬赏ID',
   remind_24h_sent TINYINT(1)     NOT NULL DEFAULT 0,
   remind_2h_sent  TINYINT(1)     NOT NULL DEFAULT 0,
   created_at      DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at      DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   KEY idx_bounty_status_city (status, city, deadline_at),
-  KEY idx_bounty_publisher (publisher_id)
+  KEY idx_bounty_publisher (publisher_id),
+  KEY idx_bounty_source (source_bounty_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE bounty_warrant (
@@ -345,5 +361,163 @@ CREATE TABLE admin_user (
   display_name  VARCHAR(64)  NOT NULL,
   status        VARCHAR(20)  NOT NULL DEFAULT 'ACTIVE',
   created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   UNIQUE KEY uk_admin_username (username)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE admin_role (
+  id          BIGINT PRIMARY KEY AUTO_INCREMENT,
+  code        VARCHAR(32)  NOT NULL,
+  name        VARCHAR(64)  NOT NULL,
+  builtin     TINYINT(1)   NOT NULL DEFAULT 1,
+  description VARCHAR(255) NULL,
+  status      VARCHAR(20)  NOT NULL DEFAULT 'ACTIVE',
+  created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uk_admin_role_code (code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE admin_permission (
+  id         BIGINT PRIMARY KEY AUTO_INCREMENT,
+  code       VARCHAR(64)  NOT NULL,
+  name       VARCHAR(128) NOT NULL,
+  module     VARCHAR(64)  NOT NULL,
+  type       VARCHAR(20)  NOT NULL DEFAULT 'API',
+  UNIQUE KEY uk_admin_perm_code (code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE admin_role_permission (
+  id            BIGINT PRIMARY KEY AUTO_INCREMENT,
+  role_id       BIGINT NOT NULL,
+  permission_id BIGINT NOT NULL,
+  UNIQUE KEY uk_role_perm (role_id, permission_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE admin_user_role (
+  id       BIGINT PRIMARY KEY AUTO_INCREMENT,
+  admin_id BIGINT NOT NULL,
+  role_id  BIGINT NOT NULL,
+  UNIQUE KEY uk_admin_role (admin_id, role_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE admin_menu (
+  id              BIGINT PRIMARY KEY AUTO_INCREMENT,
+  parent_id       BIGINT       NOT NULL DEFAULT 0,
+  type            VARCHAR(20)  NOT NULL,
+  name            VARCHAR(64)  NOT NULL,
+  path            VARCHAR(128) NULL,
+  component       VARCHAR(128) NULL,
+  icon            VARCHAR(64)  NULL,
+  sort            INT          NOT NULL DEFAULT 0,
+  visible         TINYINT(1)   NOT NULL DEFAULT 1,
+  permission_code VARCHAR(64)  NULL,
+  status          VARCHAR(20)  NOT NULL DEFAULT 'ACTIVE',
+  KEY idx_menu_parent (parent_id, sort)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE office_application (
+  id          BIGINT PRIMARY KEY AUTO_INCREMENT,
+  user_id     BIGINT       NOT NULL,
+  office_code VARCHAR(32)  NOT NULL,
+  statement   VARCHAR(1000) NULL,
+  status      VARCHAR(20)  NOT NULL DEFAULT 'PENDING',
+  reason      VARCHAR(255) NULL,
+  reviewer_id BIGINT       NULL,
+  created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  KEY idx_office_app_status (status, id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE lord_application (
+  id          BIGINT PRIMARY KEY AUTO_INCREMENT,
+  user_id     BIGINT       NOT NULL,
+  statement   VARCHAR(1000) NULL,
+  status      VARCHAR(20)  NOT NULL DEFAULT 'PENDING',
+  reason      VARCHAR(255) NULL,
+  reviewer_id BIGINT       NULL,
+  created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  KEY idx_lord_app_status (status, id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE platform_lord (
+  id         BIGINT PRIMARY KEY AUTO_INCREMENT,
+  user_id    BIGINT   NOT NULL,
+  start_at   DATETIME NOT NULL,
+  end_at     DATETIME NULL,
+  status     VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uk_lord_active_user (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE dispute (
+  id            BIGINT PRIMARY KEY AUTO_INCREMENT,
+  settlement_id BIGINT       NULL,
+  bounty_id     BIGINT       NOT NULL,
+  initiator_id  BIGINT       NOT NULL,
+  status        VARCHAR(20)  NOT NULL DEFAULT 'OPEN',
+  reason        VARCHAR(512) NULL,
+  evidence_json JSON         NULL,
+  verdict_json  JSON         NULL,
+  deadline_at   DATETIME     NULL,
+  created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  KEY idx_dispute_status (status, id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE audit_log (
+  id         BIGINT PRIMARY KEY AUTO_INCREMENT,
+  operator   VARCHAR(64)  NOT NULL,
+  action     VARCHAR(64)  NOT NULL,
+  detail     VARCHAR(1000) NULL,
+  created_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE user_level_config (
+  id              BIGINT PRIMARY KEY AUTO_INCREMENT,
+  level           INT          NOT NULL,
+  title           VARCHAR(64)  NOT NULL,
+  min_chivalry    INT          NOT NULL DEFAULT 0,
+  privileges_json VARCHAR(1000) NULL,
+  sort_no         INT          NOT NULL DEFAULT 0,
+  UNIQUE KEY uk_level (level)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE warrant_field_config (
+  id                 BIGINT PRIMARY KEY AUTO_INCREMENT,
+  template_code      VARCHAR(32)  NOT NULL,
+  template_name      VARCHAR(64)  NOT NULL,
+  field_key          VARCHAR(64)  NOT NULL,
+  label              VARCHAR(64)  NOT NULL,
+  field_type         VARCHAR(32)  NOT NULL DEFAULT 'text',
+  required           TINYINT(1)   NOT NULL DEFAULT 0,
+  mask_until_claimed TINYINT(1)   NOT NULL DEFAULT 0,
+  sort_no            INT          NOT NULL DEFAULT 0,
+  status             VARCHAR(20)  NOT NULL DEFAULT 'ACTIVE',
+  UNIQUE KEY uk_warrant_field (template_code, field_key)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE reward_product (
+  id            BIGINT PRIMARY KEY AUTO_INCREMENT,
+  name          VARCHAR(128) NOT NULL,
+  description   VARCHAR(512) NULL,
+  cost_chivalry INT          NOT NULL DEFAULT 0,
+  stock         INT          NOT NULL DEFAULT 0,
+  cover_url     VARCHAR(512) NULL,
+  status        VARCHAR(20)  NOT NULL DEFAULT 'ACTIVE',
+  created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE redeem_order (
+  id            BIGINT PRIMARY KEY AUTO_INCREMENT,
+  user_id       BIGINT       NOT NULL,
+  product_id    BIGINT       NOT NULL,
+  quantity      INT          NOT NULL DEFAULT 1,
+  chivalry_cost INT          NOT NULL DEFAULT 0,
+  status        VARCHAR(20)  NOT NULL DEFAULT 'DONE',
+  created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  KEY idx_redeem_user (user_id, id),
+  KEY idx_redeem_status (status, id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

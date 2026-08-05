@@ -14,6 +14,7 @@ import com.jianghu.ling.security.JwtService;
 import com.jianghu.ling.security.PrincipalType;
 import com.jianghu.ling.user.domain.*;
 import com.jianghu.ling.user.mapper.*;
+import com.jianghu.ling.notify.service.NotifyService;
 import com.jianghu.ling.user.service.UserAssetService;
 import com.jianghu.ling.wallet.service.WalletService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -50,6 +51,7 @@ public class AuthService {
     private final WalletService walletService;
     private final UserAssetService userAssetService;
     private final ConfigService configService;
+    private final NotifyService notifyService;
 
     public Map<String, Object> sendSms(String phone, String scene) {
         if (!"REGISTER".equals(scene) && !"LOGIN".equals(scene)) {
@@ -122,12 +124,29 @@ public class AuthService {
         invite.setUsedCount(invite.getUsedCount() + 1);
         inviteCodeMapper.updateById(invite);
 
+        Long inviterId = invite.getOwnerUserId() == null ? 0L : invite.getOwnerUserId();
         InviteRelation relation = new InviteRelation();
-        relation.setInviterId(invite.getOwnerUserId() == null ? 0L : invite.getOwnerUserId());
+        relation.setInviterId(inviterId);
         relation.setInviteeId(user.getId());
         relation.setInviteCodeId(invite.getId());
         relation.setCreatedAt(LocalDateTime.now());
         inviteRelationMapper.insert(relation);
+
+        // 注册赠银 + 站内通知
+        walletService.grantRegisterBonus(user.getId());
+        var grantAmt = walletService.registerGrantAmount();
+        notifyService.send(user.getId(), "注册赠银到账",
+                "您已获得注册赠银 " + grantAmt.stripTrailingZeros().toPlainString() + " 两，可在钱庄查看。",
+                "WALLET", user.getId());
+
+        // 邀新奖励（有效邀请人）
+        if (inviterId != null && inviterId > 0) {
+            walletService.grantInviteReward(inviterId, user.getId());
+            var rewardAmt = walletService.inviteRewardAmount();
+            notifyService.send(inviterId, "邀新奖励到账",
+                    "好友成功注册，您获得邀新奖励 " + rewardAmt.stripTrailingZeros().toPlainString() + " 两。",
+                    "WALLET", user.getId());
+        }
 
         return issueLoginResponse(user, request);
     }
@@ -200,15 +219,35 @@ public class AuthService {
         data.put("chivalry", asset.getChivalry());
         data.put("stamina", asset.getStamina());
         data.put("completedOrders", asset.getCompletedOrders());
-        data.put("goodRate", asset.getGoodRate());
+        // 前端按 0~1 展示好评率
+        data.put("goodRate", toRate(asset.getGoodRate()));
         data.put("reputationScore", asset.getReputationScore());
         data.put("balance", wallet.get("balance"));
         data.put("frozen", wallet.get("frozen"));
         data.put("todayClaimCount", todayClaims);
         data.put("claimDayLimit", dayLimit);
+        data.put("claimCountToday", todayClaims);
+        data.put("claimLimitToday", dayLimit);
         data.put("isLord", false);
-        data.put("offices", offices);
+        // 前端 offices 期望对象数组
+        data.put("offices", offices.stream().map(code -> {
+            Map<String, Object> o = new LinkedHashMap<>();
+            o.put("code", code);
+            o.put("name", code);
+            o.put("status", "ACTIVE");
+            return o;
+        }).collect(Collectors.toList()));
         return data;
+    }
+
+    private java.math.BigDecimal toRate(java.math.BigDecimal goodRate) {
+        if (goodRate == null) {
+            return java.math.BigDecimal.ONE;
+        }
+        if (goodRate.compareTo(java.math.BigDecimal.ONE) > 0) {
+            return goodRate.divide(java.math.BigDecimal.valueOf(100), 4, java.math.RoundingMode.HALF_UP);
+        }
+        return goodRate;
     }
 
     private Map<String, Object> issueLoginResponse(User user, HttpServletRequest request) {

@@ -1,0 +1,217 @@
+﻿{
+    "AC-W1":  {
+                  "detail":  {
+                                 "extraOk":  true,
+                                 "keys":  [
+                                              "rentBudgetMin",
+                                              "acceptAgency",
+                                              "layout",
+                                              "district",
+                                              "rentBudgetMax",
+                                              "expectMoveInDate",
+                                              "extra"
+                                          ],
+                                 "extraLabel":  "补充说明"
+                             },
+                  "pass":  true
+              },
+    "AC-W5":  {
+                  "detail":  {
+                                 "extraOk":  true
+                             },
+                  "pass":  true
+              },
+    "AC-01":  {
+                  "detail":  {
+                                 "idA":  3,
+                                 "bMsg":  "ok",
+                                 "aMsg":  "ok",
+                                 "B":  0,
+                                 "idB":  4,
+                                 "phoneA":  "13830722544",
+                                 "noInv":  44001,
+                                 "phoneB":  "13964463848",
+                                 "A":  0
+                             },
+                  "pass":  true
+              },
+    "AC-02":  {
+                  "detail":  {
+                                 "code":  0
+                             },
+                  "pass":  true
+              },
+    "AC-03":  {
+                  "detail":  {
+                                 "r2":  0,
+                                 "bal":  1000.00,
+                                 "r1":  0
+                             },
+                  "pass":  true
+              },
+    "AC-05":  {
+                  "detail":  {
+                                 "low":  43001,
+                                 "missMsg":  "ç¼ºå°å­æ®µ: rentBudgetMin",
+                                 "miss":  43002
+                             },
+                  "pass":  true
+              },
+    "AC-04":  {
+                  "detail":  {
+                                 "frozen":  200.00,
+                                 "status":  "PENDING_REVIEW",
+                                 "code":  0,
+                                 "bal":  800.00,
+                                 "id":  2
+                             },
+                  "pass":  true
+              },
+    "AC-W2-data":  {
+                       "detail":  {
+                                      "district":  "MedSchool",
+                                      "acceptAgency":  false,
+                                      "extra":  ""
+                                  },
+                       "pass":  true
+                   },
+    "AC-06":  {
+                  "detail":  {
+                                 "status":  "OPEN",
+                                 "apMsg":  "ok",
+                                 "ap":  0
+                             },
+                  "pass":  true
+              },
+    "AC-S1":  {
+                  "detail":  {
+                                 "code":  40100
+                             },
+                  "pass":  true
+              },
+    "AC-S2":  {
+                  "detail":  {
+                                 "heroAdmin":  40300,
+                                 "adminHero":  40300
+                             },
+                  "pass":  true
+              },
+    "AC-S3":  {
+                  "detail":  {
+                                 "code":  40310,
+                                 "msg":  "èå¸æ æææªæäº"
+                             },
+                  "pass":  true
+              },
+    "AC-07":  {
+                  "detail":  {
+                                 "claim":  0,
+                                 "claimMsg":  "ok",
+                                 "dup":  40900,
+                                 "selfMsg":  "ä¸å¯æ­èªå·±çä»¤",
+                                 "self":  43005
+                             },
+                  "pass":  true
+              },
+    "AC-08":  {
+                  "detail":  {
+                                 "msgs":  0,
+                                 "msg":  0,
+                                 "sub":  0,
+                                 "subMsg":  "ok",
+                                 "subId":  1
+                             },
+                  "pass":  true
+              },
+    "AC-09":  {
+                  "detail":  {
+                                 "dist":  180.00,
+                                 "settle":  0,
+                                 "sr":  0,
+                                 "balB":  180.00,
+                                 "fee":  20.00,
+                                 "status":  "COMPLETED",
+                                 "srMsg":  "ok",
+                                 "settleMsg":  "ok"
+                             },
+                  "pass":  true
+              },
+    "AC-10":  {
+                  "detail":  {
+                                 "ev1":  0,
+                                 "level":  1,
+                                 "ev2":  0
+                             },
+                  "pass":  true
+              },
+    "AC-X1":  {
+                  "detail":  {
+                                 "code":  0,
+                                 "msg":  "ok"
+                             },
+                  "pass":  true
+              },
+    "AC-X2":  {
+                  "detail":  {
+                                 "code":  0,
+                                 "msg":  "ok"
+                             },
+                  "pass":  true
+              },
+    "AC-X3":  {
+                  "detail":  {
+                                 "mine":  0,
+                                 "disputeCreate":  0,
+                                 "disputeMsg":  "ok"
+                             },
+                  "pass":  true
+              },
+    "AC-X4":  {
+                  "detail":  {
+                                 "code":  0
+                             },
+                  "pass":  true
+              },
+    "AC-X5":  {
+                  "detail":  {
+                                 "cMsg":  "ok",
+                                 "warrant":  0,
+                                 "wMsg":  "ok",
+                                 "checklist":  0
+                             },
+                  "pass":  true
+              },
+    "AC-W3":  {
+                  "detail":  {
+                                 "noRaw":  true,
+                                 "usesRows":  true
+                             },
+                  "pass":  true
+              },
+    "AC-W4":  {
+                  "detail":  {
+                                 "pubLabel":  true
+                             },
+                  "pass":  true
+              },
+    "AC-W2":  {
+                  "detail":  {
+                                 "usesRows":  true,
+                                 "hideEmpty":  true
+                             },
+                  "pass":  true
+              },
+    "AC-S4":  {
+                  "detail":  {
+                                 "note":  "needs office grant; deferred"
+                             },
+                  "pass":  false
+              },
+    "meta":  {
+                 "idB":  4,
+                 "ts":  "2026-08-05T15:40:51",
+                 "idA":  3,
+                 "suffix":  65568,
+                 "bountyId":  2
+             }
+}

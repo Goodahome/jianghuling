@@ -87,7 +87,7 @@ export function adminListInvites(params: PageQuery) {
 }
 
 export function adminCreateInvites(data: Record<string, unknown>) {
-  return http<null>({
+  return http<{ count: number; codes: string[] }>({
     url: '/admin/invites',
     method: 'POST',
     data,
@@ -289,5 +289,186 @@ export function adminPutSystemConfig(data: Record<string, unknown>) {
     method: 'PUT',
     data,
     headers: { 'X-Admin': '1' },
+  })
+}
+
+function adminHeaders() {
+  return { 'X-Admin': '1' as const }
+}
+
+export function adminGetLevels() {
+  return http<Record<string, unknown>[]>({ url: '/admin/configs/levels', method: 'GET', headers: adminHeaders() })
+}
+
+export function adminPutLevels(data: unknown) {
+  return http<Record<string, unknown>[]>({ url: '/admin/configs/levels', method: 'PUT', data, headers: adminHeaders() })
+}
+
+export function adminGetRanksConfig() {
+  return http<Record<string, unknown>>({ url: '/admin/configs/ranks', method: 'GET', headers: adminHeaders() })
+}
+
+export function adminPutRanksConfig(data: Record<string, unknown>) {
+  return http<Record<string, unknown>>({ url: '/admin/configs/ranks', method: 'PUT', data, headers: adminHeaders() })
+}
+
+export function adminGetGrowthConfig() {
+  return http<Record<string, unknown>>({ url: '/admin/configs/growth', method: 'GET', headers: adminHeaders() })
+}
+
+export function adminPutGrowthConfig(data: Record<string, unknown>) {
+  return http<Record<string, unknown>>({ url: '/admin/configs/growth', method: 'PUT', data, headers: adminHeaders() })
+}
+
+export function adminGetRewardSuggestConfig() {
+  return http<Record<string, unknown>>({ url: '/admin/configs/reward-suggest', method: 'GET', headers: adminHeaders() })
+}
+
+export function adminPutRewardSuggestConfig(data: Record<string, unknown>) {
+  return http<Record<string, unknown>>({
+    url: '/admin/configs/reward-suggest',
+    method: 'PUT',
+    data,
+    headers: adminHeaders(),
+  })
+}
+
+export function adminListProducts(params: PageQuery) {
+  return http<PageResult<Record<string, unknown>>>({
+    url: '/admin/products',
+    method: 'GET',
+    params,
+    headers: adminHeaders(),
+  })
+}
+
+export function adminCreateProduct(data: Record<string, unknown>) {
+  return http<Record<string, unknown>>({ url: '/admin/products', method: 'POST', data, headers: adminHeaders() })
+}
+
+export function adminUpdateProduct(id: number | string, data: Record<string, unknown>) {
+  return http<Record<string, unknown>>({
+    url: `/admin/products/${id}`,
+    method: 'PUT',
+    data,
+    headers: adminHeaders(),
+  })
+}
+
+export function adminDeleteProduct(id: number | string) {
+  return http<null>({ url: `/admin/products/${id}`, method: 'DELETE', headers: adminHeaders() })
+}
+
+export function adminListRedeemOrders(params: PageQuery & { status?: string }) {
+  return http<PageResult<Record<string, unknown>>>({
+    url: '/admin/redeem-orders',
+    method: 'GET',
+    params,
+    headers: adminHeaders(),
+  })
+}
+
+export function adminUpdateRedeemOrder(id: number | string, data: Record<string, unknown>) {
+  return http<Record<string, unknown>>({
+    url: `/admin/redeem-orders/${id}`,
+    method: 'PUT',
+    data,
+    headers: adminHeaders(),
+  })
+}
+
+export function adminListChecklistTemplates(params: PageQuery) {
+  return http<PageResult<Record<string, unknown>>>({
+    url: '/admin/checklist-templates',
+    method: 'GET',
+    params,
+    headers: adminHeaders(),
+  })
+}
+
+export function adminCreateChecklistTemplate(data: Record<string, unknown>) {
+  return http<Record<string, unknown>>({
+    url: '/admin/checklist-templates',
+    method: 'POST',
+    data,
+    headers: adminHeaders(),
+  })
+}
+
+export function adminUpdateChecklistTemplate(id: number | string, data: Record<string, unknown>) {
+  return http<Record<string, unknown>>({
+    url: `/admin/checklist-templates/${id}`,
+    method: 'PUT',
+    data,
+    headers: adminHeaders(),
+  })
+}
+
+export function adminDeleteChecklistTemplate(id: number | string) {
+  return http<null>({ url: `/admin/checklist-templates/${id}`, method: 'DELETE', headers: adminHeaders() })
+}
+
+export function adminListWarrantConfigs(params: PageQuery & { templateCode?: string }) {
+  return http<PageResult<Record<string, unknown>>>({
+    url: '/admin/warrant-field-configs',
+    method: 'GET',
+    params,
+    headers: adminHeaders(),
+  })
+}
+
+export function adminCreateWarrantConfig(data: Record<string, unknown>) {
+  return http<Record<string, unknown>>({
+    url: '/admin/warrant-field-configs',
+    method: 'POST',
+    data,
+    headers: adminHeaders(),
+  })
+}
+
+export function adminUpdateWarrantConfig(id: number | string, data: Record<string, unknown>) {
+  return http<Record<string, unknown>>({
+    url: `/admin/warrant-field-configs/${id}`,
+    method: 'PUT',
+    data,
+    headers: adminHeaders(),
+  })
+}
+
+export function adminDeleteWarrantConfig(id: number | string) {
+  return http<null>({ url: `/admin/warrant-field-configs/${id}`, method: 'DELETE', headers: adminHeaders() })
+}
+
+export function adminListOfficeDefs() {
+  return http<Record<string, unknown>[]>({ url: '/admin/offices/defs', method: 'GET', headers: adminHeaders() })
+}
+
+export function adminPutOfficeDefs(data: unknown) {
+  return http<Record<string, unknown>[]>({
+    url: '/admin/offices/defs',
+    method: 'PUT',
+    data,
+    headers: adminHeaders(),
+  })
+}
+
+export function adminSuspendOfficeHolder(id: number | string) {
+  return http<null>({ url: `/admin/offices/holders/${id}/suspend`, method: 'POST', headers: adminHeaders() })
+}
+
+export function adminRevokeOfficeHolder(id: number | string) {
+  return http<null>({ url: `/admin/offices/holders/${id}/revoke`, method: 'POST', headers: adminHeaders() })
+}
+
+export function adminGetLord() {
+  return http<Record<string, unknown> | null>({ url: '/admin/lord', method: 'GET', headers: adminHeaders() })
+}
+
+export function adminDismissLord(reason?: string) {
+  return http<null>({
+    url: '/admin/lord/dismiss',
+    method: 'POST',
+    data: { reason },
+    headers: adminHeaders(),
   })
 }

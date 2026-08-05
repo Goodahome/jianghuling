@@ -40,7 +40,8 @@ async function onSubmit() {
   min-height: 100vh;
   display: grid;
   place-items: center;
-  background: #111827;
+  background: #f4f4f5;
+  padding: 16px;
 }
 .card {
   width: min(400px, 92vw);

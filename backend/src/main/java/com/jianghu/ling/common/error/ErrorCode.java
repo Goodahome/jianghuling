@@ -22,6 +22,7 @@ public enum ErrorCode {
     WALLET_INSUFFICIENT(42001, "余额不足"),
     WALLET_FREEZE_FAIL(42002, "冻结或解冻失败"),
     WALLET_SETTLE_INVALID(42003, "结算分配未分完或不合法"),
+    WALLET_FEATURE_DISABLED(42004, "充值/提现暂未开放"),
 
     BOUNTY_REWARD_TOO_LOW(43001, "赏银低于最低限制"),
     BOUNTY_WARRANT_INVALID(43002, "令状字段不完整"),
@@ -29,6 +30,7 @@ public enum ErrorCode {
     CLAIM_DAY_LIMIT(43004, "超出每日揭榜上限"),
     CLAIM_NOT_ALLOWED(43005, "不可揭榜"),
     SUBMISSION_INVALID(43006, "成果提交被限流或内容非法"),
+    BOUNTY_REPUBLISH_DENIED(43007, "不可再发一令"),
 
     INVITE_INVALID(44001, "邀请码无效/已用尽/过期");
 

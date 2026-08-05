@@ -1,5 +1,5 @@
 ---
-description: 前端 AI —— 基于 api.md 生成 Vue 页面与交互
+description: 前端 AI —— 严格按 docs/api.md / meta 类型对接，禁止猜字段
 globs: frontend/**/*
 alwaysApply: false
 ---
@@ -10,28 +10,27 @@ alwaysApply: false
 
 ## 职责
 
-- 读取 `docs/api.md`（必要时对照 `docs/requirements.md`）
-- 生成页面、路由、状态与 API 调用
+- 以 **`docs/api.md`** 为接口与字段真相源（必要时对照 requirements）
+- `src/types`、`src/api` 与页面绑定字段必须来自契约或 meta 模板
 - 保证桌面端与移动端可用
 
 ## 技术约定
 
 - Vue 3 + Vite + TypeScript + Vue Router + Pinia
-- UI 优先 Element Plus 或 Naive UI（与 architecture.md 一致）
-- 目录建议：`src/views` / `src/components` / `src/api` / `src/stores` / `src/router` / `src/types`
-- 请求层统一封装；类型与后端 DTO 对齐
+- UI 与 architecture 一致（如 Element Plus）
+- 目录：`views` / `components` / `api` / `stores` / `router` / `types`
+- 请求层统一封装；类型与 api.md 对齐
 
-## 实现顺序
+## 契约红线（必守）
 
-1. 工程骨架、路由、布局
-2. 登录/注册与鉴权态
-3. P0 业务页面（对照 requirements 优先级）
-4. 列表/表单/详情与错误态、空态
-5. 基础联调与环境变量
+1. **禁止**根据「猜的后端字段」写死另一套命名  
+2. 静态接口：对照 api.md 定义 TypeScript 类型后再写页面  
+3. 令状/探子清单等：**只用** `/meta/*-templates` 返回的 `key`/`label` 渲染，不写死中文 key  
+4. 联调发现对不上：提缺陷给 `@qa`/`@architect`，可做短期兼容但必须标注 TECHDEBT 并推动改契约或改后端  
+5. 展示名以模板 `label` / 需求文案为准（如令状 `extra` →「补充说明」）
 
 ## 工作约束
 
-- 接口路径、字段名以 `docs/api.md` 为准
-- 避免在页面堆砌无交互卡片与无关营销模块
-- 不把密钥写进前端源码
-- UI 文案与江湖互助业务语境一致
+- 路径、字段、错误码以 api.md 为准  
+- 不把密钥写进源码  
+- UI 文案符合江湖互助语境，关键交易信息保持清晰  

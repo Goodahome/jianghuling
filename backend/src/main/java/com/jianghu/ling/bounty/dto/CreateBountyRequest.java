@@ -25,4 +25,6 @@ public class CreateBountyRequest {
     private List<String> taskTags;
     private Map<String, Object> warrantFields;
     private List<String> checklistItemCodes;
+    /** 可选：经「创建+来源」等价再发路径时传入；须满足 §7.8 终态约束 */
+    private Long sourceBountyId;
 }

@@ -7,6 +7,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jianghu.ling.bounty.domain.*;
 import com.jianghu.ling.bounty.dto.CreateBountyRequest;
+import com.jianghu.ling.bounty.dto.RepublishBountyRequest;
 import com.jianghu.ling.bounty.dto.SubmitRequest;
 import com.jianghu.ling.bounty.mapper.*;
 import com.jianghu.ling.cms.domain.ChecklistTemplate;
@@ -20,7 +21,9 @@ import com.jianghu.ling.common.util.IdempotencyKeys;
 import com.jianghu.ling.security.AuthContext;
 import com.jianghu.ling.security.AuthPrincipal;
 import com.jianghu.ling.security.PrincipalType;
+import com.jianghu.ling.user.domain.User;
 import com.jianghu.ling.user.domain.UserProfile;
+import com.jianghu.ling.user.mapper.UserMapper;
 import com.jianghu.ling.user.mapper.UserProfileMapper;
 import com.jianghu.ling.user.service.UserAssetService;
 import com.jianghu.ling.wallet.service.WalletService;
@@ -43,6 +46,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class BountyService {
 
+    private static final Set<String> REPUBLISHABLE_STATUSES = Set.of("REJECTED", "CANCELLED", "COMPLETED");
+
     private final BountyMapper bountyMapper;
     private final BountyWarrantMapper warrantMapper;
     private final BountyChecklistMapper checklistMapper;
@@ -55,6 +60,7 @@ public class BountyService {
     private final WalletService walletService;
     private final UserAssetService userAssetService;
     private final UserProfileMapper userProfileMapper;
+    private final UserMapper userMapper;
     private final ObjectMapper objectMapper;
     private final StringRedisTemplate redisTemplate;
 
@@ -102,6 +108,75 @@ public class BountyService {
     @Transactional
     public Map<String, Object> create(CreateBountyRequest req) {
         Long userId = AuthContext.requireUserId();
+        Long sourceId = req.getSourceBountyId();
+        if (sourceId != null) {
+            // 等价再发路径：校验终态/归属，仍走新建+冻结，禁止复活原单
+            Bounty source = requireBounty(sourceId);
+            assertCanRepublish(source, userId);
+        }
+        Bounty bounty = createNewBounty(userId, req, sourceId);
+        return detail(bounty.getId());
+    }
+
+    public Map<String, Object> republishDraft(Long sourceId) {
+        Long userId = AuthContext.requireUserId();
+        Bounty source = requireBounty(sourceId);
+        assertCanRepublish(source, userId);
+
+        Map<String, Object> warrantFields = readJsonMap(
+                optionalWarrant(sourceId).map(BountyWarrant::getFieldsJson).orElse("{}"));
+        List<String> checklistCodes = checklistMapper.selectList(new LambdaQueryWrapper<BountyChecklist>()
+                        .eq(BountyChecklist::getBountyId, sourceId)
+                        .orderByAsc(BountyChecklist::getSortNo))
+                .stream().map(BountyChecklist::getItemCode).toList();
+
+        BigDecimal minReward = configService.getDecimal("min_reward", "200");
+        RewardSuggestConfig diff = metaService.findDifficulty(source.getDifficulty());
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("sourceBountyId", source.getId());
+        data.put("type", source.getType());
+        data.put("title", source.getTitle());
+        data.put("difficulty", source.getDifficulty());
+        data.put("rewardAmount", source.getRewardAmount());
+        data.put("deadlineAt", null);
+        data.put("taskTags", readJsonList(source.getTaskTagsJson()));
+        data.put("warrantFields", warrantFields);
+        data.put("checklistItemCodes", checklistCodes);
+        data.put("suggestMin", diff == null ? null : diff.getSuggestMin());
+        data.put("minReward", minReward);
+        return data;
+    }
+
+    @Transactional
+    public Map<String, Object> republish(Long sourceId, RepublishBountyRequest body) {
+        Long userId = AuthContext.requireUserId();
+        Bounty source = requireBounty(sourceId);
+        assertCanRepublish(source, userId);
+        // 记录原状态，提交后校验未被改写
+        String sourceStatusBefore = source.getStatus();
+
+        CreateBountyRequest req = mergeRepublishRequest(source, body);
+        Bounty created = createNewBounty(userId, req, sourceId);
+
+        Bounty sourceAfter = bountyMapper.selectById(sourceId);
+        if (sourceAfter == null || !sourceStatusBefore.equals(sourceAfter.getStatus())) {
+            throw new BizException(ErrorCode.INTERNAL, "原单状态异常，再发已中止");
+        }
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("id", created.getId());
+        data.put("sourceBountyId", sourceId);
+        data.put("status", created.getStatus());
+        data.put("type", created.getType());
+        data.put("title", created.getTitle());
+        data.put("rewardAmount", created.getRewardAmount());
+        data.put("deadlineAt", created.getDeadlineAt());
+        data.put("frozen", StringUtils.hasText(created.getFrozenBizNo()));
+        data.put("canRepublish", false);
+        return data;
+    }
+
+    private Bounty createNewBounty(Long userId, CreateBountyRequest req, Long sourceBountyId) {
         if (!"RENT_SEEK".equals(req.getType()) && !"RENT_OUT".equals(req.getType())) {
             throw new BizException(ErrorCode.PARAM_INVALID, "type无效");
         }
@@ -118,6 +193,9 @@ public class BountyService {
             throw new BizException(ErrorCode.BIZ_RULE, "赏银低于建议下限，请确认 confirmLowReward=true");
         }
         validateWarrant(req.getType(), req.getWarrantFields());
+        if (req.getDeadlineAt() == null) {
+            throw new BizException(ErrorCode.PARAM_INVALID, "截止时间必填");
+        }
         LocalDateTime deadline = req.getDeadlineAt().toLocalDateTime();
         if (!deadline.isAfter(LocalDateTime.now())) {
             throw new BizException(ErrorCode.PARAM_INVALID, "截止时间必须晚于当前");
@@ -135,6 +213,7 @@ public class BountyService {
         bounty.setRewardAmount(req.getRewardAmount());
         bounty.setDeadlineAt(deadline);
         bounty.setTaskTagsJson(writeJson(req.getTaskTags() == null ? List.of() : req.getTaskTags()));
+        bounty.setSourceBountyId(sourceBountyId);
         bounty.setRemind24hSent(false);
         bounty.setRemind2hSent(false);
         bounty.setCreatedAt(LocalDateTime.now());
@@ -164,7 +243,54 @@ public class BountyService {
             item.setSortNo(sort++);
             checklistMapper.insert(item);
         }
-        return detail(bounty.getId());
+        return bounty;
+    }
+
+    private CreateBountyRequest mergeRepublishRequest(Bounty source, RepublishBountyRequest body) {
+        if (body == null) {
+            body = new RepublishBountyRequest();
+        }
+        Map<String, Object> sourceFields = readJsonMap(
+                optionalWarrant(source.getId()).map(BountyWarrant::getFieldsJson).orElse("{}"));
+        List<String> sourceChecklist = checklistMapper.selectList(new LambdaQueryWrapper<BountyChecklist>()
+                        .eq(BountyChecklist::getBountyId, source.getId())
+                        .orderByAsc(BountyChecklist::getSortNo))
+                .stream().map(BountyChecklist::getItemCode).toList();
+
+        CreateBountyRequest req = new CreateBountyRequest();
+        req.setType(source.getType());
+        req.setTitle(StringUtils.hasText(body.getTitle()) ? body.getTitle() : source.getTitle());
+        req.setDifficulty(StringUtils.hasText(body.getDifficulty()) ? body.getDifficulty() : source.getDifficulty());
+        req.setRewardAmount(body.getRewardAmount() != null ? body.getRewardAmount() : source.getRewardAmount());
+        req.setConfirmLowReward(body.getConfirmLowReward());
+        req.setDeadlineAt(body.getDeadlineAt());
+        req.setTaskTags(body.getTaskTags() != null ? body.getTaskTags() : readJsonList(source.getTaskTagsJson()));
+        req.setWarrantFields(body.getWarrantFields() != null ? body.getWarrantFields() : sourceFields);
+        req.setChecklistItemCodes(body.getChecklistItemCodes() != null ? body.getChecklistItemCodes() : sourceChecklist);
+        req.setSourceBountyId(source.getId());
+        return req;
+    }
+
+    private void assertCanRepublish(Bounty source, Long userId) {
+        if (!userId.equals(source.getPublisherId())
+                || !REPUBLISHABLE_STATUSES.contains(source.getStatus())) {
+            throw new BizException(ErrorCode.BOUNTY_REPUBLISH_DENIED);
+        }
+        User user = userMapper.selectById(userId);
+        if (user == null || !"ACTIVE".equals(user.getStatus())) {
+            throw new BizException(ErrorCode.BOUNTY_REPUBLISH_DENIED);
+        }
+    }
+
+    private boolean computeCanRepublish(Bounty bounty, Long viewerId) {
+        if (viewerId == null || !viewerId.equals(bounty.getPublisherId())) {
+            return false;
+        }
+        if (!REPUBLISHABLE_STATUSES.contains(bounty.getStatus())) {
+            return false;
+        }
+        User user = userMapper.selectById(viewerId);
+        return user != null && "ACTIVE".equals(user.getStatus());
     }
 
     public PageResult<Map<String, Object>> minePublished(String status, long page, long pageSize) {
@@ -420,14 +546,22 @@ public class BountyService {
     }
 
     private void validateWarrant(String type, Map<String, Object> fields) {
-        if (fields == null) {
-            throw new BizException(ErrorCode.BOUNTY_WARRANT_INVALID);
+        if (fields == null || fields.isEmpty()) {
+            throw new BizException(ErrorCode.BOUNTY_WARRANT_INVALID, "令状字段不能为空");
         }
         List<String> required = "RENT_SEEK".equals(type)
                 ? List.of("district", "rentBudgetMin", "rentBudgetMax", "layout", "expectMoveInDate", "acceptAgency")
                 : List.of("district", "exactAddress", "rentPrice", "layout", "availableDate");
         for (String key : required) {
-            if (!fields.containsKey(key) || fields.get(key) == null || String.valueOf(fields.get(key)).isBlank()) {
+            Object val = fields.get(key);
+            if (val == null) {
+                throw new BizException(ErrorCode.BOUNTY_WARRANT_INVALID, "缺少字段: " + key);
+            }
+            // boolean false 合法；其余按字符串判空
+            if (val instanceof Boolean) {
+                continue;
+            }
+            if (String.valueOf(val).isBlank()) {
                 throw new BizException(ErrorCode.BOUNTY_WARRANT_INVALID, "缺少字段: " + key);
             }
         }
@@ -473,6 +607,8 @@ public class BountyService {
         m.put("rewardAmount", bounty.getRewardAmount());
         m.put("deadlineAt", bounty.getDeadlineAt());
         m.put("publisherId", bounty.getPublisherId());
+        m.put("sourceBountyId", bounty.getSourceBountyId());
+        m.put("canRepublish", computeCanRepublish(bounty, optionalUserId()));
         m.put("createdAt", bounty.getCreatedAt());
         return m;
     }

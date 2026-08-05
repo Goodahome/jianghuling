@@ -2,6 +2,7 @@ package com.jianghu.ling.user.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.jianghu.ling.cms.service.ConfigService;
+import com.jianghu.ling.cms.service.LevelConfigService;
 import com.jianghu.ling.common.error.BizException;
 import com.jianghu.ling.common.error.ErrorCode;
 import com.jianghu.ling.user.domain.UserAsset;
@@ -20,6 +21,7 @@ public class UserAssetService {
 
     private final UserAssetMapper userAssetMapper;
     private final ConfigService configService;
+    private final LevelConfigService levelConfigService;
 
     public UserAsset getOrCreate(Long userId) {
         UserAsset asset = userAssetMapper.selectOne(new LambdaQueryWrapper<UserAsset>()
@@ -114,28 +116,10 @@ public class UserAssetService {
     }
 
     public String levelTitle(int chivalry) {
-        if (chivalry >= 500) {
-            return "名扬江湖";
-        }
-        if (chivalry >= 200) {
-            return "小有名气";
-        }
-        if (chivalry >= 50) {
-            return "初显身手";
-        }
-        return "初入江湖";
+        return levelConfigService.levelTitle(chivalry);
     }
 
     public int levelOf(int chivalry) {
-        if (chivalry >= 500) {
-            return 4;
-        }
-        if (chivalry >= 200) {
-            return 3;
-        }
-        if (chivalry >= 50) {
-            return 2;
-        }
-        return 1;
+        return levelConfigService.levelOf(chivalry);
     }
 }

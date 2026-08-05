@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { getBounty, listClaimSubmissions, submitResult } from '@/api/bounty'
 import type { BountyDetail, Submission } from '@/types/models'
+import ImageUpload from '@/components/ImageUpload.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -12,7 +13,13 @@ const history = ref<Submission[]>([])
 const loading = ref(false)
 const form = reactive({
   summary: '',
-  items: [] as { itemCode: string; itemName: string; done: boolean; text: string; mediaUrls: string[] }[],
+  items: [] as {
+    itemCode: string
+    itemName: string
+    done: boolean
+    text: string
+    mediaUrls: string[]
+  }[],
 })
 
 onMounted(async () => {
@@ -64,6 +71,9 @@ async function onSubmit() {
             <el-switch v-model="item.done" active-text="已完成" />
           </div>
           <el-input v-model="item.text" type="textarea" :rows="2" placeholder="说明 / 带看记录等" />
+          <div class="media">
+            <ImageUpload v-model="item.mediaUrls" :limit="3" tip="该项现场图 / 凭证" />
+          </div>
         </div>
         <el-button type="primary" class="jh-btn-seal" native-type="submit" :loading="loading">
           提交本版成果
@@ -104,5 +114,8 @@ h1 {
   display: flex;
   justify-content: space-between;
   margin-bottom: 8px;
+}
+.media {
+  margin-top: 8px;
 }
 </style>

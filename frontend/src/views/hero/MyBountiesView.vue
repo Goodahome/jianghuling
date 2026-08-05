@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { listMyClaimed, listMyPublished } from '@/api/bounty'
 import type { BountyListItem } from '@/types/models'
 import { bountyTypeLabel, formatAmount } from '@/utils/labels'
 import StatusTag from '@/components/StatusTag.vue'
 import EmptyState from '@/components/EmptyState.vue'
 
+const router = useRouter()
 const tab = ref('published')
 const list = ref<BountyListItem[]>([])
 const loading = ref(false)
@@ -21,6 +23,12 @@ async function load() {
   } finally {
     loading.value = false
   }
+}
+
+function goRepublish(id: number, e: Event) {
+  e.preventDefault()
+  e.stopPropagation()
+  router.push({ path: '/bounties/publish', query: { republishFrom: String(id) } })
 }
 
 onMounted(load)
@@ -49,6 +57,11 @@ onMounted(load)
           <p class="jh-muted">
             {{ bountyTypeLabel[item.type] }} · {{ formatAmount(item.rewardAmount) }} 两
           </p>
+          <div v-if="tab === 'published' && item.canRepublish" class="ops">
+            <el-button size="small" type="primary" @click="goRepublish(item.id, $event)">
+              再发一令
+            </el-button>
+          </div>
         </RouterLink>
       </div>
     </div>
@@ -73,5 +86,8 @@ h1 {
   justify-content: space-between;
   gap: 8px;
   margin-bottom: 6px;
+}
+.ops {
+  margin-top: 10px;
 }
 </style>

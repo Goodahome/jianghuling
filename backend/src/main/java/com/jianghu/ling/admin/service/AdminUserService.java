@@ -35,6 +35,7 @@ public class AdminUserService {
     private final UserAssetService userAssetService;
     private final WalletService walletService;
     private final LoginLogMapper loginLogMapper;
+    private final AuditService auditService;
 
     public PageResult<Map<String, Object>> page(String keyword, String status, long page, long pageSize) {
         LambdaQueryWrapper<User> q = new LambdaQueryWrapper<User>()
@@ -46,6 +47,7 @@ public class AdminUserService {
         return PageResult.of(p.getRecords().stream().map(u -> {
             UserProfile profile = userProfileMapper.selectOne(new LambdaQueryWrapper<UserProfile>()
                     .eq(UserProfile::getUserId, u.getId()).last("LIMIT 1"));
+            UserAsset asset = userAssetService.getOrCreate(u.getId());
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("id", u.getId());
             m.put("username", u.getUsername());
@@ -53,6 +55,8 @@ public class AdminUserService {
             m.put("nickname", profile == null ? "" : profile.getNickname());
             m.put("status", u.getStatus());
             m.put("city", u.getCity());
+            m.put("level", userAssetService.levelOf(asset.getChivalry()));
+            m.put("levelTitle", userAssetService.levelTitle(asset.getChivalry()));
             m.put("createdAt", u.getCreatedAt());
             return m;
         }).toList(), p.getTotal(), page, pageSize);
@@ -117,6 +121,8 @@ public class AdminUserService {
         } else {
             throw new BizException(ErrorCode.PARAM_INVALID, "assetType无效");
         }
+        auditService.log("USER_ASSET_ADJUST",
+                "userId=" + id + ", type=" + type + ", delta=" + req.getDelta() + ", reason=" + req.getReason());
     }
 
     public PageResult<LoginLog> loginLogs(Long userId, long page, long pageSize) {

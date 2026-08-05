@@ -3,6 +3,7 @@ package com.jianghu.ling.bounty.controller;
 import com.jianghu.ling.bounty.domain.BountyMessage;
 import com.jianghu.ling.bounty.dto.CreateBountyRequest;
 import com.jianghu.ling.bounty.dto.MessageRequest;
+import com.jianghu.ling.bounty.dto.RepublishBountyRequest;
 import com.jianghu.ling.bounty.dto.SubmitRequest;
 import com.jianghu.ling.bounty.service.BountyService;
 import com.jianghu.ling.common.api.ApiResponse;
@@ -56,6 +57,17 @@ public class BountyController {
     @PostMapping
     public ApiResponse<Map<String, Object>> create(@Valid @RequestBody CreateBountyRequest req) {
         return ApiResponse.ok(bountyService.create(req));
+    }
+
+    @GetMapping("/{id}/republish-draft")
+    public ApiResponse<Map<String, Object>> republishDraft(@PathVariable Long id) {
+        return ApiResponse.ok(bountyService.republishDraft(id));
+    }
+
+    @PostMapping("/{id}/republish")
+    public ApiResponse<Map<String, Object>> republish(@PathVariable Long id,
+                                                      @RequestBody(required = false) RepublishBountyRequest req) {
+        return ApiResponse.ok(bountyService.republish(id, req));
     }
 
     @PostMapping("/{id}/claims")

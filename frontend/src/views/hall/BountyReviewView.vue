@@ -1,10 +1,15 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { listBountyReviews, reviewBounty } from '@/api/hall'
 import type { BountyListItem } from '@/types/models'
-import { formatAmount } from '@/utils/labels'
+import { bountyTypeLabel, formatAmount } from '@/utils/labels'
+import StatusTag from '@/components/StatusTag.vue'
+import EmptyState from '@/components/EmptyState.vue'
+import HallBackBar from '@/components/HallBackBar.vue'
 
+const router = useRouter()
 const list = ref<BountyListItem[]>([])
 const loading = ref(false)
 
@@ -18,7 +23,13 @@ async function load() {
   }
 }
 
-async function decide(id: number, result: 'APPROVE' | 'REJECT') {
+function goDetail(id: number) {
+  router.push(`/hall/bounty-reviews/${id}`)
+}
+
+async function decide(id: number, result: 'APPROVE' | 'REJECT', e: Event) {
+  e.preventDefault()
+  e.stopPropagation()
   let reason = ''
   if (result === 'REJECT') {
     const { value } = await ElMessageBox.prompt('请填写驳回原因', '驳回发令')
@@ -33,20 +44,75 @@ onMounted(load)
 </script>
 
 <template>
-  <div v-loading="loading">
-    <h2>令审队列</h2>
-    <el-table :data="list">
-      <el-table-column prop="id" label="ID" width="80" />
-      <el-table-column prop="title" label="标题" />
-      <el-table-column label="赏银" width="120">
-        <template #default="{ row }">{{ formatAmount(row.rewardAmount) }} 两</template>
-      </el-table-column>
-      <el-table-column label="操作" width="200">
-        <template #default="{ row }">
-          <el-button type="success" size="small" @click="decide(row.id, 'APPROVE')">通过</el-button>
-          <el-button type="danger" size="small" @click="decide(row.id, 'REJECT')">驳回</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
-  </div>
+  <section class="jh-section">
+    <div class="jh-container">
+      <HallBackBar to="/hall" />
+      <h1 class="brand-title">令审队列</h1>
+      <p class="jh-muted">待审发令 · 点进详情可览令状后落判</p>
+
+      <div v-loading="loading" class="list">
+        <EmptyState v-if="!loading && !list.length" title="暂无待审发令" />
+        <button
+          v-for="item in list"
+          :key="item.id"
+          type="button"
+          class="item jh-panel"
+          @click="goDetail(item.id)"
+        >
+          <div class="row">
+            <strong>{{ item.title }}</strong>
+            <StatusTag :status="item.status" />
+          </div>
+          <p class="jh-muted">
+            {{ bountyTypeLabel[item.type] || item.type }} · {{ formatAmount(item.rewardAmount) }} 两
+          </p>
+          <div class="ops">
+            <el-button size="small" class="jh-btn-seal" @click="decide(item.id, 'APPROVE', $event)">
+              通过
+            </el-button>
+            <el-button size="small" class="jh-btn-ink" @click="decide(item.id, 'REJECT', $event)">
+              驳回
+            </el-button>
+          </div>
+        </button>
+      </div>
+    </div>
+  </section>
 </template>
+
+<style scoped>
+h1 {
+  margin: 0 0 6px;
+  font-size: 32px;
+}
+.list {
+  display: grid;
+  gap: 10px;
+  min-height: 120px;
+  margin-top: 14px;
+}
+.item {
+  padding: 14px 16px;
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--jh-line);
+  background: #fff;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+.item:hover {
+  border-color: var(--jh-seal);
+}
+.row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.ops {
+  margin-top: 10px;
+  display: flex;
+  gap: 8px;
+}
+</style>

@@ -97,7 +97,7 @@ h1 {
   text-align: left;
 }
 .msg.mine .bubble {
-  background: rgba(178, 58, 45, 0.12);
+  background: var(--jh-mist);
 }
 .composer {
   display: grid;

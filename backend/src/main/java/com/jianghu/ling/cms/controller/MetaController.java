@@ -2,6 +2,7 @@ package com.jianghu.ling.cms.controller;
 
 import com.jianghu.ling.cms.service.MetaService;
 import com.jianghu.ling.common.api.ApiResponse;
+import com.jianghu.ling.wallet.service.WalletService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,6 +18,7 @@ import java.util.Map;
 public class MetaController {
 
     private final MetaService metaService;
+    private final WalletService walletService;
 
     @GetMapping("/reward-suggest")
     public ApiResponse<Map<String, Object>> rewardSuggest() {
@@ -36,5 +38,10 @@ public class MetaController {
     @GetMapping("/growth-config")
     public ApiResponse<Map<String, Object>> growthConfig() {
         return ApiResponse.ok(metaService.growthConfig());
+    }
+
+    @GetMapping("/wallet-features")
+    public ApiResponse<Map<String, Object>> walletFeatures() {
+        return ApiResponse.ok(walletService.walletFeatures());
     }
 }

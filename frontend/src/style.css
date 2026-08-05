@@ -17,7 +17,7 @@ html {
 body {
   font-family: var(--jh-font-body), 'Noto Sans SC', sans-serif;
   color: #1c2430;
-  background: #f7f5f2;
+  background: #f4f4f5;
   overflow-x: clip;
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);

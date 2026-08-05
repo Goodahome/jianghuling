@@ -1,0 +1,108 @@
+﻿{
+    "D-003":  {
+                  "detail":  {
+                                 "opsPermCount":  35,
+                                 "roleCodes":  [
+                                                   "SUPER_ADMIN",
+                                                   "OPS_ADMIN",
+                                                   "ARBITER",
+                                                   "OBSERVER"
+                                               ],
+                                 "obsPermCount":  19,
+                                 "mePerms":  [
+                                                 "*"
+                                             ],
+                                 "meRoles":  [
+                                                 "SUPER_ADMIN"
+                                             ]
+                             },
+                  "pass":  true
+              },
+    "REG":  {
+                "detail":  {
+                               "i1":  "2Q3Q469A",
+                               "idR":  7,
+                               "P":  0,
+                               "idC":  8,
+                               "i3":  "RXDVF5U9",
+                               "i2":  "GN469TJ2",
+                               "C":  0,
+                               "R":  0,
+                               "idP":  6
+                           },
+                "pass":  true
+            },
+    "SQL-GRANT":  {
+                      "detail":  {
+                                     "out":  "mysql.exe : mysql: [Warning] Using a password on the command line interface can be insecure. 所在位置 F:\\Jinanghu_Ling\\docs\\_qa_run\\run_followup_v2.ps1:74 字符: 11 + $grantOut=\u0026 $mysql -uroot \"-p$mp\" --defa"
+                                 },
+                      "pass":  true
+                  },
+    "OFFICE-LOADED":  {
+                          "detail":  {
+                                         "r":  [
+                                                   "DECREE_REVIEWER",
+                                                   "FEAT_REVIEWER"
+                                               ],
+                                         "p":  [
+                                                   "DECREE_REVIEWER"
+                                               ]
+                                     },
+                          "pass":  true
+                      },
+    "AC-S4":  {
+                  "detail":  {
+                                 "offices":  [
+                                                 "DECREE_REVIEWER"
+                                             ],
+                                 "queue":  0,
+                                 "avoid":  40310,
+                                 "bountyId":  4,
+                                 "avoidMsg":  "ä¸å¯å®¡æ ¸æ¬äººåå¸çä»¤"
+                             },
+                  "pass":  true
+              },
+    "HALL-OK":  {
+                    "detail":  {
+                                   "status":  "OPEN",
+                                   "code":  0,
+                                   "msg":  "ok"
+                               },
+                    "pass":  true
+                },
+    "AC-S4-FEAT":  {
+                       "detail":  {
+                                      "sid":  2,
+                                      "code":  40310,
+                                      "sub":  0,
+                                      "claim":  0,
+                                      "msg":  "ä¸å¯å®¡æ ¸æ¬äººæ­æ¦çä»¤"
+                                  },
+                       "pass":  true
+                   },
+    "FEAT-OK":  {
+                    "detail":  {
+                                   "code":  0,
+                                   "msg":  "ok"
+                               },
+                    "pass":  true
+                },
+    "DISPUTE-VERDICT":  {
+                            "detail":  {
+                                           "verMsg":  "ok",
+                                           "verdict":  0,
+                                           "dispute":  0,
+                                           "settle":  0,
+                                           "dspId":  2
+                                       },
+                            "pass":  true
+                        },
+    "meta":  {
+                 "bid":  4,
+                 "idC":  8,
+                 "ts":  "2026-08-05T16:01:12",
+                 "idR":  7,
+                 "suffix":  73452,
+                 "idP":  6
+             }
+}

@@ -5,7 +5,8 @@ alwaysApply: true
 
 # AI 团队协作工作流
 
-本仓库按「产品 → 架构 → 研发 → 测试/运维」协作。改代码前先对齐文档。
+本仓库按「产品 → 架构 → 研发 → 测试/运维」协作。改代码前先对齐文档。  
+交接与缺陷分流详见：`docs/handoff.md`。
 
 ## 角色与产物
 
@@ -15,16 +16,26 @@ alwaysApply: true
 | 架构师 | `architect.mdc` | `docs/architecture.md`、`docs/api.md` |
 | 后端 | `backend.mdc` | `backend/`（Spring Boot） |
 | 前端 | `frontend.mdc` | `frontend/`（Vue） |
-| 测试 | `qa.mdc` | 用例与验收清单 |
+| 测试 | `qa.mdc` | 用例、验收、**缺陷分流** |
 | 运维 | `devops.mdc` | `docker/`、`docs/deployment.md` |
 
-## 推荐调用顺序
+## 推荐调用顺序（需求变更）
 
-1. **@pm**：描述产品想法 → 生成/更新 requirements
-2. **@architect**：基于 requirements → architecture + api
-3. **@backend**：基于 requirements + architecture + api → Spring Boot
-4. **@frontend**：基于 api → Vue 页面
-5. **@qa / @devops**：验收与部署
+1. **@pm** → 更新 `docs/requirements.md`（写清版本与变更说明）
+2. **@architect** → 同步 `architecture.md` + **`api.md`（字段级契约，SSOT）**
+3. **契约关卡**：api.md 未更新完成前，禁止 backend/frontend 各自发明字段
+4. **@backend** 与 **@frontend** 均只对照 **同一份 api.md**（及 meta 模板）实现
+5. **@qa** → 含「契约字段比对」；**@devops**（若涉及环境）
+
+标准口令、契约纪律、缺陷分流：见 `docs/handoff.md`。
+
+## 测试问题分流（谁判断、谁执行）
+
+1. **默认先 @qa**：复现、归层、指定执行角色、给出可粘贴口令。
+2. **争议（算不算 Bug / 期望是什么）→ @pm 仲裁**，必要时改 requirements 再接力。
+3. **执行**：只让被指定的角色改对应产物；契约问题先 architect。
+
+归层速查与缺陷卡：见 `docs/handoff.md` §2。
 
 ## 目录约定
 

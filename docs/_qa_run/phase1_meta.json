@@ -1,0 +1,36 @@
+﻿{
+    "AC-W1":  {
+                  "labels":  [
+                                 "district=åºå",
+                                 "rentBudgetMin=é¢ç®ä¸é(å\u0085/æ)",
+                                 "rentBudgetMax=é¢ç®ä¸é(å\u0085/æ)",
+                                 "layout=æ·å",
+                                 "expectMoveInDate=ææå\u0085¥ä½",
+                                 "acceptAgency=æ¯å¦æ¥åä¸­ä»",
+                                 "extra=è¡¥å\u0085\u0085è¯´æ"
+                             ],
+                  "pass":  false,
+                  "missing":  [
+
+                              ],
+                  "extraLabel":  "è¡¥å\u0085\u0085è¯´æ"
+              },
+    "AC-W5":  {
+                  "badNames":  [
+
+                               ],
+                  "pass":  false,
+                  "forbiddenKeys":  [
+
+                                    ]
+              },
+    "meta-checklist":  {
+                           "sample":  [
+                                          "VERIFY_AUTHENTIC",
+                                          "SITE_VISIT_RECORD",
+                                          "PHOTO_EVIDENCE"
+                                      ],
+                           "code":  0,
+                           "count":  6
+                       }
+}

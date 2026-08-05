@@ -1,7 +1,13 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { exchangeStamina, getLevelProgress, listProducts, redeemProduct } from '@/api/growth'
+import {
+  exchangeStamina,
+  getLevelProgress,
+  listProducts,
+  listRedeemOrders,
+  redeemProduct,
+} from '@/api/growth'
 import { getGrowthConfig } from '@/api/meta'
 import type { GrowthConfig, LevelProgress, Product } from '@/types/models'
 import { useAuthStore } from '@/stores/auth'
@@ -10,13 +16,19 @@ const auth = useAuthStore()
 const level = ref<LevelProgress | null>(null)
 const config = ref<GrowthConfig | null>(null)
 const products = ref<Product[]>([])
+const orders = ref<Record<string, unknown>[]>([])
 const staminaPoints = ref(1)
+
+async function loadOrders() {
+  const page = await listRedeemOrders({ page: 1, pageSize: 20 }).catch(() => null)
+  orders.value = page?.list || []
+}
 
 onMounted(async () => {
   ;[level.value, config.value] = await Promise.all([getLevelProgress(), getGrowthConfig()])
   const page = await listProducts({ page: 1, pageSize: 50 })
   products.value = page.list || []
-  await auth.fetchMe()
+  await Promise.all([auth.fetchMe(), loadOrders()])
 })
 
 async function onExchange() {
@@ -30,6 +42,7 @@ async function onRedeem(id: number) {
   await redeemProduct(id, 1)
   ElMessage.success('兑换成功')
   await auth.fetchMe()
+  await loadOrders()
 }
 </script>
 
@@ -60,6 +73,19 @@ async function onRedeem(id: number) {
           </div>
         </div>
       </div>
+
+      <div class="jh-panel block orders">
+        <h2>我的兑换订单</h2>
+        <el-empty v-if="!orders.length" description="暂无兑换记录" />
+        <el-table v-else :data="orders">
+          <el-table-column prop="id" label="单号" width="90" />
+          <el-table-column prop="productName" label="奖品" />
+          <el-table-column prop="quantity" label="数量" width="80" />
+          <el-table-column prop="costChivalry" label="消耗侠义" width="110" />
+          <el-table-column prop="status" label="状态" width="100" />
+          <el-table-column prop="createdAt" label="时间" min-width="160" />
+        </el-table>
+      </div>
     </div>
   </section>
 </template>
@@ -84,5 +110,13 @@ h1 {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 12px;
+}
+.orders {
+  margin-top: 8px;
+}
+.orders h2 {
+  margin: 0 0 12px;
+  font-size: 18px;
+  font-family: var(--jh-font-display);
 }
 </style>

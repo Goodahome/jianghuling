@@ -1,20 +1,31 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { createBounty } from '@/api/bounty'
+import { createBounty, getRepublishDraft, republishBounty } from '@/api/bounty'
 import { getChecklistTemplates, getRewardSuggest, getWarrantTemplates } from '@/api/meta'
 import { getTopNotices } from '@/api/notice'
 import type { BountyType, Difficulty } from '@/types/api'
 import type { ChecklistTemplate, Notice, RewardSuggest, WarrantTemplate } from '@/types/models'
 import { difficultyLabel } from '@/utils/labels'
 
+const route = useRoute()
 const router = useRouter()
 const loading = ref(false)
+const draftLoading = ref(false)
 const suggest = ref<RewardSuggest | null>(null)
 const templates = ref<WarrantTemplate[]>([])
 const checklists = ref<ChecklistTemplate[]>([])
 const tops = ref<Notice[]>([])
+
+const republishFromId = computed(() => {
+  const raw = route.query.republishFrom
+  const v = Array.isArray(raw) ? raw[0] : raw
+  if (!v) return null
+  const n = Number(v)
+  return Number.isFinite(n) && n > 0 ? n : null
+})
+const isRepublish = computed(() => republishFromId.value != null)
 
 const form = reactive({
   type: 'RENT_SEEK' as BountyType,
@@ -29,7 +40,9 @@ const form = reactive({
   confirmLowReward: false,
 })
 
-const currentTemplate = computed(() => templates.value.find((t) => t.type === form.type))
+const currentTemplate = computed(() =>
+  templates.value.find((t) => t.type === form.type || (t as { code?: string }).code === form.type),
+)
 const currentSuggest = computed(() =>
   suggest.value?.difficulties.find((d) => d.code === form.difficulty),
 )
@@ -37,16 +50,63 @@ const currentSuggest = computed(() =>
 const tagOptions = ['帮寻房', '帮带看', '帮验房', '帮谈价', '帮核验真伪']
 
 onMounted(async () => {
-  ;[suggest.value, templates.value, checklists.value, tops.value] = await Promise.all([
+  ;[suggest.value, templates.value, tops.value] = await Promise.all([
     getRewardSuggest(),
     getWarrantTemplates(),
-    getChecklistTemplates(),
     getTopNotices('ANTI_FRAUD', 3).catch(() => []),
   ])
   if (suggest.value) form.rewardAmount = Math.max(suggest.value.minReward, form.rewardAmount)
-  form.checklistItemCodes = checklists.value.filter((c) => c.required).map((c) => c.itemCode)
-  initWarrantDefaults()
+
+  if (isRepublish.value) {
+    await loadRepublishDraft()
+  } else {
+    await reloadChecklists()
+    initWarrantDefaults()
+  }
 })
+
+async function loadRepublishDraft() {
+  const id = republishFromId.value
+  if (!id) return
+  draftLoading.value = true
+  try {
+    const draft = await getRepublishDraft(id)
+    form.type = draft.type
+    form.title = draft.title || ''
+    form.difficulty = draft.difficulty
+    form.rewardAmount = Number(draft.rewardAmount) || form.rewardAmount
+    form.taskTags = [...(draft.taskTags || [])]
+    form.warrantFields = { ...(draft.warrantFields || {}) }
+    form.checklistItemCodes = [...(draft.checklistItemCodes || [])]
+    form.deadlineAt = ''
+    initWarrantDefaults()
+    await reloadChecklists()
+    // 保留草稿勾选（reload 会合并必选项）
+    const fromDraft = draft.checklistItemCodes || []
+    form.checklistItemCodes = Array.from(
+      new Set([...form.checklistItemCodes, ...fromDraft]),
+    )
+  } finally {
+    draftLoading.value = false
+  }
+}
+
+async function reloadChecklists() {
+  const tags = form.taskTags.length ? form.taskTags.join(',') : undefined
+  checklists.value = await getChecklistTemplates(tags)
+  const required = checklists.value.filter((c) => c.required).map((c) => c.itemCode)
+  const keep = form.checklistItemCodes.filter((code) =>
+    checklists.value.some((c) => c.itemCode === code),
+  )
+  form.checklistItemCodes = Array.from(new Set([...required, ...keep]))
+}
+
+watch(
+  () => [...form.taskTags],
+  () => {
+    reloadChecklists()
+  },
+)
 
 function initWarrantDefaults() {
   const fields = currentTemplate.value?.fields || []
@@ -54,15 +114,21 @@ function initWarrantDefaults() {
   fields.forEach((f) => {
     next[f.key] = form.warrantFields[f.key] ?? (f.type === 'boolean' ? false : '')
   })
+  // 保留模板外已有值（草稿可能含旧 key）
+  Object.keys(form.warrantFields || {}).forEach((k) => {
+    if (!(k in next)) next[k] = form.warrantFields[k]
+  })
   form.warrantFields = next
 }
 
 async function onTypeChange() {
+  if (isRepublish.value) return
   initWarrantDefaults()
 }
 
 async function onSubmit() {
   if (!form.title.trim()) return ElMessage.warning('请填写标题')
+  if (!form.deadlineAt) return ElMessage.warning('请选择截止时间')
   const min = suggest.value?.minReward ?? 200
   if (form.rewardAmount < min) return ElMessage.error(`赏银不得低于 ${min} 两`)
 
@@ -78,13 +144,29 @@ async function onSubmit() {
 
   loading.value = true
   try {
-    const created = await createBounty({
-      ...form,
-      confirmLowReward,
-      deadlineAt: new Date(form.deadlineAt).toISOString(),
-    })
-    ElMessage.success('已提交发令，赏银已冻结，等待审核')
-    router.replace(`/bounties/${created.id}`)
+    const deadlineAt = new Date(form.deadlineAt).toISOString()
+    if (isRepublish.value && republishFromId.value) {
+      const created = await republishBounty(republishFromId.value, {
+        title: form.title,
+        difficulty: form.difficulty,
+        rewardAmount: form.rewardAmount,
+        confirmLowReward,
+        deadlineAt,
+        taskTags: form.taskTags,
+        warrantFields: form.warrantFields,
+        checklistItemCodes: form.checklistItemCodes,
+      })
+      ElMessage.success('再发一令已提交，赏银已重新冻结，等待审核')
+      router.replace(`/bounties/${created.id}`)
+    } else {
+      const created = await createBounty({
+        ...form,
+        confirmLowReward,
+        deadlineAt,
+      })
+      ElMessage.success('已提交发令，赏银已冻结，等待审核')
+      router.replace(`/bounties/${created.id}`)
+    }
   } finally {
     loading.value = false
   }
@@ -92,10 +174,17 @@ async function onSubmit() {
 </script>
 
 <template>
-  <section class="jh-section">
+  <section class="jh-section" v-loading="draftLoading">
     <div class="jh-container narrow">
-      <h1 class="brand-title">张贴悬赏令</h1>
-      <p class="jh-muted">结构化租房令状 · 最低赏银 {{ suggest?.minReward ?? 200 }} 两 · 模拟银两托管</p>
+      <h1 class="brand-title">{{ isRepublish ? '再发一令' : '张贴悬赏令' }}</h1>
+      <p class="jh-muted">
+        <template v-if="isRepublish">
+          基于原令 #{{ republishFromId }} 复制新建 · 须重新托管赏银并审核 · 原单不变
+        </template>
+        <template v-else>
+          结构化租房令状 · 最低赏银 {{ suggest?.minReward ?? 200 }} 两 · 模拟银两托管
+        </template>
+      </p>
 
       <div v-if="tops.length" class="tips jh-panel">
         <strong>发令前必读</strong>
@@ -104,7 +193,7 @@ async function onSubmit() {
 
       <el-form class="jh-panel form" label-position="top" @submit.prevent="onSubmit">
         <el-form-item label="令种">
-          <el-radio-group v-model="form.type" @change="onTypeChange">
+          <el-radio-group v-model="form.type" :disabled="isRepublish" @change="onTypeChange">
             <el-radio-button value="RENT_SEEK">求租</el-radio-button>
             <el-radio-button value="RENT_OUT">出租/转租</el-radio-button>
           </el-radio-group>
@@ -131,10 +220,11 @@ async function onSubmit() {
             type="datetime"
             value-format="YYYY-MM-DDTHH:mm:ss"
             style="width: 100%"
+            placeholder="再发须重新选择截止时间"
           />
         </el-form-item>
         <el-form-item label="任务标签">
-          <el-select v-model="form.taskTags" multiple style="width: 100%">
+          <el-select v-model="form.taskTags" multiple style="width: 100%" placeholder="选择后预勾探子清单">
             <el-option v-for="t in tagOptions" :key="t" :label="t" :value="t" />
           </el-select>
         </el-form-item>
@@ -147,11 +237,9 @@ async function onSubmit() {
             :label="field.label"
             :required="field.required"
           >
-            <el-input
-              v-if="field.type === 'text' || field.type === 'number' || field.type === 'date'"
+            <el-switch
+              v-if="field.type === 'boolean'"
               v-model="form.warrantFields[field.key]"
-              :type="field.type === 'number' ? 'number' : 'text'"
-              :placeholder="field.placeholder"
             />
             <el-input
               v-else-if="field.type === 'textarea'"
@@ -171,7 +259,12 @@ async function onSubmit() {
                 :value="opt.value"
               />
             </el-select>
-            <el-switch v-else-if="field.type === 'boolean'" v-model="form.warrantFields[field.key]" />
+            <el-input
+              v-else
+              v-model="form.warrantFields[field.key]"
+              :type="field.type === 'number' ? 'number' : 'text'"
+              :placeholder="field.placeholder || field.label"
+            />
           </el-form-item>
         </template>
         <el-empty v-else description="令状模板加载中或暂无配置" />
@@ -195,7 +288,7 @@ async function onSubmit() {
           native-type="submit"
           :loading="loading"
         >
-          冻结赏银并提交审核
+          {{ isRepublish ? '再发并冻结赏银提交审核' : '冻结赏银并提交审核' }}
         </el-button>
       </el-form>
     </div>

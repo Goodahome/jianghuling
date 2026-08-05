@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 import * as authApi from '@/api/auth'
 import { clearToken, getToken, setToken } from '@/api/request'
 import type { LoginType } from '@/types/api'
-import type { MeProfile, UserBrief } from '@/types/models'
+import type { MeProfile, OfficeBrief, UserBrief } from '@/types/models'
 
 export const useAuthStore = defineStore('auth', () => {
   const token = ref(getToken() || '')
@@ -13,9 +13,33 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isLoggedIn = computed(() => !!token.value)
   const hasOffice = computed(() => {
-    const offices = me.value?.offices || user.value?.offices || []
-    return offices.some((o) => o.status === 'ACTIVE')
+    return activeOffices.value.length > 0
   })
+
+  const hasDecreeOffice = computed(() => hasOfficeCode('DECREE_REVIEWER'))
+  const hasFeatOffice = computed(() => hasOfficeCode('FEAT_REVIEWER'))
+
+  const activeOffices = computed(() => {
+    const raw = (me.value?.offices || user.value?.offices || []) as Array<
+      OfficeBrief | string | { code?: string; status?: string }
+    >
+    return raw
+      .map((o) => {
+        if (typeof o === 'string') {
+          return { code: o, name: o, status: 'ACTIVE' as const }
+        }
+        return {
+          code: String(o.code || ''),
+          name: String((o as OfficeBrief).name || o.code || ''),
+          status: (o.status as OfficeBrief['status']) || 'ACTIVE',
+        }
+      })
+      .filter((o) => o.code && o.status === 'ACTIVE')
+  })
+
+  function hasOfficeCode(code: string) {
+    return activeOffices.value.some((o) => o.code === code)
+  }
 
   function applyAuth(result: { token: string; user: UserBrief }) {
     token.value = result.token
@@ -79,6 +103,10 @@ export const useAuthStore = defineStore('auth', () => {
     loading,
     isLoggedIn,
     hasOffice,
+    hasDecreeOffice,
+    hasFeatOffice,
+    activeOffices,
+    hasOfficeCode,
     login,
     register,
     fetchMe,

@@ -42,6 +42,7 @@ public class AdminDashboardService {
                 .map(WalletAccount::getFrozen)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         data.put("totalFrozen", frozen);
+        data.put("frozenTotal", frozen); // 与前端 DashboardOverview.frozenTotal 对齐
         return data;
     }
 

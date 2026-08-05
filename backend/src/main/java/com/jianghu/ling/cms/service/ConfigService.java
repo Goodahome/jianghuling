@@ -39,6 +39,21 @@ public class ConfigService {
         }
     }
 
+    public boolean getBoolean(String key, boolean defaultValue) {
+        String raw = get(key, String.valueOf(defaultValue));
+        if (raw == null) {
+            return defaultValue;
+        }
+        String v = raw.trim().toLowerCase();
+        if ("true".equals(v) || "1".equals(v) || "yes".equals(v)) {
+            return true;
+        }
+        if ("false".equals(v) || "0".equals(v) || "no".equals(v)) {
+            return false;
+        }
+        return defaultValue;
+    }
+
     public BigDecimal getDecimal(String key, String defaultValue) {
         return new BigDecimal(get(key, defaultValue));
     }

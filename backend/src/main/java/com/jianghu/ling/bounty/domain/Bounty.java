@@ -1,6 +1,7 @@
 package com.jianghu.ling.bounty.domain;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
@@ -25,7 +26,12 @@ public class Bounty {
     private String taskTagsJson;
     private String frozenBizNo;
     private String cancelReason;
+    /** 再发一令来源悬赏 ID；普通发令为 null */
+    private Long sourceBountyId;
+    /** 表字段 remind_24h_sent；默认驼峰会变成 remind24h_sent */
+    @TableField("remind_24h_sent")
     private Boolean remind24hSent;
+    @TableField("remind_2h_sent")
     private Boolean remind2hSent;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

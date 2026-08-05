@@ -82,14 +82,16 @@ public class AdminBountyService {
             throw new BizException(ErrorCode.BIZ_RULE, "终态不可强制关闭");
         }
         String old = bounty.getStatus();
+        if ("REJECTED".equals(old) || "CANCELLED".equals(old)) {
+            throw new BizException(ErrorCode.BIZ_RULE, "当前状态无需强制关闭");
+        }
         bounty.setStatus("CANCELLED");
         bounty.setCancelReason(StringUtils.hasText(reason) ? reason : "管理员强制关闭");
         bounty.setUpdatedAt(LocalDateTime.now());
         bountyMapper.updateById(bounty);
-        if (!"REJECTED".equals(old)) {
-            walletService.unfreezeRefund(bounty.getPublisherId(), bounty.getRewardAmount(),
-                    IdempotencyKeys.bizNo("UR"), "BOUNTY", id, "管理员强制关闭退款");
-        }
+        // 有托管冻结则退回；无冻结（已退过）时 unfreezeRefund 幂等跳过
+        walletService.unfreezeRefund(bounty.getPublisherId(), bounty.getRewardAmount(),
+                IdempotencyKeys.bizNo("UR"), "BOUNTY", id, "管理员强制关闭退款");
         notifyService.send(bounty.getPublisherId(), "悬赏被强制关闭",
                 "悬赏「" + bounty.getTitle() + "」已被管理员关闭", "BOUNTY", id);
         return Map.of("bountyId", id, "status", "CANCELLED");

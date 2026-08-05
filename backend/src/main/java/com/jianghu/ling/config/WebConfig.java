@@ -1,5 +1,6 @@
 package com.jianghu.ling.config;
 
+import com.jianghu.ling.admin.security.AdminPermissionInterceptor;
 import com.jianghu.ling.security.JwtAuthFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -7,6 +8,7 @@ import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -18,6 +20,7 @@ public class WebConfig implements WebMvcConfigurer {
     private String uploadDir;
 
     private final JwtAuthFilter jwtAuthFilter;
+    private final AdminPermissionInterceptor adminPermissionInterceptor;
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
@@ -35,6 +38,12 @@ public class WebConfig implements WebMvcConfigurer {
                 : "file:" + uploadDir + "/";
         registry.addResourceHandler("/files/**")
                 .addResourceLocations(location);
+    }
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(adminPermissionInterceptor)
+                .addPathPatterns("/api/v1/admin/**");
     }
 
     @Bean

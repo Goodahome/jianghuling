@@ -1,0 +1,173 @@
+﻿{
+    "ADM":  {
+                "detail":  {
+                               "code":  0
+                           },
+                "pass":  true
+            },
+    "REG":  {
+                "detail":  {
+                               "C":  0,
+                               "idC":  15,
+                               "P":  0,
+                               "idP":  14,
+                               "bal0":  500.00
+                           },
+                "pass":  true
+            },
+    "CREATE":  {
+                   "detail":  {
+                                  "id":  7,
+                                  "status":  "PENDING_REVIEW"
+                              },
+                   "pass":  true
+               },
+    "V18-06-DENY-PENDING":  {
+                                "detail":  {
+                                               "code":  43007,
+                                               "msg":  "ä¸å¯ååä¸ä»¤"
+                                           },
+                                "pass":  true
+                            },
+    "REJECT":  {
+                   "detail":  {
+                                  "rej":  0,
+                                  "frozen":  0.00,
+                                  "status":  "REJECTED",
+                                  "canRepublish":  true,
+                                  "bal":  500.00
+                              },
+                   "pass":  true
+               },
+    "V18-06-DENY-NONOWNER":  {
+                                 "detail":  {
+                                                "code":  43007,
+                                                "msg":  "ä¸å¯ååä¸ä»¤"
+                                            },
+                                 "pass":  true
+                             },
+    "V18-DRAFT":  {
+                      "detail":  {
+                                     "sourceBountyId":  7,
+                                     "code":  0,
+                                     "title":  "V18-SRC-19063",
+                                     "reward":  200.00
+                                 },
+                      "pass":  true
+                  },
+    "V18-02-DIAG":  {
+                        "detail":  {
+                                       "code":  0,
+                                       "data":  {
+                                                    "id":  8,
+                                                    "sourceBountyId":  7,
+                                                    "status":  "PENDING_REVIEW",
+                                                    "type":  "RENT_SEEK",
+                                                    "title":  "V18-SRC-19063",
+                                                    "rewardAmount":  200.00,
+                                                    "deadlineAt":  "2026-08-15T20:07:35",
+                                                    "frozen":  true,
+                                                    "canRepublish":  false
+                                                },
+                                       "id":  8,
+                                       "msg":  "ok"
+                                   },
+                        "pass":  true
+                    },
+    "V18-02-NEW-ID":  {
+                          "detail":  {
+                                         "srcId":  7,
+                                         "sourceBountyId":  7,
+                                         "newId":  8,
+                                         "status":  "PENDING_REVIEW"
+                                     },
+                          "pass":  true
+                      },
+    "V18-03-PENDING-FREEZE":  {
+                                  "detail":  {
+                                                 "status":  "PENDING_REVIEW",
+                                                 "frozenBal":  200.00,
+                                                 "bal":  300.00,
+                                                 "balBefore":  500.00
+                                             },
+                                  "pass":  true
+                              },
+    "V18-02-SRC-UNCHANGED":  {
+                                 "detail":  {
+                                                "status":  "REJECTED"
+                                            },
+                                 "pass":  true
+                             },
+    "V18-05-SOURCE-FIELD":  {
+                                "detail":  {
+                                               "listSrc":  7,
+                                               "detailSrc":  7
+                                           },
+                                "pass":  true
+                            },
+    "V18-01-FE-ENTRY":  {
+                            "detail":  {
+                                           "ok":  true
+                                       },
+                            "pass":  true
+                        },
+    "REGRESS-LOOP":  {
+                         "detail":  {
+                                        "final":  "COMPLETED",
+                                        "settle":  0,
+                                        "sr":  0,
+                                        "dist":  180.00,
+                                        "claim":  0,
+                                        "open":  "OPEN",
+                                        "fee":  20.00,
+                                        "ap":  0,
+                                        "sub":  0
+                                    },
+                         "pass":  true
+                     },
+    "V18-COMPLETED-CAN":  {
+                              "detail":  {
+                                             "status":  "COMPLETED",
+                                             "can":  true
+                                         },
+                              "pass":  true
+                          },
+    "V181-01-VISUAL":  {
+                           "detail":  {
+                                          "visual":  true
+                                      },
+                           "pass":  true
+                       },
+    "V181-02-LIST-SHAPE":  {
+                               "detail":  {
+                                              "ok":  true
+                                          },
+                               "pass":  true
+                           },
+    "V181-03-CLICK-DETAIL":  {
+                                 "detail":  {
+                                                "ok":  true
+                                            },
+                                 "pass":  true
+                             },
+    "V181-04-BACK":  {
+                         "detail":  {
+                                        "ok":  true
+                                    },
+                         "pass":  true
+                     },
+    "V181-05-REVIEW":  {
+                           "detail":  {
+                                          "ok":  true
+                                      },
+                           "pass":  true
+                       },
+    "meta":  {
+                 "newId":  8,
+                 "idC":  15,
+                 "srcId":  7,
+                 "ts":  "2026-08-05T20:07:35",
+                 "suffix":  19063,
+                 "idP":  14
+             }
+}

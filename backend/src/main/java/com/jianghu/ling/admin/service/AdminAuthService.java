@@ -19,7 +19,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 @Service
@@ -30,27 +29,26 @@ public class AdminAuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final LoginLogMapper loginLogMapper;
+    private final AdminRbacService adminRbacService;
 
     public Map<String, Object> login(AdminLoginRequest req, HttpServletRequest request) {
         AdminUser admin = adminUserMapper.selectOne(new LambdaQueryWrapper<AdminUser>()
                 .eq(AdminUser::getUsername, req.getUsername())
                 .last("LIMIT 1"));
-        if (admin == null || !"ACTIVE".equals(admin.getStatus())
-                || !passwordEncoder.matches(req.getPassword(), admin.getPasswordHash())) {
+        if (admin == null || !passwordEncoder.matches(req.getPassword(), admin.getPasswordHash())) {
             writeLog(null, request, "FAIL");
             throw new BizException(ErrorCode.PARAM_INVALID, "用户名或密码错误");
+        }
+        if (!"ACTIVE".equals(admin.getStatus())) {
+            writeLog(admin.getId(), request, "FAIL");
+            throw new BizException(ErrorCode.ACCOUNT_BANNED, "账号已停用");
         }
         JwtService.TokenResult token = jwtService.issue(admin.getId(), PrincipalType.ADMIN);
         writeLog(admin.getId(), request, "SUCCESS");
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("token", token.token());
         data.put("expiresIn", token.expiresIn());
-        data.put("permissions", List.of("*"));
-        data.put("admin", Map.of(
-                "id", admin.getId(),
-                "username", admin.getUsername(),
-                "displayName", admin.getDisplayName()
-        ));
+        data.put("admin", adminRbacService.toAdminAuthView(admin));
         return data;
     }
 
@@ -63,15 +61,14 @@ public class AdminAuthService {
 
     public Map<String, Object> me() {
         Long adminId = AuthContext.requireAdminId();
-        AdminUser admin = adminUserMapper.selectById(adminId);
-        if (admin == null || !"ACTIVE".equals(admin.getStatus())) {
-            throw new BizException(ErrorCode.UNAUTHORIZED);
-        }
+        AdminUser admin = adminRbacService.requireActiveAdmin(adminId);
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("id", admin.getId());
         data.put("username", admin.getUsername());
         data.put("displayName", admin.getDisplayName());
-        data.put("permissions", List.of("*"));
+        data.put("status", admin.getStatus());
+        data.put("roles", adminRbacService.roleViewsOf(adminId));
+        data.put("permissions", adminRbacService.permissionsForResponse(adminId));
         return data;
     }
 

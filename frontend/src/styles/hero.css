@@ -1,25 +1,24 @@
 @import './variables.css';
 
-.hero-app {
+.hero-app,
+.hall-app {
   min-height: 100vh;
   min-height: 100dvh;
   color: var(--jh-ink);
   font-family: var(--jh-font-body);
-  background:
-    radial-gradient(1200px 500px at 10% -10%, rgba(178, 58, 45, 0.08), transparent 55%),
-    radial-gradient(900px 420px at 90% 0%, rgba(45, 58, 74, 0.08), transparent 50%),
-    linear-gradient(180deg, #f3f6f8 0%, var(--jh-paper) 40%, #eef2f5 100%);
+  background: var(--jh-paper);
   overflow-x: clip;
 }
 
-.hero-app a {
+.hero-app a,
+.hall-app a {
   color: inherit;
   text-decoration: none;
 }
 
 .brand-title {
   font-family: var(--jh-font-display);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.04em;
 }
 
 .jh-container {
@@ -28,7 +27,7 @@
 }
 
 .jh-section {
-  padding: 28px 0 48px;
+  padding: 24px 0 40px;
 }
 
 .jh-muted {
@@ -38,57 +37,70 @@
 .jh-btn-seal {
   background: var(--jh-seal) !important;
   border-color: var(--jh-seal) !important;
+  color: #fff !important;
 }
 
 .jh-btn-seal:hover {
   background: var(--jh-seal-dark) !important;
   border-color: var(--jh-seal-dark) !important;
+  color: #fff !important;
+}
+
+.jh-btn-ink {
+  background: #fff !important;
+  border-color: var(--jh-ink-soft) !important;
+  color: var(--jh-ink) !important;
+}
+
+.jh-btn-ink:hover {
+  border-color: var(--jh-seal) !important;
+  color: var(--jh-seal) !important;
 }
 
 .jh-empty {
-  padding: 48px 16px;
+  padding: 40px 16px;
   text-align: center;
   color: var(--jh-muted);
 }
 
 .jh-panel {
-  background: rgba(255, 255, 255, 0.72);
+  background: #fff;
   border: 1px solid var(--jh-line);
   border-radius: var(--jh-radius);
-  box-shadow: var(--jh-shadow);
-  backdrop-filter: blur(6px);
 }
 
-/* 移动端通用：防横向溢出、触控、表单不缩放 */
 @media (max-width: 768px) {
   .jh-container {
     width: calc(100% - 20px);
   }
 
   .jh-section {
-    padding: 18px 0 32px;
+    padding: 16px 0 28px;
   }
 
-  .jh-panel {
-    border-radius: 12px;
-  }
-
-  .hero-app .el-button {
+  .hero-app .el-button,
+  .hall-app .el-button {
     min-height: 40px;
   }
 
   .hero-app .el-input__inner,
   .hero-app .el-textarea__inner,
   .hero-app input,
-  .hero-app textarea {
+  .hero-app textarea,
+  .hall-app .el-input__inner,
+  .hall-app .el-textarea__inner,
+  .hall-app input,
+  .hall-app textarea {
     font-size: 16px !important;
   }
 
-  .hero-app .el-table {
+  .hero-app .el-table,
+  .hall-app .el-table {
     width: 100%;
   }
 
-  .hero-app .el-form-item {
+  .hero-app .el-form-item,
+  .hall-app .el-form-item {
     margin-bottom: 14px;
   }
 }
