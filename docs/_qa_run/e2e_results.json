@@ -23,14 +23,14 @@
               },
     "AC-01":  {
                   "detail":  {
-                                 "idA":  3,
+                                 "idA":  16,
                                  "bMsg":  "ok",
                                  "aMsg":  "ok",
                                  "B":  0,
-                                 "idB":  4,
-                                 "phoneA":  "13830722544",
+                                 "idB":  17,
+                                 "phoneA":  "13873582504",
                                  "noInv":  44001,
-                                 "phoneB":  "13964463848",
+                                 "phoneB":  "13974698521",
                                  "A":  0
                              },
                   "pass":  true
@@ -43,11 +43,11 @@
               },
     "AC-03":  {
                   "detail":  {
-                                 "r2":  0,
-                                 "bal":  1000.00,
-                                 "r1":  0
+                                 "r2":  42004,
+                                 "bal":  500.00,
+                                 "r1":  42004
                              },
-                  "pass":  true
+                  "pass":  false
               },
     "AC-05":  {
                   "detail":  {
@@ -62,8 +62,8 @@
                                  "frozen":  200.00,
                                  "status":  "PENDING_REVIEW",
                                  "code":  0,
-                                 "bal":  800.00,
-                                 "id":  2
+                                 "bal":  300.00,
+                                 "id":  9
                              },
                   "pass":  true
               },
@@ -119,7 +119,7 @@
                                  "msg":  0,
                                  "sub":  0,
                                  "subMsg":  "ok",
-                                 "subId":  1
+                                 "subId":  4
                              },
                   "pass":  true
               },
@@ -128,7 +128,7 @@
                                  "dist":  180.00,
                                  "settle":  0,
                                  "sr":  0,
-                                 "balB":  180.00,
+                                 "balB":  680.00,
                                  "fee":  20.00,
                                  "status":  "COMPLETED",
                                  "srMsg":  "ok",
@@ -208,10 +208,10 @@
                   "pass":  false
               },
     "meta":  {
-                 "idB":  4,
-                 "ts":  "2026-08-05T15:40:51",
-                 "idA":  3,
-                 "suffix":  65568,
-                 "bountyId":  2
+                 "idB":  17,
+                 "ts":  "2026-08-05T23:05:08",
+                 "idA":  16,
+                 "suffix":  27629,
+                 "bountyId":  9
              }
 }

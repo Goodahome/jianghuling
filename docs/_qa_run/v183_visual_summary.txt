@@ -1,0 +1,22 @@
+V1.8.3 视觉 + 主路径回归（合并前）
+日期: 2026-08-05
+分支: trial/wuxia-notice-board-ui
+对照: requirements §9.8 / §6.20
+
+=== 视觉静态（§9.8）===
+V183-01 街景底+瓦顶壳 NoticeBoardShell / hero.css          PASS
+V183-02 `/` 品牌首页 + `/plaza` 金榜拆分 + 导航             PASS
+V183-03 钉墙宣纸纸贴 / 赏银状态截止可读                       PASS
+V183-04 JhPageHeader；导航「英雄榜」                         PASS
+V183-05 防骗箴言：透明底、正文直出、过长滚动、左侧 mask       PASS
+V183-06 隐退江湖 / 重出江湖 / 内测中；用户芯片上名下衔       PASS
+V183-07 执事堂同壳；列表无 HallBackBar、详情有               PASS
+
+=== 主路径 API（run_e2e.ps1 + 广场烟测）===
+广场列表 GET /bounties status=OPEN,IN_COLLAB  code=0         PASS
+发令冻结→审→揭榜→成果→结算 COMPLETED fee=20 dist=180       PASS（AC-04..10 / X）
+AC-03 充值 期望旧脚本成功；现 42004（v1.7 默认关）           N/A（非本分支回归，脚本待更）
+AC-S4 脚本标记 deferred                                       N/A（此前 followup_v2 已 Pass）
+
+结论: Pass — 可合并 main
+备注: 合并时还原 application-dev.yml 为环境变量写法，不携带本机密文。

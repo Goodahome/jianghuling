@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { listBounties } from '@/api/bounty'
 import { getTopNotices } from '@/api/notice'
 import type { BountyListItem, Notice } from '@/types/models'
@@ -16,6 +16,12 @@ const loading = ref(false)
 const list = ref<BountyListItem[]>([])
 const total = ref(0)
 const tops = ref<Notice[]>([])
+const mottoViewport = ref<HTMLElement | null>(null)
+const mottoTrack = ref<HTMLElement | null>(null)
+const shouldScroll = ref(false)
+const scrollDuration = ref(18)
+let mottoObserver: ResizeObserver | null = null
+
 const query = reactive({
   page: 1,
   pageSize: 12,
@@ -23,6 +29,31 @@ const query = reactive({
   keyword: '',
   district: '',
 })
+
+const mottoText = computed(() =>
+  tops.value
+    .map((n) => (n.content || n.summary || n.title || '').replace(/\s+/g, ' ').trim())
+    .filter(Boolean)
+    .join('　·　'),
+)
+
+function measureMotto() {
+  const viewport = mottoViewport.value
+  const track = mottoTrack.value
+  if (!viewport || !track) {
+    shouldScroll.value = false
+    return
+  }
+  const textEl = track.querySelector('.notice-text') as HTMLElement | null
+  const contentWidth = textEl?.scrollWidth ?? track.scrollWidth
+  const style = getComputedStyle(viewport)
+  const padX = (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.paddingRight) || 0)
+  const overflow = contentWidth > viewport.clientWidth - padX + 2
+  shouldScroll.value = overflow
+  if (overflow) {
+    scrollDuration.value = Math.max(12, Math.min(48, contentWidth / 40))
+  }
+}
 
 async function load() {
   loading.value = true
@@ -44,24 +75,35 @@ async function load() {
   }
 }
 
+watch(mottoText, async () => {
+  await nextTick()
+  measureMotto()
+})
+
 onMounted(async () => {
   try {
     tops.value = (await getTopNotices('ANTI_FRAUD', 3)) || []
   } catch {
     tops.value = []
   }
+  await nextTick()
+  measureMotto()
+  if (typeof ResizeObserver !== 'undefined' && mottoViewport.value) {
+    mottoObserver = new ResizeObserver(() => measureMotto())
+    mottoObserver.observe(mottoViewport.value)
+  }
   await load()
+})
+
+onBeforeUnmount(() => {
+  mottoObserver?.disconnect()
+  mottoObserver = null
 })
 </script>
 
 <template>
   <section class="jh-section plaza-section">
     <div class="jh-container">
-      <div v-if="tops.length" class="notice-strip jh-panel">
-        <strong>防骗箴言</strong>
-        <RouterLink v-for="n in tops" :key="n.id" :to="`/notices/${n.id}`">{{ n.title }}</RouterLink>
-      </div>
-
       <div class="jinbang-board" aria-label="悬赏金榜">
         <JhPageHeader title="悬赏金榜" subtitle="揭榜行侠 · 赏银分明" />
 
@@ -86,6 +128,21 @@ onMounted(async () => {
             <RouterLink to="/bounties/publish">
               <el-button class="jh-btn-ink filter-btn">张贴悬赏</el-button>
             </RouterLink>
+          </div>
+        </div>
+
+        <div v-if="mottoText" class="notice-strip" aria-label="防骗箴言">
+          <strong class="notice-label">防骗箴言：</strong>
+          <div ref="mottoViewport" class="notice-marquee">
+            <div
+              ref="mottoTrack"
+              class="notice-track"
+              :class="{ scrolling: shouldScroll }"
+              :style="shouldScroll ? { '--marquee-duration': `${scrollDuration}s` } : undefined"
+            >
+              <span class="notice-text">{{ mottoText }}</span>
+              <span v-if="shouldScroll" class="notice-text" aria-hidden="true">{{ mottoText }}</span>
+            </div>
           </div>
         </div>
 
@@ -147,15 +204,61 @@ onMounted(async () => {
 <style scoped>
 .notice-strip {
   display: flex;
-  flex-wrap: wrap;
-  gap: 12px 18px;
-  padding: 14px 18px;
-  margin-bottom: 20px;
   align-items: center;
-  background: rgba(251, 246, 232, 0.9) !important;
+  gap: 12px;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 0 16px;
+  padding: 4px 12px 8px 8px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  color: rgba(247, 240, 221, 0.92);
 }
-.notice-strip a {
-  color: var(--jh-seal);
+.notice-label {
+  flex: none;
+  font-family: var(--jh-font-display);
+  letter-spacing: 0.08em;
+  color: var(--jh-gold-bright);
+  white-space: nowrap;
+}
+.notice-marquee {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  /* 首字避开左侧淡出带 */
+  padding-left: 14px;
+  mask-image: linear-gradient(90deg, transparent, #000 12px, #000 calc(100% - 12px), transparent);
+}
+.notice-track {
+  display: inline-flex;
+  width: max-content;
+  max-width: 100%;
+  gap: 48px;
+  white-space: nowrap;
+}
+.notice-track.scrolling {
+  max-width: none;
+  animation: notice-marquee var(--marquee-duration, 18s) linear infinite;
+}
+.notice-text {
+  color: rgba(247, 240, 221, 0.9);
+  font-size: 14px;
+  letter-spacing: 0.04em;
+}
+@keyframes notice-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .notice-track.scrolling {
+    animation: none;
+    max-width: 100%;
+  }
 }
 
 .toolbar {

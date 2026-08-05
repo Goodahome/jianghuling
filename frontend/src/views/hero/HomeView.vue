@@ -2,7 +2,6 @@
   <section class="hero-band">
     <div class="band-inner">
       <div class="copy">
-        <p class="eyebrow">遵义城 · 告示牌前</p>
         <h1 class="brand-title">江湖令</h1>
         <p class="slogan">天下有悬赏，江湖有侠士。</p>
         <p class="belief">江湖不让善意吃亏。</p>
@@ -35,12 +34,6 @@
   background: rgba(28, 22, 16, 0.45);
   border: 1px solid rgba(196, 163, 90, 0.35);
 }
-.eyebrow {
-  margin: 0 0 8px;
-  font-size: 13px;
-  letter-spacing: 0.28em;
-  color: var(--jh-gold-bright);
-}
 .brand-title {
   margin: 0;
   font-size: clamp(36px, 6vw, 56px);
@@ -57,9 +50,12 @@
 }
 .belief {
   margin: 0 0 20px;
+  padding-left: 1ch;
+  font-family: var(--jh-font-display);
   font-size: 15px;
-  line-height: 1.6;
-  color: rgba(247, 240, 221, 0.8);
+  letter-spacing: 0.06em;
+  line-height: 1.4;
+  color: var(--jh-gold-bright);
 }
 .cta-row {
   display: flex;

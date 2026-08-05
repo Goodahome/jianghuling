@@ -96,6 +96,7 @@ async function onLogout() {
                 <span v-if="unreadBadge" class="badge">{{ unreadBadge }}</span>
               </RouterLink>
               <RouterLink v-if="auth.hasOffice" to="/hall" class="ghost">执事堂</RouterLink>
+              <button class="ghost" type="button" @click="onLogout">隐退江湖</button>
               <RouterLink
                 to="/profile"
                 class="user-chip"
@@ -107,7 +108,6 @@ async function onLogout() {
                   <span class="user-title">{{ levelTitle }}</span>
                 </span>
               </RouterLink>
-              <button class="link-btn" type="button" @click="onLogout">登出</button>
             </template>
             <template v-else>
               <RouterLink to="/login" class="ghost">登录</RouterLink>
@@ -175,8 +175,8 @@ async function onLogout() {
           </RouterLink>
           <RouterLink v-if="!auth.isLoggedIn" to="/login" class="drawer-link" active-class="" exact-active-class="">登录</RouterLink>
           <RouterLink v-if="!auth.isLoggedIn" to="/register" class="drawer-link accent" active-class="" exact-active-class="">持令入江湖</RouterLink>
-          <button v-if="auth.isLoggedIn" type="button" class="drawer-link as-btn" @click="onLogout">
-            登出
+          <button v-if="auth.isLoggedIn" type="button" class="ghost drawer-ghost" @click="onLogout">
+            隐退江湖
           </button>
         </nav>
       </aside>
@@ -188,7 +188,7 @@ async function onLogout() {
       <footer v-if="showNav" class="footer">
         <div class="jh-container">
           <p class="brand-title">江湖令</p>
-          <p class="jh-muted">天下有悬赏，江湖有侠士。 · 遵义试点 · 模拟银两非真实货币</p>
+          <p class="jh-muted">天下有悬赏，江湖有侠士。 · 内测中 · 模拟银两非真实货币</p>
         </div>
       </footer>
     </NoticeBoardShell>
@@ -299,13 +299,24 @@ async function onLogout() {
   font-size: 14px;
 }
 .ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-family: var(--jh-font-display);
+  font-size: 14px;
   color: #4a3824;
   padding: 7px 10px;
   background: linear-gradient(180deg, #fbf6e8, #eadfc8);
   border: 1px solid rgba(90, 66, 40, 0.35);
   letter-spacing: 0.08em;
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.drawer-ghost {
+  width: 100%;
+  margin-top: 8px;
+  min-height: 44px;
 }
 .with-badge {
   position: relative;

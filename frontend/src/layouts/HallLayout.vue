@@ -63,6 +63,7 @@ watch(
             </RouterLink>
           </nav>
           <div class="actions desktop-only">
+            <RouterLink to="/" class="ghost">返回江湖</RouterLink>
             <div class="user-chip" :title="`${displayName} · ${levelTitle}`">
               <span class="user-avatar" aria-hidden="true">{{ nameInitial }}</span>
               <span class="user-meta">
@@ -70,7 +71,6 @@ watch(
                 <span class="user-title">{{ levelTitle }}</span>
               </span>
             </div>
-            <RouterLink to="/" class="ghost">返回江湖</RouterLink>
           </div>
           <button
             class="menu-btn mobile-only"

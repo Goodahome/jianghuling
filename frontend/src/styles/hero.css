@@ -60,6 +60,81 @@
   text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
 }
 
+/* Element Plus 主题：去默认蓝，改朱红/金 */
+.hero-app,
+.hall-app {
+  --el-color-primary: #b23a2d;
+  --el-color-primary-light-3: #c96558;
+  --el-color-primary-light-5: #d98c82;
+  --el-color-primary-light-7: #e8b3ac;
+  --el-color-primary-light-8: #f0c9c4;
+  --el-color-primary-light-9: #f7e2df;
+  --el-color-primary-dark-2: #8f2d23;
+  --el-color-primary-rgb: 178, 58, 45;
+}
+
+/* Tabs：金榜气质，禁用蓝下划线 */
+.hero-app .el-tabs__item,
+.hall-app .el-tabs__item {
+  color: rgba(247, 240, 221, 0.72);
+  font-family: var(--jh-font-display);
+  letter-spacing: 0.08em;
+}
+.hero-app .el-tabs__item:hover,
+.hall-app .el-tabs__item:hover {
+  color: var(--jh-gold-bright);
+}
+.hero-app .el-tabs__item.is-active,
+.hall-app .el-tabs__item.is-active {
+  color: var(--jh-gold-bright);
+}
+.hero-app .el-tabs__active-bar,
+.hall-app .el-tabs__active-bar {
+  background-color: var(--jh-gold);
+  height: 2px;
+}
+.hero-app .el-tabs__nav-wrap::after,
+.hall-app .el-tabs__nav-wrap::after {
+  background-color: rgba(196, 163, 90, 0.35);
+  height: 1px;
+}
+.hero-app .el-tabs__nav-wrap.is-top::after,
+.hall-app .el-tabs__nav-wrap.is-top::after {
+  bottom: 0;
+}
+
+/* Radio Button 分段切换（筛榜等） */
+.hero-app .el-radio-button__inner,
+.hall-app .el-radio-button__inner {
+  background: rgba(251, 246, 232, 0.18);
+  border-color: rgba(196, 163, 90, 0.45);
+  color: rgba(247, 240, 221, 0.85);
+  box-shadow: none !important;
+}
+.hero-app .el-radio-button__original-radio:checked + .el-radio-button__inner,
+.hall-app .el-radio-button__original-radio:checked + .el-radio-button__inner {
+  background: rgba(196, 163, 90, 0.35);
+  border-color: var(--jh-gold);
+  color: #1c1408;
+  box-shadow: none !important;
+}
+.hero-app .el-radio-button:first-child .el-radio-button__inner,
+.hall-app .el-radio-button:first-child .el-radio-button__inner {
+  border-left-color: rgba(196, 163, 90, 0.45);
+}
+.hero-app .el-radio-button__original-radio:checked + .el-radio-button__inner,
+.hall-app .el-radio-button__original-radio:checked + .el-radio-button__inner {
+  border-left-color: var(--jh-gold);
+}
+
+/* link 按钮去蓝 */
+.hero-app .el-button.is-link,
+.hall-app .el-button.is-link {
+  --el-button-text-color: var(--jh-gold-bright);
+  --el-button-hover-link-text-color: var(--jh-gold);
+  --el-button-active-color: var(--jh-seal);
+}
+
 .jh-container {
   width: min(1120px, calc(100% - 32px));
   margin: 0 auto;

@@ -510,3 +510,19 @@
 
 **§9.6 / §9.7 结论：Pass**（无阻断缺陷）  
 已同步勾选 `requirements.md` §9.6 / §9.7 判定列与 P0 清单（再发一令、执事堂）。产品放行栏待 `@pm`。
+
+---
+
+## 15. requirements §9.8（v1.8.3）视觉 + 主路径回归（合并前）
+
+> 对照 `requirements.md` §9.8 / §6.20。分支 `trial/wuxia-notice-board-ui`。实测 2026-08-05。
+
+| ID | 验收项 | 结果 |
+|----|--------|------|
+| V183-01～07 | 告示板壳 / 首页·广场拆分 / 纸贴 / 页眉英雄榜 / 防骗箴言 / 文案芯片 / 执事堂返回 | **Pass**（静态代码+结构核对） |
+| 主路径 | 发令→审→揭榜→成果→结算 | **Pass**（`run_e2e`：COMPLETED；fee=20；dist=180） |
+| 广场 API | `GET /bounties?status=OPEN,IN_COLLAB` | **Pass** |
+
+**说明**：旧 `run_e2e` 的 AC-03（充值）因 v1.7 默认关返回 `42004`，不计入本批失败；AC-S4 脚本仍 deferred。
+
+**结论：Pass** → 合并 `main`。证据 `docs/_qa_run/v183_visual_summary.txt`。

@@ -57,7 +57,7 @@ async function onSubmit() {
   <div class="auth-page">
     <div class="panel">
       <h1 class="brand-title">持令入江湖</h1>
-      <p class="slogan">MVP 仅邀请注册 · 遵义试点</p>
+      <p class="slogan">MVP 仅邀请注册 · 内测中</p>
       <el-form label-position="top" @submit.prevent="onSubmit">
         <el-form-item label="邀请码">
           <el-input v-model="form.inviteCode" @blur="checkInvite" />
@@ -95,19 +95,20 @@ async function onSubmit() {
 
 <style scoped>
 .auth-page {
-  min-height: 100vh;
-  min-height: 100dvh;
+  min-height: min(70vh, 720px);
   display: grid;
   place-items: center;
-  padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
-  background: var(--jh-paper);
+  padding: 24px 16px 32px;
+  background: transparent;
 }
 .panel {
   width: min(460px, 100%);
-  background: #fff;
-  border: 1px solid var(--jh-line);
+  background: rgba(42, 34, 24, 0.12);
+  border: 1px solid rgba(196, 163, 90, 0.35);
   border-radius: var(--jh-radius);
   padding: 28px 24px 22px;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 .brand-title {
   margin: 0;
@@ -118,7 +119,7 @@ async function onSubmit() {
 .hint,
 .foot {
   text-align: center;
-  color: var(--jh-muted);
+  color: rgba(247, 240, 221, 0.78);
 }
 .slogan {
   margin: 4px 0 16px;
@@ -127,6 +128,23 @@ async function onSubmit() {
   font-size: 12px;
   margin-top: 4px;
   text-align: left;
+}
+.panel :deep(.el-form-item__label) {
+  color: rgba(247, 240, 221, 0.85);
+}
+.panel :deep(.el-input__wrapper) {
+  background: rgba(255, 253, 246, 0.2);
+  box-shadow: 0 0 0 1px rgba(196, 163, 90, 0.45) inset;
+}
+.panel :deep(.el-input__wrapper:hover),
+.panel :deep(.el-input__wrapper.is-focus) {
+  box-shadow: 0 0 0 1px var(--jh-gold) inset;
+}
+.panel :deep(.el-input__inner) {
+  color: #f7f0dd;
+}
+.panel :deep(.el-input__inner::placeholder) {
+  color: rgba(247, 240, 221, 0.45);
 }
 .row {
   display: flex;
@@ -137,7 +155,7 @@ async function onSubmit() {
   margin-top: 16px;
 }
 .foot a {
-  color: var(--jh-seal);
+  color: var(--jh-gold-bright);
 }
 @media (max-width: 480px) {
   .panel {

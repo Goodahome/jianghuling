@@ -72,7 +72,7 @@ async function onSubmit() {
           </el-form-item>
         </template>
         <el-button class="jh-btn-seal" type="primary" native-type="submit" :loading="auth.loading" style="width: 100%">
-          入江湖
+          重出江湖
         </el-button>
       </el-form>
       <p class="foot">
@@ -85,19 +85,21 @@ async function onSubmit() {
 
 <style scoped>
 .auth-page {
-  min-height: 100vh;
-  min-height: 100dvh;
+  min-height: min(70vh, 640px);
   display: grid;
   place-items: center;
-  padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
-  background: var(--jh-paper);
+  padding: 24px 16px 32px;
+  background: transparent;
 }
 .panel {
   width: min(420px, 100%);
-  background: #fff;
-  border: 1px solid var(--jh-line);
+  background: rgba(42, 34, 24, 0.12);
+  border: 1px solid rgba(196, 163, 90, 0.35);
   border-radius: var(--jh-radius);
   padding: 28px 24px 22px;
+  box-shadow: none;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 .brand-title {
   margin: 0;
@@ -106,8 +108,32 @@ async function onSubmit() {
 }
 .slogan {
   text-align: center;
-  color: var(--jh-muted);
+  color: rgba(247, 240, 221, 0.78);
   margin: 4px 0 18px;
+}
+.panel :deep(.el-form-item__label) {
+  color: rgba(247, 240, 221, 0.85);
+}
+.panel :deep(.el-input__wrapper) {
+  background: rgba(255, 253, 246, 0.2);
+  box-shadow: 0 0 0 1px rgba(196, 163, 90, 0.45) inset;
+}
+.panel :deep(.el-input__wrapper:hover),
+.panel :deep(.el-input__wrapper.is-focus) {
+  box-shadow: 0 0 0 1px var(--jh-gold) inset;
+}
+.panel :deep(.el-input__inner) {
+  color: #f7f0dd;
+}
+.panel :deep(.el-input__inner::placeholder) {
+  color: rgba(247, 240, 221, 0.45);
+}
+.panel :deep(.el-tabs__item) {
+  color: rgba(247, 240, 221, 0.72);
+}
+.panel :deep(.el-tabs__item.is-active),
+.panel :deep(.el-tabs__item:hover) {
+  color: var(--jh-gold-bright);
 }
 .row {
   display: flex;
@@ -120,10 +146,10 @@ async function onSubmit() {
 .foot {
   margin-top: 16px;
   text-align: center;
-  color: var(--jh-muted);
+  color: rgba(247, 240, 221, 0.72);
 }
 .foot a {
-  color: var(--jh-seal);
+  color: var(--jh-gold-bright);
 }
 @media (max-width: 480px) {
   .panel {
