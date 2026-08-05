@@ -52,6 +52,7 @@ declare module 'vue' {
     EmptyState: typeof import('./components/EmptyState.vue')['default']
     HallBackBar: typeof import('./components/HallBackBar.vue')['default']
     ImageUpload: typeof import('./components/ImageUpload.vue')['default']
+    NoticeBoardShell: typeof import('./components/NoticeBoardShell.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     StatusTag: typeof import('./components/StatusTag.vue')['default']

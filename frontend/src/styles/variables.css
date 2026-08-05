@@ -13,4 +13,13 @@
   --jh-font-display: 'ZCOOL XiaoWei', 'Noto Serif SC', 'Songti SC', serif;
   --jh-font-body: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   --jh-shadow: none;
+
+  /* 金榜试验色（v1.8.2-trial，可整段删除回滚） */
+  --jh-gold: #c4a35a;
+  --jh-gold-bright: #e4c878;
+  --jh-gold-deep: #8a6b2a;
+  --jh-board: #2a2218;
+  --jh-board-mid: #3d3224;
+  --jh-plaque: #f7f0dd;
+  --jh-plaque-ink: #2a2118;
 }

@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useMessageStore } from '@/stores/message'
+import NoticeBoardShell from '@/components/NoticeBoardShell.vue'
 
 const auth = useAuthStore()
 const messageStore = useMessageStore()
@@ -62,95 +63,104 @@ async function onLogout() {
 
 <template>
   <div class="hero-app">
-    <header v-if="showNav" class="topbar">
-      <div class="jh-container bar-inner">
-        <RouterLink to="/" class="brand brand-title">江湖令</RouterLink>
+    <NoticeBoardShell title="江湖令">
+      <header v-if="showNav" class="topbar">
+        <div class="jh-container bar-inner">
+          <RouterLink to="/" class="brand brand-title">江湖令</RouterLink>
 
-        <nav class="nav desktop-only">
+          <nav class="nav desktop-only">
+            <RouterLink
+              v-for="item in visibleNav.slice(0, 5)"
+              :key="item.to"
+              :to="item.to"
+              class="nav-link"
+              :class="{ 'is-active': isNavActive(item.to) }"
+              active-class=""
+              exact-active-class=""
+            >
+              {{ item.label }}
+            </RouterLink>
+          </nav>
+
+          <div class="actions desktop-only">
+            <template v-if="auth.isLoggedIn">
+              <RouterLink to="/messages" class="ghost with-badge">
+                消息
+                <span v-if="unreadBadge" class="badge">{{ unreadBadge }}</span>
+              </RouterLink>
+              <RouterLink v-if="auth.hasOffice" to="/hall" class="ghost">执事堂</RouterLink>
+              <RouterLink to="/profile" class="user">{{ auth.user?.nickname || '侠士' }}</RouterLink>
+              <button class="link-btn" type="button" @click="onLogout">登出</button>
+            </template>
+            <template v-else>
+              <RouterLink to="/login" class="ghost">登录</RouterLink>
+              <RouterLink to="/register" class="cta">持令入江湖</RouterLink>
+            </template>
+          </div>
+
+          <button
+            class="menu-btn mobile-only"
+            type="button"
+            :aria-expanded="menuOpen"
+            aria-label="打开菜单"
+            @click="menuOpen = !menuOpen"
+          >
+            <span />
+            <span />
+            <span />
+            <span v-if="unreadBadge" class="menu-dot" />
+          </button>
+        </div>
+      </header>
+
+      <div v-if="showNav && menuOpen" class="drawer-mask mobile-only" @click="menuOpen = false" />
+      <aside v-if="showNav" class="drawer mobile-only" :class="{ open: menuOpen }">
+        <div class="drawer-head">
+          <strong class="brand-title">江湖令</strong>
+          <button type="button" class="link-btn" @click="menuOpen = false">关闭</button>
+        </div>
+        <nav class="drawer-nav">
           <RouterLink
-            v-for="item in visibleNav.slice(0, 5)"
+            v-for="item in visibleNav"
             :key="item.to"
             :to="item.to"
-            class="nav-link"
+            class="drawer-link"
             :class="{ 'is-active': isNavActive(item.to) }"
             active-class=""
             exact-active-class=""
           >
-            {{ item.label }}
+            <span>{{ item.label }}</span>
+            <span v-if="item.to === '/messages' && unreadBadge" class="badge">{{ unreadBadge }}</span>
           </RouterLink>
+          <RouterLink
+            v-if="auth.hasOffice"
+            to="/hall"
+            class="drawer-link"
+            :class="{ 'is-active': isNavActive('/hall') }"
+            active-class=""
+            exact-active-class=""
+          >
+            执事堂
+          </RouterLink>
+          <RouterLink v-if="!auth.isLoggedIn" to="/login" class="drawer-link" active-class="" exact-active-class="">登录</RouterLink>
+          <RouterLink v-if="!auth.isLoggedIn" to="/register" class="drawer-link accent" active-class="" exact-active-class="">持令入江湖</RouterLink>
+          <button v-if="auth.isLoggedIn" type="button" class="drawer-link as-btn" @click="onLogout">
+            登出
+          </button>
         </nav>
+      </aside>
 
-        <div class="actions desktop-only">
-          <template v-if="auth.isLoggedIn">
-            <RouterLink to="/messages" class="ghost with-badge">
-              消息
-              <span v-if="unreadBadge" class="badge">{{ unreadBadge }}</span>
-            </RouterLink>
-            <RouterLink v-if="auth.hasOffice" to="/hall" class="ghost">执事堂</RouterLink>
-            <RouterLink to="/profile" class="user">{{ auth.user?.nickname || '侠士' }}</RouterLink>
-            <button class="link-btn" type="button" @click="onLogout">登出</button>
-          </template>
-          <template v-else>
-            <RouterLink to="/login" class="ghost">登录</RouterLink>
-            <RouterLink to="/register" class="cta">持令入江湖</RouterLink>
-          </template>
+      <main class="page-main">
+        <RouterView />
+      </main>
+
+      <footer v-if="showNav" class="footer">
+        <div class="jh-container">
+          <p class="brand-title">江湖令</p>
+          <p class="jh-muted">天下有悬赏，江湖有侠士。 · 遵义试点 · 模拟银两非真实货币</p>
         </div>
-
-        <button
-          class="menu-btn mobile-only"
-          type="button"
-          :aria-expanded="menuOpen"
-          aria-label="打开菜单"
-          @click="menuOpen = !menuOpen"
-        >
-          <span />
-          <span />
-          <span />
-          <span v-if="unreadBadge" class="menu-dot" />
-        </button>
-      </div>
-    </header>
-
-    <div v-if="showNav && menuOpen" class="drawer-mask mobile-only" @click="menuOpen = false" />
-    <aside v-if="showNav" class="drawer mobile-only" :class="{ open: menuOpen }">
-      <div class="drawer-head">
-        <strong class="brand-title">江湖令</strong>
-        <button type="button" class="link-btn" @click="menuOpen = false">关闭</button>
-      </div>
-      <nav class="drawer-nav">
-        <RouterLink
-          v-for="item in visibleNav"
-          :key="item.to"
-          :to="item.to"
-          class="drawer-link"
-          :class="{ 'is-active': isNavActive(item.to) }"
-          active-class=""
-          exact-active-class=""
-        >
-          <span>{{ item.label }}</span>
-          <span v-if="item.to === '/messages' && unreadBadge" class="badge">{{ unreadBadge }}</span>
-        </RouterLink>
-        <RouterLink
-          v-if="auth.hasOffice"
-          to="/hall"
-          class="drawer-link"
-          :class="{ 'is-active': isNavActive('/hall') }"
-          active-class=""
-          exact-active-class=""
-        >
-          执事堂
-        </RouterLink>
-        <RouterLink v-if="!auth.isLoggedIn" to="/login" class="drawer-link" active-class="" exact-active-class="">登录</RouterLink>
-        <RouterLink v-if="!auth.isLoggedIn" to="/register" class="drawer-link accent" active-class="" exact-active-class="">持令入江湖</RouterLink>
-        <button v-if="auth.isLoggedIn" type="button" class="drawer-link as-btn" @click="onLogout">
-          登出
-        </button>
-      </nav>
-    </aside>
-
-    <main class="page-main">
-      <RouterView />
-    </main>
+      </footer>
+    </NoticeBoardShell>
 
     <nav v-if="showNav" class="tabbar mobile-only">
       <RouterLink to="/" class="tab" :class="{ 'is-active': isNavActive('/') }" active-class="" exact-active-class="">广场</RouterLink>
@@ -176,13 +186,6 @@ async function onLogout() {
         <span v-if="auth.isLoggedIn && unreadBadge" class="badge tab-badge">{{ unreadBadge }}</span>
       </RouterLink>
     </nav>
-
-    <footer v-if="showNav" class="footer">
-      <div class="jh-container">
-        <p class="brand-title">江湖令</p>
-        <p class="jh-muted">天下有悬赏，江湖有侠士。 · 遵义试点 · 模拟银两非真实货币</p>
-      </div>
-    </footer>
   </div>
 </template>
 
@@ -191,45 +194,87 @@ async function onLogout() {
   position: sticky;
   top: 0;
   z-index: 30;
-  background: #fff;
-  border-bottom: 1px solid var(--jh-line);
-  padding-top: env(safe-area-inset-top);
+  background: transparent;
+  border-bottom: none;
+  padding: calc(10px + env(safe-area-inset-top)) 0 12px;
 }
 .bar-inner {
   display: flex;
   align-items: center;
-  gap: 16px;
-  min-height: 56px;
+  gap: 10px;
+  min-height: 64px;
+  flex-wrap: wrap;
 }
+/* 空白木牌刻字 */
 .brand {
-  font-size: 26px;
-  color: var(--jh-ink);
+  font-family: var(--jh-font-display);
+  font-size: 22px;
+  letter-spacing: 0.22em;
+  text-indent: 0.12em;
   white-space: nowrap;
+  padding: 8px 16px;
+  color: #3a2a18;
+  background:
+    linear-gradient(180deg, #f7f0dd 0%, #e8d9b8 100%);
+  border: 1px solid rgba(90, 66, 40, 0.45);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.65),
+    inset 0 -2px 4px rgba(90, 66, 40, 0.12),
+    0 2px 0 rgba(42, 34, 24, 0.2);
+  text-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.35),
+    0 -1px 0 rgba(42, 34, 24, 0.25);
 }
 .nav {
   display: flex;
-  gap: 14px;
+  gap: 8px;
   flex: 1;
   flex-wrap: wrap;
+  align-items: center;
 }
 .nav-link {
-  color: var(--jh-ink-soft);
+  font-family: var(--jh-font-display);
   font-size: 14px;
-  padding: 6px 0;
-  border-bottom: 2px solid transparent;
+  letter-spacing: 0.12em;
+  color: #4a3824;
+  padding: 8px 12px;
+  background:
+    linear-gradient(180deg, #fbf6e8 0%, #eadfc8 100%);
+  border: 1px solid rgba(90, 66, 40, 0.35);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    0 1px 0 rgba(42, 34, 24, 0.15);
+  text-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.4),
+    0 -0.5px 0 rgba(42, 34, 24, 0.2);
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+.nav-link:hover {
+  transform: translateY(-1px);
+  border-color: rgba(138, 107, 42, 0.65);
 }
 .nav-link.is-active {
   color: var(--jh-seal);
-  border-bottom-color: var(--jh-seal);
+  border-color: rgba(178, 58, 45, 0.55);
+  box-shadow:
+    inset 0 0 0 1px rgba(178, 58, 45, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    0 1px 0 rgba(42, 34, 24, 0.15);
 }
 .actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   font-size: 14px;
 }
 .ghost {
-  color: var(--jh-muted);
+  font-family: var(--jh-font-display);
+  color: #4a3824;
+  padding: 7px 10px;
+  background: linear-gradient(180deg, #fbf6e8, #eadfc8);
+  border: 1px solid rgba(90, 66, 40, 0.35);
+  letter-spacing: 0.08em;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 .with-badge {
   position: relative;
@@ -253,32 +298,35 @@ async function onLogout() {
 }
 .cta,
 .user {
-  color: #fff;
-  background: var(--jh-seal);
+  font-family: var(--jh-font-display);
+  color: #f7f0dd;
+  background: linear-gradient(180deg, #c45a4a, var(--jh-seal));
   padding: 7px 12px;
-  border-radius: var(--jh-radius);
+  border: 1px solid rgba(90, 30, 24, 0.45);
   max-width: 120px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  letter-spacing: 0.08em;
 }
 .user {
-  background: var(--jh-ink-soft);
+  background: linear-gradient(180deg, #5a4a38, #3a2a18);
 }
 .link-btn {
   border: none;
   background: transparent;
-  color: var(--jh-muted);
+  color: #efe6d0;
   cursor: pointer;
-  padding: 0;
+  padding: 0 4px;
   font: inherit;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.35);
 }
 .menu-btn {
   margin-left: auto;
   width: 44px;
   height: 44px;
-  border: none;
-  background: transparent;
+  border: 1px solid rgba(90, 66, 40, 0.45);
+  background: linear-gradient(180deg, #fbf6e8, #eadfc8);
   display: none;
   flex-direction: column;
   justify-content: center;
@@ -286,11 +334,12 @@ async function onLogout() {
   padding: 10px;
   cursor: pointer;
   position: relative;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
 }
 .menu-btn span:not(.menu-dot) {
   display: block;
   height: 2px;
-  background: var(--jh-ink);
+  background: #3a2a18;
   border-radius: 2px;
 }
 .menu-dot {
@@ -365,8 +414,8 @@ async function onLogout() {
   right: 0;
   bottom: 0;
   z-index: 25;
-  background: #fff;
-  border-top: 1px solid var(--jh-line);
+  background: rgba(251, 246, 232, 0.96);
+  border-top: 1px solid rgba(138, 107, 42, 0.35);
   padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
   grid-template-columns: repeat(5, 1fr);
 }
@@ -393,13 +442,18 @@ async function onLogout() {
   font-size: 10px;
 }
 .footer {
-  border-top: 1px solid var(--jh-line);
+  border-top: 1px solid rgba(196, 163, 90, 0.3);
   padding: 28px 0 40px;
   margin-top: 24px;
+  color: rgba(247, 240, 221, 0.85);
 }
 .footer .brand-title {
   font-size: 22px;
   margin: 0 0 6px;
+  color: var(--jh-gold-bright);
+}
+.footer .jh-muted {
+  color: rgba(247, 240, 221, 0.65);
 }
 .mobile-only {
   display: none;
