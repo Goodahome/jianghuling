@@ -24,6 +24,7 @@ import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -40,9 +41,20 @@ public class AdminUserService {
     public PageResult<Map<String, Object>> page(String keyword, String status, long page, long pageSize) {
         LambdaQueryWrapper<User> q = new LambdaQueryWrapper<User>()
                 .eq(StringUtils.hasText(status), User::getStatus, status)
-                .and(StringUtils.hasText(keyword), w -> w.like(User::getUsername, keyword)
-                        .or().like(User::getPhone, keyword))
                 .orderByDesc(User::getId);
+        if (StringUtils.hasText(keyword)) {
+            // keyword：username / phone / user_profile.nickname（api.md §16.3）
+            List<Long> nicknameUserIds = userProfileMapper.selectList(new LambdaQueryWrapper<UserProfile>()
+                            .select(UserProfile::getUserId)
+                            .like(UserProfile::getNickname, keyword))
+                    .stream().map(UserProfile::getUserId).distinct().toList();
+            q.and(w -> {
+                w.like(User::getUsername, keyword).or().like(User::getPhone, keyword);
+                if (!nicknameUserIds.isEmpty()) {
+                    w.or().in(User::getId, nicknameUserIds);
+                }
+            });
+        }
         Page<User> p = userMapper.selectPage(new Page<>(page, pageSize), q);
         return PageResult.of(p.getRecords().stream().map(u -> {
             UserProfile profile = userProfileMapper.selectOne(new LambdaQueryWrapper<UserProfile>()

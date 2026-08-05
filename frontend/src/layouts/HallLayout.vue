@@ -88,24 +88,34 @@ watch(
 
       <div v-if="menuOpen" class="drawer-mask mobile-only" @click="menuOpen = false" />
       <aside class="drawer mobile-only" :class="{ open: menuOpen }">
-        <div class="drawer-head">
-          <strong class="brand-title">执事堂</strong>
-          <button type="button" class="link-btn" @click="menuOpen = false">关闭</button>
-        </div>
-        <nav class="drawer-nav">
-          <RouterLink
-            v-for="m in menus"
-            :key="m.path"
-            :to="m.path"
-            class="drawer-link"
-            :class="{ 'is-active': isActive(m.path, m.exact) }"
-            active-class=""
-            exact-active-class=""
-          >
-            {{ m.label }}
-          </RouterLink>
-          <RouterLink to="/" class="drawer-link" active-class="" exact-active-class="">返回江湖</RouterLink>
-        </nav>
+          <div class="drawer-head">
+            <strong class="brand-title">执事堂</strong>
+            <button type="button" class="link-btn" @click="menuOpen = false">关闭</button>
+          </div>
+          <div class="drawer-user">
+            <span class="user-avatar" aria-hidden="true">{{ nameInitial }}</span>
+            <span class="user-meta">
+              <span class="user-name">{{ displayName }}</span>
+              <span class="user-title">{{ levelTitle }}</span>
+            </span>
+          </div>
+          <nav class="drawer-nav">
+            <RouterLink
+              v-for="m in menus"
+              :key="m.path"
+              :to="m.path"
+              class="drawer-link"
+              :class="{ 'is-active': isActive(m.path, m.exact) }"
+              active-class=""
+              exact-active-class=""
+              @click="menuOpen = false"
+            >
+              {{ m.label }}
+            </RouterLink>
+            <RouterLink to="/" class="drawer-link" active-class="" exact-active-class="" @click="menuOpen = false">
+              返回江湖
+            </RouterLink>
+          </nav>
       </aside>
 
       <main class="page-main">
@@ -115,7 +125,7 @@ watch(
       <footer class="footer">
         <div class="jh-container">
           <p class="brand-title">执事堂</p>
-          <p class="jh-muted">职司履职之所 · 与侠士同江湖 · 非武林盟运营后台</p>
+          <p class="jh-muted">职司履职之所 · 与侠士同江湖</p>
         </div>
       </footer>
     </NoticeBoardShell>
@@ -248,53 +258,91 @@ watch(
   margin-left: auto;
   width: 44px;
   height: 44px;
-  border: none;
-  background: transparent;
+  border: 1px solid rgba(90, 66, 40, 0.45);
+  background: linear-gradient(180deg, #fbf6e8, #eadfc8);
   display: none;
   flex-direction: column;
   justify-content: center;
   gap: 5px;
   padding: 10px;
   cursor: pointer;
+  flex-shrink: 0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
 }
 .menu-btn span {
   display: block;
   height: 2px;
-  background: var(--jh-ink);
+  background: #3a2a18;
   border-radius: 2px;
 }
 .drawer-mask {
-  position: fixed;
+  /* 相对告示板木面，不盖瓦顶 */
+  position: absolute;
   inset: 0;
   background: rgba(28, 36, 48, 0.45);
   z-index: 40;
 }
 .drawer {
-  position: fixed;
+  /* 落在 board-face 内，避免 fixed 顶到视口被瓦面遮挡 */
+  position: absolute;
   top: 0;
   right: 0;
-  width: min(320px, 86vw);
-  height: 100%;
+  bottom: auto;
+  display: flex;
+  flex-direction: column;
+  width: min(260px, 72%);
+  height: auto;
+  max-height: 100%;
   background: #fff;
   z-index: 50;
   transform: translateX(100%);
   transition: transform 0.22s ease;
-  padding: calc(16px + env(safe-area-inset-top)) 16px 24px;
+  padding: 16px 16px 24px;
   border-left: 1px solid var(--jh-line);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+.drawer:not(.open) {
+  pointer-events: none;
 }
 .drawer.open {
   transform: translateX(0);
+  pointer-events: auto;
 }
 .drawer-head {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-shrink: 0;
   margin-bottom: 16px;
+}
+.drawer-user {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 10px;
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  background: linear-gradient(180deg, #fbf6e8, #eadfc8);
+  border: 1px solid rgba(90, 66, 40, 0.35);
+}
+.drawer-user .user-avatar {
+  width: 36px;
+  height: 36px;
+  font-size: 16px;
+}
+.drawer-user .user-name {
+  font-size: 16px;
 }
 .drawer-nav {
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
   gap: 4px;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 .drawer-link {
   display: block;
@@ -302,6 +350,7 @@ watch(
   border-radius: var(--jh-radius);
   font-size: 16px;
   color: var(--jh-ink);
+  flex-shrink: 0;
 }
 .drawer-link.is-active {
   background: var(--jh-mist);
@@ -310,9 +359,10 @@ watch(
 .link-btn {
   border: none;
   background: transparent;
-  color: var(--jh-muted);
+  color: #5a4630;
   cursor: pointer;
   font: inherit;
+  padding: 0 4px;
 }
 .page-main {
   min-height: 50vh;
@@ -354,11 +404,60 @@ watch(
   .drawer-mask.mobile-only {
     display: block;
   }
-  .page-main {
-    padding-bottom: env(safe-area-inset-bottom);
+  .topbar {
+    padding: calc(8px + env(safe-area-inset-top)) 0 8px;
+  }
+  .bar-inner {
+    flex-wrap: nowrap;
+    gap: 8px;
+    min-height: 52px;
+    min-width: 0;
   }
   .brand {
-    font-size: 24px;
+    font-size: 18px;
+    letter-spacing: 0.12em;
+    text-indent: 0.06em;
+    padding: 6px 10px;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .drawer {
+    width: min(220px, 68%);
+    max-width: 220px;
+    max-height: calc(100vh - 5.75rem);
+    max-height: calc(100dvh - 5.75rem - env(safe-area-inset-bottom, 0px));
+    background: linear-gradient(180deg, #fbf6e8 0%, #f3ead4 100%);
+    border-left: 1px solid rgba(90, 66, 40, 0.35);
+    padding: 12px 12px 14px;
+    padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+    overflow: hidden;
+  }
+  .drawer-head {
+    margin-bottom: 12px;
+  }
+  .drawer-head .brand-title {
+    color: #3a2a18;
+  }
+  .drawer-user {
+    margin-bottom: 10px;
+    padding: 9px 11px;
+  }
+  .drawer-nav {
+    gap: 2px;
+  }
+  .drawer-link {
+    padding: 11px 11px;
+    font-size: 15px;
+  }
+  .page-main {
+    padding-bottom: env(safe-area-inset-bottom);
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: clip;
+  }
+  .footer {
+    padding: 20px 0 28px;
   }
 }
 </style>

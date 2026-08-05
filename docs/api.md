@@ -3,7 +3,7 @@
 > 由 **架构师 AI（@architect）** 定义；**后端 / 前端** 严格对齐本文件。  
 > 对齐：`docs/requirements.md`（**v1.8.0**）P0、`docs/architecture.md`（**v1.0.4**）。
 
-**版本**：v1.0.4  
+**版本**：v1.0.5  
 **Base URL**：`/api/v1`  
 **鉴权**：`Authorization: Bearer <accessToken>`（标注「公开」的除外）  
 **最后更新**：2026-08-05
@@ -1164,7 +1164,7 @@
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| GET | `/admin/users` | 列表筛选 |
+| GET | `/admin/users?page=1&pageSize=20&keyword=&status=` | 列表筛选 |
 | GET | `/admin/users/{id}` | 详情（等级/声望/资产/邀请） |
 | POST | `/admin/users/{id}/disable` | 禁用 |
 | POST | `/admin/users/{id}/enable` | 启用 |
@@ -1174,6 +1174,16 @@
 | POST | `/admin/users/{id}/assets/adjust` | 手工调整侠义/体力/余额（审计） |
 | GET | `/admin/users/{id}/login-logs` | 登录日志 |
 | GET | `/admin/users/{id}/real-name` | 实名查看/状态维护 PUT |
+
+**`GET /admin/users` 查询参数**：
+
+| 参数 | 说明 |
+|------|------|
+| `keyword` | 可选；模糊匹配 **`user.username` / `user.phone` / `user_profile.nickname`**（任一命中即返回） |
+| `status` | 可选；`ACTIVE` / `DISABLED` / `BANNED` |
+| `page` / `pageSize` | 分页，默认 `1` / `20` |
+
+列表项至少含：`id`、`username`、`phone`、`nickname`、`status`、`city`、`level`、`levelTitle`、`createdAt`。
 
 资产调整 Body 示例：`{ "assetType": "BALANCE|CHIVALRY|STAMINA", "delta": 10, "reason": "..." }`
 
@@ -1482,3 +1492,4 @@ MVP **不提供**自定义新建角色 code（仅四类内置）；`role:write` 
 | v1.0.2 | 2026-08-05 | **D-003 管理员完整 RBAC**：① 新增 **§16.0**（权限码枚举、`*` 仅超管、四角色默认集、拦截策略）；② **§16.1** login/me 字段补全 `roles`/`permissions`/`status`，废弃顶层重复 permissions；③ **§16.10** 展开 `/admin/admins`、`/roles`、`/menus` 请求响应示例与权限要求；④ 路径↔权限码绑定表 |
 | v1.0.3 | 2026-08-05 | **需求 v1.7.1**：① §2.3 注册副作用：赠银/`REGISTER_GRANT`、邀新/`INVITE_REWARD`+幂等 biz_no；② §4 账户增加 `rechargeEnabled`/`withdrawEnabled`；充值提现关时 **`42004`**（接口保留）；③ 流水枚举补发放类；④ §4.5 `/meta/wallet-features`；⑤ §14 补列表字段、`GET /messages/unread-count`、已读响应；⑥ 错误码 `42004` |
 | **v1.0.4** | 2026-08-05 | **需求 v1.8.0 再发一令**：① 新增 **§7.8** `GET .../republish-draft` + `POST .../republish`；② 详情/我的发布增加 `sourceBountyId`、`canRepublish`；③ 仅 `REJECTED`/`CANCELLED`/`COMPLETED` 可再发；原单不变、新单 `PENDING_REVIEW`+重新冻结；④ 错误码 **`43007`**；⑤ `POST /bounties` 可选 `sourceBountyId`（等价约束） |
+| **v1.0.5** | 2026-08-05 | **§16.3** 明确 `GET /admin/users` 的 `keyword`：模糊匹配 `username` / `phone` / **`user_profile.nickname`**；补列表项字段说明 |

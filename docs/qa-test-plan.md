@@ -526,3 +526,37 @@
 **说明**：旧 `run_e2e` 的 AC-03（充值）因 v1.7 默认关返回 `42004`，不计入本批失败；AC-S4 脚本仍 deferred。
 
 **结论：Pass** → 合并 `main`。证据 `docs/_qa_run/v183_visual_summary.txt`。
+
+---
+
+## 16. 全站搜索 / 筛选功能验收
+
+> 范围：页面上**实际提供**搜索或筛选控件的列表。实测 2026-08-05。脚本 `docs/_qa_run/run_filter_qa.ps1`。
+
+### 16.1 有筛选 UI 的页面
+
+| 页面 | 筛选项 | 结果 | 说明 |
+|------|--------|------|------|
+| 悬赏广场 `/plaza` | type / district / keyword | **Pass** | 与 api `GET /bounties` 一致；无匹配 keyword→0 |
+| 告示栏 `/notices` | category | **Pass** | 分类互斥正确 |
+| 英雄榜 `/ranks` | type 三榜 | **Pass** | |
+| 站内消息 `/messages` | 仅未读 | **Pass** | `unreadOnly=true` |
+| 我的悬赏 `/mine` | 发布 / 揭榜 Tab | **Pass** | |
+| Admin 侠士 | keyword | **Pass** | 用户名/手机/昵称均可（D-FILTER-001 已关闭） |
+| Admin 悬赏 | status | **Pass** | |
+| Admin 令状配置 | templateCode | **Pass** | |
+
+### 16.2 无筛选 UI（本批 N/A）
+
+首页、钱庄流水、邀请、成长、纠纷、职司、资料；执事堂队列（固定待审）；Admin 邀请/纠纷/告示/奖品/盟主/职司/清单/运营/系统/流水等。
+
+### 16.3 缺陷
+
+**D-FILTER-001**（P2）Admin「侠士管理」查询 — **已关闭**（2026-08-05 复测）
+
+| 项 | 内容 |
+|----|------|
+| 修复 | `@backend` keyword 含 `user_profile.nickname`；`api.md` §16.3；`@frontend` placeholder「用户名/手机号/昵称」 |
+| 复测 | `KW-USERNAME/PHONE/NICKNAME` 均 Pass（`docs/_qa_run/dfilter_retest.txt`） |
+
+**本批结论：有筛选页主功能 Pass；D-FILTER-001 已关闭**

@@ -79,6 +79,11 @@ async function onSubmit() {
         尚无身份？
         <RouterLink to="/register">持邀请码注册</RouterLink>
       </p>
+      <p class="legal-links">
+        <RouterLink to="/legal/user-agreement">用户协议</RouterLink>
+        <span>·</span>
+        <RouterLink to="/legal/privacy">隐私政策</RouterLink>
+      </p>
     </div>
   </div>
 </template>
@@ -151,12 +156,41 @@ async function onSubmit() {
 .foot a {
   color: var(--jh-gold-bright);
 }
+.legal-links {
+  margin: 12px 0 0;
+  text-align: center;
+  font-size: 13px;
+  color: rgba(247, 240, 221, 0.55);
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.legal-links a {
+  color: rgba(247, 240, 221, 0.78);
+}
+.legal-links a:hover {
+  color: var(--jh-gold-bright);
+}
 @media (max-width: 480px) {
+  .auth-page {
+    min-height: auto;
+    padding: 16px 10px calc(28px + env(safe-area-inset-bottom));
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
   .panel {
-    padding: 22px 16px 18px;
+    width: 100%;
+    max-width: 100%;
+    padding: 20px 14px 16px;
+    box-sizing: border-box;
   }
   .row {
     flex-direction: column;
+  }
+  .row .el-button {
+    width: 100%;
   }
 }
 </style>

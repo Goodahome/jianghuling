@@ -12,6 +12,8 @@
   --jh-radius: 6px;
   --jh-font-display: 'ZCOOL XiaoWei', 'Noto Serif SC', 'Songti SC', serif;
   --jh-font-body: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  /* 法律/告示等文书标题：宋体系，非金榜艺术字 */
+  --jh-font-doc: 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', 'SimSun', serif;
   --jh-shadow: none;
 
   /* 金榜试验色（v1.8.2-trial，可整段删除回滚） */

@@ -40,7 +40,7 @@ onMounted(load)
   <div>
     <h2>侠士管理</h2>
     <div style="margin-bottom: 12px; display: flex; gap: 8px">
-      <el-input v-model="query.keyword" placeholder="昵称/手机号" style="width: 220px" />
+      <el-input v-model="query.keyword" placeholder="用户名/手机号/昵称" style="width: 220px" />
       <el-button type="primary" @click="query.page = 1; load()">查询</el-button>
     </div>
     <el-table :data="list">

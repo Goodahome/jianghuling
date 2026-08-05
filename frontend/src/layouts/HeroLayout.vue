@@ -18,9 +18,7 @@ const nav = [
   { to: '/ranks', label: '英雄榜' },
   { to: '/mine', label: '我的悬赏', auth: true },
   { to: '/wallet', label: '钱庄', auth: true },
-  { to: '/growth', label: '成长兑换', auth: true },
   { to: '/messages', label: '站内消息', auth: true },
-  { to: '/profile', label: '侠士资料', auth: true },
 ]
 
 const visibleNav = computed(() => nav.filter((n) => !n.auth || auth.isLoggedIn))
@@ -175,10 +173,10 @@ async function onLogout() {
           </RouterLink>
           <RouterLink v-if="!auth.isLoggedIn" to="/login" class="drawer-link" active-class="" exact-active-class="">登录</RouterLink>
           <RouterLink v-if="!auth.isLoggedIn" to="/register" class="drawer-link accent" active-class="" exact-active-class="">持令入江湖</RouterLink>
-          <button v-if="auth.isLoggedIn" type="button" class="ghost drawer-ghost" @click="onLogout">
-            隐退江湖
-          </button>
         </nav>
+        <button v-if="auth.isLoggedIn" type="button" class="ghost drawer-ghost" @click="onLogout">
+          隐退江湖
+        </button>
       </aside>
 
       <main class="page-main">
@@ -189,6 +187,11 @@ async function onLogout() {
         <div class="jh-container">
           <p class="brand-title">江湖令</p>
           <p class="jh-muted">天下有悬赏，江湖有侠士。 · 内测中 · 模拟银两非真实货币</p>
+          <p class="footer-legal">
+            <RouterLink to="/legal/user-agreement">用户协议</RouterLink>
+            <span>·</span>
+            <RouterLink to="/legal/privacy">隐私政策</RouterLink>
+          </p>
         </div>
       </footer>
     </NoticeBoardShell>
@@ -315,6 +318,7 @@ async function onLogout() {
 }
 .drawer-ghost {
   width: 100%;
+  flex-shrink: 0;
   margin-top: 8px;
   min-height: 44px;
 }
@@ -400,6 +404,7 @@ async function onLogout() {
 .drawer-user {
   display: flex;
   align-items: center;
+  flex-shrink: 0;
   gap: 10px;
   margin: 0 0 12px;
   padding: 10px 12px;
@@ -455,37 +460,55 @@ async function onLogout() {
   background: var(--jh-seal);
 }
 .drawer-mask {
-  position: fixed;
+  /* 相对告示板木面，不盖瓦顶 */
+  position: absolute;
   inset: 0;
   background: rgba(28, 36, 48, 0.45);
   z-index: 40;
 }
 .drawer {
-  position: fixed;
+  /* 落在 board-face 内，避免 fixed 顶到视口被瓦面遮挡 */
+  position: absolute;
   top: 0;
   right: 0;
-  width: min(320px, 86vw);
-  height: 100%;
+  bottom: auto;
+  display: flex;
+  flex-direction: column;
+  width: min(260px, 72%);
+  height: auto;
+  max-height: 100%;
   background: #fff;
   z-index: 50;
   transform: translateX(100%);
   transition: transform 0.22s ease;
-  padding: calc(16px + env(safe-area-inset-top)) 16px 24px;
+  padding: 16px 16px 24px;
   border-left: 1px solid var(--jh-line);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+.drawer:not(.open) {
+  pointer-events: none;
 }
 .drawer.open {
   transform: translateX(0);
+  pointer-events: auto;
 }
 .drawer-head {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-shrink: 0;
   margin-bottom: 16px;
 }
 .drawer-nav {
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
   gap: 4px;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 .drawer-link {
   display: flex;
@@ -496,6 +519,7 @@ async function onLogout() {
   border-radius: var(--jh-radius);
   font-size: 16px;
   color: var(--jh-ink);
+  flex-shrink: 0;
 }
 .drawer-link.is-active,
 .drawer-link.accent {
@@ -558,6 +582,21 @@ async function onLogout() {
 .footer .jh-muted {
   color: rgba(247, 240, 221, 0.65);
 }
+.footer-legal {
+  margin: 10px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  font-size: 13px;
+  color: rgba(247, 240, 221, 0.45);
+}
+.footer-legal a {
+  color: rgba(247, 240, 221, 0.78);
+}
+.footer-legal a:hover {
+  color: var(--jh-gold-bright);
+}
 .mobile-only {
   display: none;
 }
@@ -574,6 +613,7 @@ async function onLogout() {
   }
   .menu-btn {
     display: flex;
+    flex-shrink: 0;
   }
   .drawer.mobile-only {
     display: block;
@@ -584,14 +624,69 @@ async function onLogout() {
   .tabbar {
     display: grid;
   }
-  .page-main {
-    padding-bottom: calc(64px + env(safe-area-inset-bottom));
+  .topbar {
+    padding: calc(8px + env(safe-area-inset-top)) 0 8px;
   }
-  .footer {
-    padding-bottom: calc(88px + env(safe-area-inset-bottom));
+  .bar-inner {
+    flex-wrap: nowrap;
+    gap: 8px;
+    min-height: 52px;
+    min-width: 0;
   }
   .brand {
-    font-size: 24px;
+    font-size: 18px;
+    letter-spacing: 0.12em;
+    text-indent: 0.06em;
+    padding: 6px 10px;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .page-main {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom));
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: clip;
+  }
+  .footer {
+    padding: 20px 0 calc(88px + env(safe-area-inset-bottom));
+  }
+  .drawer {
+    width: min(220px, 68%);
+    max-width: 220px;
+    /* 瓦顶 + 底栏约占高，侧栏限制在可视主内容区 */
+    max-height: calc(100vh - 9.5rem);
+    max-height: calc(100dvh - 9.5rem - env(safe-area-inset-bottom, 0px));
+    background: linear-gradient(180deg, #fbf6e8 0%, #f3ead4 100%);
+    border-left: 1px solid rgba(90, 66, 40, 0.35);
+    padding: 12px 12px 14px;
+    padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+    overflow: hidden;
+  }
+  .drawer-head {
+    margin-bottom: 12px;
+  }
+  .drawer-head .brand-title {
+    color: #3a2a18;
+  }
+  .drawer-user {
+    margin-bottom: 10px;
+    padding: 9px 11px;
+  }
+  .drawer-nav {
+    gap: 2px;
+  }
+  .drawer-link {
+    padding: 11px 11px;
+    font-size: 15px;
+  }
+  .drawer-ghost {
+    margin-top: 8px;
+    min-height: 42px;
+  }
+  .link-btn {
+    color: #5a4630;
+    text-shadow: none;
   }
 }
 </style>

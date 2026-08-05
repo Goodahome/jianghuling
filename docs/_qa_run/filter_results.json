@@ -1,0 +1,238 @@
+﻿{
+    "PLAZA-BASE":  {
+                       "detail":  {
+                                      "code":  0,
+                                      "total":  2
+                                  },
+                       "pass":  true
+                   },
+    "PLAZA-TYPE":  {
+                       "detail":  {
+                                      "total":  2,
+                                      "bad":  0,
+                                      "type":  "RENT_SEEK"
+                                  },
+                       "pass":  true
+                   },
+    "PLAZA-TYPE-BOTH":  {
+                            "detail":  {
+                                           "seek":  2,
+                                           "out":  0
+                                       },
+                            "pass":  true
+                        },
+    "PLAZA-KEYWORD":  {
+                          "detail":  {
+                                         "keyword":  "å¯",
+                                         "bad":  0,
+                                         "total":  0
+                                     },
+                          "pass":  true
+                      },
+    "PLAZA-KEYWORD-EMPTY":  {
+                                "detail":  {
+                                               "total":  0
+                                           },
+                                "pass":  true
+                            },
+    "PLAZA-DISTRICT":  {
+                           "detail":  {
+                                          "bad":  0,
+                                          "district":  "å»å­¦é¢éè¿",
+                                          "total":  0
+                                      },
+                           "pass":  true
+                       },
+    "PLAZA-COMBO":  {
+                        "detail":  {
+                                       "total":  0,
+                                       "bad":  0
+                                   },
+                        "pass":  true
+                    },
+    "NOTICE-ALL":  {
+                       "detail":  {
+                                      "total":  4
+                                  },
+                       "pass":  true
+                   },
+    "NOTICE-ANTI_FRAUD":  {
+                              "detail":  {
+                                             "total":  1,
+                                             "bad":  0
+                                         },
+                              "pass":  true
+                          },
+    "NOTICE-RULE":  {
+                        "detail":  {
+                                       "total":  0,
+                                       "bad":  0
+                                   },
+                        "pass":  true
+                    },
+    "NOTICE-RENT_GUIDE":  {
+                              "detail":  {
+                                             "total":  0,
+                                             "bad":  0
+                                         },
+                              "pass":  true
+                          },
+    "NOTICE-ANNOUNCEMENT":  {
+                                "detail":  {
+                                               "total":  0,
+                                               "bad":  0
+                                           },
+                                "pass":  true
+                            },
+    "RANK-REPUTATION":  {
+                            "detail":  {
+                                           "code":  0,
+                                           "total":  17
+                                       },
+                            "pass":  true
+                        },
+    "RANK-CHIVALRY":  {
+                          "detail":  {
+                                         "code":  0,
+                                         "total":  17
+                                     },
+                          "pass":  true
+                      },
+    "RANK-COMPLETED":  {
+                           "detail":  {
+                                          "code":  0,
+                                          "total":  17
+                                      },
+                           "pass":  true
+                       },
+    "ADM-LOGIN":  {
+                      "detail":  {
+                                     "code":  0
+                                 },
+                      "pass":  true
+                  },
+    "ADM-INVITE":  {
+                       "detail":  {
+                                      "code":  0,
+                                      "invite":  "D94XB6FN"
+                                  },
+                       "pass":  true
+                   },
+    "HERO-REG":  {
+                     "detail":  {
+                                    "code":  0
+                                },
+                     "pass":  true
+                 },
+    "MSG-UNREAD":  {
+                       "detail":  {
+                                      "bad":  0,
+                                      "unread":  1,
+                                      "all":  1
+                                  },
+                       "pass":  true
+                   },
+    "MINE-TABS":  {
+                      "detail":  {
+                                     "pub":  0,
+                                     "claimed":  0
+                                 },
+                      "pass":  true
+                  },
+    "ADM-USERS-BASE":  {
+                           "detail":  {
+                                          "total":  18
+                                      },
+                           "pass":  true
+                       },
+    "ADM-USERS-KW-USERNAME":  {
+                                  "detail":  {
+                                                 "total":  1
+                                             },
+                                  "pass":  true
+                              },
+    "ADM-USERS-KW-PHONE":  {
+                               "detail":  {
+                                              "total":  1
+                                          },
+                               "pass":  true
+                           },
+    "ADM-USERS-KW-NICKNAME":  {
+                                  "detail":  {
+                                                 "total":  0,
+                                                 "note":  "UI claims nickname; backend username+phone"
+                                             },
+                                  "pass":  false
+                              },
+    "ADM-BOUNTY-STATUS":  {
+                              "detail":  {
+                                             "bad":  0,
+                                             "pending":  0,
+                                             "all":  9
+                                         },
+                              "pass":  true
+                          },
+    "ADM-WARRANT-TPL":  {
+                            "detail":  {
+                                           "bad":  0,
+                                           "all":  14,
+                                           "seek":  7
+                                       },
+                            "pass":  true
+                        },
+    "FE-PLAZA":  {
+                     "detail":  {
+                                    "file":  "f:\\Jinanghu_Ling\\frontend\\src\\views\\hero\\BountyPlazaView.vue"
+                                },
+                     "pass":  true
+                 },
+    "FE-NOTICE":  {
+                      "detail":  {
+                                     "file":  "f:\\Jinanghu_Ling\\frontend\\src\\views\\hero\\NoticesView.vue"
+                                 },
+                      "pass":  true
+                  },
+    "FE-RANK":  {
+                    "detail":  {
+                                   "file":  "f:\\Jinanghu_Ling\\frontend\\src\\views\\hero\\RankView.vue"
+                               },
+                    "pass":  true
+                },
+    "FE-MSG":  {
+                   "detail":  {
+                                  "file":  "f:\\Jinanghu_Ling\\frontend\\src\\views\\hero\\MessagesView.vue"
+                              },
+                   "pass":  true
+               },
+    "FE-MINE":  {
+                    "detail":  {
+                                   "file":  "f:\\Jinanghu_Ling\\frontend\\src\\views\\hero\\MyBountiesView.vue"
+                               },
+                    "pass":  true
+                },
+    "FE-ADM-USERS":  {
+                         "detail":  {
+                                        "file":  "f:\\Jinanghu_Ling\\frontend\\src\\views\\admin\\UsersView.vue"
+                                    },
+                         "pass":  true
+                     },
+    "FE-ADM-BOUNTY":  {
+                          "detail":  {
+                                         "file":  "f:\\Jinanghu_Ling\\frontend\\src\\views\\admin\\BountiesView.vue"
+                                     },
+                          "pass":  true
+                      },
+    "FE-ADM-WARRANT":  {
+                           "detail":  {
+                                          "file":  "f:\\Jinanghu_Ling\\frontend\\src\\views\\admin\\WarrantConfigAdminView.vue"
+                                      },
+                           "pass":  true
+                       },
+    "meta":  {
+                 "sampleId":  5,
+                 "username":  "flt70421",
+                 "nickname":  "NickFlt70421",
+                 "phone":  "13967277080",
+                 "ts":  "2026-08-05T23:35:19"
+             }
+}

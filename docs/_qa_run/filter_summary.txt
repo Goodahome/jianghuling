@@ -1,0 +1,32 @@
+全站搜索/筛选验收摘要
+日期: 2026-08-05
+脚本: docs/_qa_run/run_filter_qa.ps1
+明细: docs/_qa_run/filter_results.json
+
+=== 范围内（有筛选/搜索 UI）===
+悬赏广场 /plaza: type / district / keyword / 组合          ALL PASS
+告示栏 /notices: category 分类                            ALL PASS
+英雄榜 /ranks: REPUTATION|CHIVALRY|COMPLETED              ALL PASS
+站内消息 /messages: unreadOnly                            PASS
+我的悬赏 /mine: 发布/揭榜 Tab                             PASS
+Admin 侠士 /admin/users: keyword 用户名/手机              PASS
+Admin 侠士 keyword 按昵称                                 FAIL  << 缺陷
+Admin 悬赏状态筛选                                        PASS
+Admin 令状模板 templateCode                               PASS
+前端接线静态核对                                          ALL PASS
+
+=== 范围外（无搜索/筛选控件，仅列表或分页）===
+首页、钱庄流水、邀请、成长、纠纷、职司申请、资料
+执事堂队列（固定 PENDING）
+Admin：邀请/纠纷/告示/奖品/盟主/职司/清单/运营/系统/流水
+
+=== 缺陷 ===
+D-FILTER-001 [P2] Admin 侠士查询文案「昵称/手机号」与实现不符
+- 期望: 按昵称可查到用户（或改文案为用户名/手机号）
+- 实际: AdminUserService 仅 like username / phone；昵称 keyword 返回 0
+- 归属: @backend 补 nickname（联 profile）或 @frontend 改正文案
+- 建议先 @frontend 改 placeholder（成本低）；若产品要按昵称搜再 @backend
+
+=== 结论 ===
+有筛选能力的页面主路径：Pass（1 项 P2 文案/能力不一致）
+无筛选 UI 的页面：N/A

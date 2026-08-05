@@ -30,11 +30,18 @@ onMounted(async () => {
 }
 h1 {
   margin: 8px 0 16px;
-  font-family: var(--jh-font-display);
-  font-size: 30px;
+  font-family: var(--jh-font-doc);
+  font-size: clamp(22px, 5vw, 28px);
+  color: var(--jh-ink);
+  text-shadow: none;
+  letter-spacing: 0.04em;
+  font-weight: 600;
 }
 .content {
   white-space: pre-wrap;
-  line-height: 1.8;
+  line-height: 1.85;
+  color: var(--jh-ink);
+  font-family: var(--jh-font-body);
+  font-size: 15px;
 }
 </style>

@@ -36,23 +36,29 @@ defineProps<{
 <style scoped>
 .notice-stage {
   width: 100%;
+  max-width: 100%;
   margin: 0;
   padding: 0;
   min-height: 100vh;
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
+  overflow-x: clip;
+  box-sizing: border-box;
 }
 
 .notice-board {
   position: relative;
   width: min(1220px, calc(100% - 20px));
+  max-width: 100%;
   margin: 0 auto;
   flex: 1;
   display: flex;
   flex-direction: column;
   min-height: 100%;
+  min-width: 0;
   box-shadow: none;
+  box-sizing: border-box;
 }
 
 .board-roof {
@@ -169,6 +175,8 @@ defineProps<{
   margin: 0 12px;
   padding: 0 14px 10px;
   min-height: 0;
+  /* 侧栏 absolute 滑出时由舞台 overflow-x 裁切，木面保持定位上下文 */
+  isolation: isolate;
   background-color: #3d3224;
   background-image:
     linear-gradient(180deg, rgba(62, 48, 32, 0.55), rgba(42, 34, 24, 0.35)),
@@ -220,42 +228,54 @@ defineProps<{
 }
 
 @media (max-width: 768px) {
+  .notice-stage {
+    overflow-x: hidden;
+    /* 兜底：不支持 clip 时仍防整页横滚 */
+  }
+
   .notice-board {
-    width: 100%;
+    /* 左右留白，瓦顶微伸出也不顶出视口 */
+    width: calc(100% - 12px);
+    max-width: calc(100% - 12px);
   }
 
   .board-roof {
-    width: calc(100% + 80px);
-    margin: 0 -40px;
+    /* 窄屏仅微伸出，避免 ±40px 负边距造成横向滚动 */
+    width: calc(100% + 20px);
+    max-width: none;
+    margin: 0 -10px;
   }
 
   .roof-tiles,
   .roof-tiles-thickness {
-    height: clamp(50px, 13vw, 70px);
+    height: clamp(44px, 12vw, 64px);
   }
 
   .roof-tiles {
-    background-size: 120px 100%;
+    background-size: 100px 100%;
+    clip-path: polygon(2.5% 0, 97.5% 0, 100% 100%, 0 100%);
   }
 
   .roof-tiles-thickness {
-    top: 4px;
+    top: 3px;
+    clip-path: polygon(2.5% 0, 97.5% 0, 100% 100%, 0 100%);
   }
 
   .roof-eave {
-    width: calc(100% - 28px);
-    height: 24px;
-    margin-top: -6px;
+    width: calc(100% - 16px);
+    height: 20px;
+    margin-top: -5px;
   }
 
   .board-beam {
-    margin: 0 4px;
+    margin: 0 2px;
+    height: 14px;
   }
 
   .board-face {
-    margin: 0 4px;
+    margin: 0 2px;
     border-width: 2px;
-    padding: 0 8px 8px;
+    padding: 0 10px 10px;
   }
 
   .board-face::before,
@@ -264,12 +284,28 @@ defineProps<{
   }
 
   .board-legs {
-    margin: 0 18px;
-    height: 28px;
+    margin: 0 14px;
+    height: 22px;
   }
 
   .leg {
-    width: 14px;
+    width: 12px;
+  }
+}
+
+@media (max-width: 400px) {
+  .notice-board {
+    width: calc(100% - 8px);
+    max-width: calc(100% - 8px);
+  }
+
+  .board-roof {
+    width: calc(100% + 12px);
+    margin: 0 -6px;
+  }
+
+  .board-face {
+    padding: 0 8px 8px;
   }
 }
 </style>

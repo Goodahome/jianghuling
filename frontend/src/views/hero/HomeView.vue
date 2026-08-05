@@ -85,13 +85,38 @@
 
 @media (max-width: 768px) {
   .hero-band {
-    padding: 16px 8px 8px;
+    padding: 12px 4px 8px;
+    min-width: 0;
+  }
+  .band-inner {
+    max-width: 100%;
+  }
+  .copy {
+    max-width: 100%;
+    padding: 14px 14px 16px;
+    box-sizing: border-box;
+  }
+  .brand-title {
+    font-size: clamp(30px, 11vw, 42px);
+    letter-spacing: 0.08em;
+    word-break: keep-all;
+  }
+  .slogan {
+    font-size: clamp(16px, 4.5vw, 20px);
+    letter-spacing: 0.04em;
+  }
+  .belief {
+    margin-bottom: 16px;
+    font-size: 14px;
+    padding-left: 0;
   }
   .cta-row {
     flex-direction: column;
+    gap: 8px;
   }
   .btn {
     width: 100%;
+    box-sizing: border-box;
   }
 }
 </style>

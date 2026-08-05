@@ -13,6 +13,12 @@ const routes: RouteRecordRaw[] = [
       { path: 'login', name: 'login', component: () => import('@/views/hero/LoginView.vue'), meta: { guest: true, title: '登录' } },
       { path: 'register', name: 'register', component: () => import('@/views/hero/RegisterView.vue'), meta: { guest: true, title: '邀请注册' } },
       { path: 'r/:code', name: 'invite-landing', component: () => import('@/views/hero/RegisterView.vue'), meta: { guest: true, title: '邀请注册' } },
+      {
+        path: 'legal/:doc',
+        name: 'legal-doc',
+        component: () => import('@/views/hero/LegalDocView.vue'),
+        meta: { title: '法律条款' },
+      },
       { path: 'bounties/publish', name: 'bounty-publish', component: () => import('@/views/hero/PublishBountyView.vue'), meta: { auth: true, title: '张贴悬赏' } },
       { path: 'bounties/:id', name: 'bounty-detail', component: () => import('@/views/hero/BountyDetailView.vue'), meta: { title: '悬赏详情' } },
       { path: 'bounties/:id/chat', name: 'bounty-chat', component: () => import('@/views/hero/CollabChatView.vue'), meta: { auth: true, title: '协作会话' } },

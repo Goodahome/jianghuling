@@ -457,17 +457,64 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 768px) {
+  .plaza-section {
+    overflow-x: clip;
+    max-width: 100%;
+  }
+  .jinbang-board {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .notice-strip {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    max-width: 100%;
+    margin-bottom: 14px;
+    padding: 4px 0 8px;
+  }
+  .notice-label {
+    white-space: nowrap;
+  }
+  .notice-marquee {
+    width: 100%;
+    padding-left: 8px;
+  }
+  .notice-text {
+    font-size: 13px;
+  }
   .jinbang-grid {
-    grid-template-columns: repeat(auto-fill, minmax(160px, 200px));
-    gap: 12px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    justify-content: stretch;
   }
   .paper-wrap {
     width: 100%;
+    max-width: 100%;
     transform: none;
+  }
+  .paper-wrap:hover {
+    transform: none;
+  }
+  .paper-poster {
+    padding: 22px 10px 10px;
+  }
+  .poster-title {
+    font-size: 15px;
+    min-height: 2.6em;
+    -webkit-line-clamp: 2;
+  }
+  .poster-seal {
+    width: 28px;
+    height: 28px;
+    font-size: 13px;
+    right: 10px;
+    bottom: 12px;
   }
   .toolbar {
     flex-direction: column;
     align-items: stretch;
+    gap: 10px;
   }
   .toolbar :deep(.el-radio-group) {
     display: flex;
@@ -475,21 +522,43 @@ onBeforeUnmount(() => {
   }
   .toolbar :deep(.el-radio-button) {
     flex: 1;
+    min-width: 0;
   }
   .toolbar :deep(.el-radio-button__inner) {
     width: 100%;
+    padding: 8px 4px;
+    font-size: 13px;
   }
   .filters {
     width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
   }
   .filter-district,
   .filter-keyword {
-    flex: 1;
-    width: auto !important;
+    width: 100% !important;
     min-width: 0;
+    grid-column: span 1;
   }
-  .filter-btn {
+  .filter-btn,
+  .filters > a {
+    grid-column: 1 / -1;
     width: 100%;
+  }
+  .filters > a .filter-btn,
+  .filters .filter-btn {
+    width: 100%;
+  }
+  .pager {
+    margin-top: 16px;
+    overflow-x: auto;
+  }
+}
+
+@media (max-width: 360px) {
+  .jinbang-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>
