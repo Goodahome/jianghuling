@@ -1,0 +1,6 @@
+-- 联调：给指定侠士授予令审使/验功使（将 :userId 换成真实用户ID）
+-- USE jianghu_ling;
+-- INSERT INTO user_office (user_id, office_code, status, start_at, end_at)
+-- VALUES
+-- (2, 'DECREE_REVIEWER', 'ACTIVE', NOW(), DATE_ADD(NOW(), INTERVAL 90 DAY)),
+-- (2, 'FEAT_REVIEWER', 'ACTIVE', NOW(), DATE_ADD(NOW(), INTERVAL 90 DAY));

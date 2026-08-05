@@ -1,0 +1,56 @@
+# 江湖互助平台 —— 本地编排模板
+# 由 @devops 根据 architecture.md 完善镜像与依赖
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: jianghu-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-changeme}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-jianghu}
+      MYSQL_USER: ${MYSQL_USER:-jianghu}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-changeme}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-changeme}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: jianghu-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  # backend:
+  #   build: ../backend
+  #   container_name: jianghu-backend
+  #   depends_on:
+  #     mysql:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_started
+  #   ports:
+  #     - "8080:8080"
+  #   env_file:
+  #     - .env
+
+  # frontend:
+  #   build: ../frontend
+  #   container_name: jianghu-frontend
+  #   depends_on:
+  #     - backend
+  #   ports:
+  #     - "80:80"
+
+volumes:
+  mysql_data:
+  redis_data:

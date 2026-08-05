@@ -1,0 +1,27 @@
+# env & secrets
+.env
+docker/.env
+*.pem
+*.key
+
+# IDE / OS
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# backend
+backend/target/
+backend/.mvn/wrapper/maven-wrapper.jar
+backend/*.log
+
+# frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# logs & temp
+*.log
+tmp/
+.temp/

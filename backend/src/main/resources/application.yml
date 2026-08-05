@@ -1,0 +1,46 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: jianghu-ling
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  jackson:
+    time-zone: Asia/Shanghai
+    serialization:
+      write-dates-as-timestamps: false
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 20MB
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+  global-config:
+    db-config:
+      id-type: auto
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when_authorized
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:change-me-jianghu-ling-jwt-secret-key-32bytes}
+    expires-in-seconds: ${JWT_EXPIRES_IN:7200}
+  invite-base-url: ${INVITE_BASE_URL:http://localhost:5173/r/}
+  mock-sms-code: ${MOCK_SMS_CODE:123456}
+  upload:
+    dir: ${UPLOAD_DIR:./uploads}
+
+logging:
+  level:
+    com.jianghu.ling: INFO
