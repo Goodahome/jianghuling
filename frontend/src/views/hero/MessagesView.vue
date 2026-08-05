@@ -4,6 +4,7 @@ import { listMessages, markAllRead, markRead } from '@/api/message'
 import { useMessageStore } from '@/stores/message'
 import type { SiteMessage } from '@/types/models'
 import EmptyState from '@/components/EmptyState.vue'
+import JhPageHeader from '@/components/JhPageHeader.vue'
 
 const messageStore = useMessageStore()
 const list = ref<SiteMessage[]>([])
@@ -45,8 +46,8 @@ onMounted(load)
 <template>
   <section class="jh-section">
     <div class="jh-container narrow">
+      <JhPageHeader title="站内消息" subtitle="江湖往来 · 未读须知" />
       <div class="head">
-        <h1 class="brand-title">站内消息</h1>
         <div class="actions">
           <el-checkbox v-model="unreadOnly" @change="load">仅未读</el-checkbox>
           <el-button @click="onReadAll">全部已读</el-button>
@@ -79,19 +80,16 @@ onMounted(load)
 }
 .head {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
+  margin-bottom: 4px;
 }
 .actions {
   display: flex;
   align-items: center;
   gap: 12px;
-}
-h1 {
-  margin: 0;
-  font-size: 32px;
 }
 .list {
   margin-top: 14px;

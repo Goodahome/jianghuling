@@ -23,6 +23,12 @@ const menus = computed(() =>
 )
 
 const pageTitle = computed(() => String(route.meta.title || '执事堂'))
+const displayName = computed(() => auth.user?.nickname || auth.me?.nickname || '未名侠士')
+const levelTitle = computed(() => auth.me?.levelTitle || auth.user?.levelTitle || '侠士')
+const nameInitial = computed(() => {
+  const n = displayName.value.trim()
+  return n ? n.slice(0, 1) : '侠'
+})
 
 function isActive(path: string, exact?: boolean) {
   if (exact) return route.path === path
@@ -57,7 +63,13 @@ watch(
             </RouterLink>
           </nav>
           <div class="actions desktop-only">
-            <span class="who">{{ auth.user?.nickname || '职司' }}</span>
+            <div class="user-chip" :title="`${displayName} · ${levelTitle}`">
+              <span class="user-avatar" aria-hidden="true">{{ nameInitial }}</span>
+              <span class="user-meta">
+                <span class="user-name">{{ displayName }}</span>
+                <span class="user-title">{{ levelTitle }}</span>
+              </span>
+            </div>
             <RouterLink to="/" class="ghost">返回江湖</RouterLink>
           </div>
           <button
@@ -176,14 +188,53 @@ watch(
   gap: 8px;
   font-size: 14px;
 }
-.who {
+.user-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 168px;
+  min-width: 0;
+  padding: 4px 10px 4px 4px;
+  background: linear-gradient(180deg, #fbf6e8 0%, #eadfc8 100%);
+  border: 1px solid rgba(90, 66, 40, 0.4);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    0 1px 0 rgba(42, 34, 24, 0.15);
+}
+.user-avatar {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
   font-family: var(--jh-font-display);
-  color: #efe6d0;
-  max-width: 96px;
+  font-size: 14px;
+  color: #f7f0dd;
+  background: linear-gradient(160deg, #c45a4a, var(--jh-seal));
+  border: 1px solid rgba(90, 30, 24, 0.35);
+}
+.user-meta {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+.user-name {
+  font-family: var(--jh-font-display);
+  font-size: 14px;
+  color: #3a2a18;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.35);
+}
+.user-title {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--jh-seal);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .ghost {
   font-family: var(--jh-font-display);

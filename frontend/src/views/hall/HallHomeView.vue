@@ -2,7 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { listBountyReviews, listSubmissionReviews } from '@/api/hall'
-import HallBackBar from '@/components/HallBackBar.vue'
+import JhPageHeader from '@/components/JhPageHeader.vue'
 
 const auth = useAuthStore()
 const pendingBounty = ref(0)
@@ -39,9 +39,10 @@ onMounted(async () => {
 <template>
   <section class="jh-section">
     <div class="jh-container">
-      <HallBackBar to="/" label="返回江湖" />
-      <h1 class="brand-title">执事堂</h1>
-      <p class="jh-muted">欢迎，{{ auth.user?.nickname || '侠士' }}。于此履职，回避由堂规强制。</p>
+      <JhPageHeader
+        title="执事堂"
+        :subtitle="`欢迎，${auth.user?.nickname || '侠士'}。于此履职，回避由堂规强制。`"
+      />
 
       <div class="cards">
         <RouterLink
@@ -74,10 +75,6 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-h1 {
-  margin: 0 0 6px;
-  font-size: 36px;
-}
 .cards {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -111,9 +108,6 @@ h1 {
   margin-top: 16px;
 }
 @media (max-width: 640px) {
-  h1 {
-    font-size: 28px;
-  }
   .cards {
     grid-template-columns: 1fr;
   }

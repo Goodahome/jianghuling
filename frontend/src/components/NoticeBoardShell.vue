@@ -8,25 +8,14 @@ defineProps<{
 <template>
   <div class="notice-stage">
     <div class="notice-board" role="presentation">
-      <!-- 加大瓦顶屋檐 -->
       <div class="board-roof" aria-hidden="true">
-        <div class="roof-ridge" />
-        <div class="roof-tiles" />
-        <div class="roof-tiles-shadow" />
+        <div class="roof-tiles-stack">
+          <div class="roof-tiles-thickness" />
+          <div class="roof-tiles" />
+        </div>
         <div class="roof-eave" />
       </div>
 
-      <!-- 遮雨帘 -->
-      <div class="rain-curtain" aria-hidden="true">
-        <span
-          v-for="i in 18"
-          :key="i"
-          class="curtain-strip"
-          :style="{ animationDelay: `${(i % 6) * 0.16}s`, height: `${88 + (i % 3) * 8}%` }"
-        />
-      </div>
-
-      <!-- 木梁（匾额字交给导航刻字） -->
       <div class="board-beam" aria-hidden="true">
         <span class="beam-notch" />
         <span class="beam-notch right" />
@@ -46,111 +35,113 @@ defineProps<{
 
 <style scoped>
 .notice-stage {
-  width: min(1220px, calc(100% - 20px));
-  margin: 0 auto;
-  padding: 20px 0 36px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
 }
 
 .notice-board {
   position: relative;
-  filter: drop-shadow(0 22px 40px rgba(12, 10, 6, 0.45));
+  width: min(1220px, calc(100% - 20px));
+  margin: 0 auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  box-shadow: none;
 }
 
-/* —— 加大小青瓦顶 —— */
 .board-roof {
   position: relative;
-  z-index: 3;
-  margin: 0 -28px;
+  z-index: 5;
+  flex-shrink: 0;
+  width: calc(100% + 240px);
+  margin: 0 -120px;
 }
 
-.roof-ridge {
-  height: 14px;
-  margin: 0 10%;
-  background: linear-gradient(180deg, #4a5560, #1a2028);
-  border-radius: 8px 8px 0 0;
-  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.4);
+.roof-tiles-stack {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  /* clip-path 会裁掉 box-shadow，用 drop-shadow 做外轮廓立体 */
+  filter:
+    drop-shadow(0 10px 14px rgba(0, 0, 0, 0.42))
+    drop-shadow(0 3px 0 rgba(20, 18, 14, 0.35));
+}
+
+/* 厚度层：略下错，形成瓦檐侧面厚度 */
+.roof-tiles-thickness {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 6px;
+  height: clamp(66px, 9vw, 94px);
+  background: linear-gradient(180deg, #3a424c 0%, #1e242c 100%);
+  clip-path: polygon(4% 0, 96% 0, 100% 100%, 0 100%);
+  z-index: 0;
 }
 
 .roof-tiles {
-  height: clamp(96px, 16vw, 148px);
-  background-color: #2f3842;
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: clamp(66px, 9vw, 94px);
+  background-color: #5a6570;
   background-image: url('/textures/roof-tiles.png');
-  background-size: 180px auto;
+  background-size: 160px 100%;
   background-repeat: repeat-x;
-  background-position: center bottom;
-  border-radius: 6px 6px 0 0;
-  clip-path: polygon(1.5% 0, 98.5% 0, 100% 100%, 0 100%);
-  box-shadow: inset 0 -18px 28px rgba(0, 0, 0, 0.4);
+  background-position: center top;
+  clip-path: polygon(4% 0, 96% 0, 100% 100%, 0 100%);
 }
 
-.roof-tiles-shadow {
-  height: 18px;
-  margin: -1px 0 0;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.35), transparent);
+/* 瓦面内缘立体：顶亮、底暗、两侧收口 */
+.roof-tiles::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, transparent 28%),
+    linear-gradient(180deg, transparent 55%, rgba(0, 0, 0, 0.38) 100%),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.32) 0%, transparent 10%, transparent 90%, rgba(0, 0, 0, 0.32) 100%);
+}
+
+.roof-tiles::after {
+  content: '';
+  position: absolute;
+  left: 2%;
+  right: 2%;
+  bottom: 0;
+  height: 9px;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(80, 90, 100, 0.15), rgba(15, 18, 22, 0.55));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .roof-eave {
-  height: 22px;
-  margin: -4px 4px 0;
-  background:
-    linear-gradient(180deg, #6a4a2a, #3a2816 60%, #24180e);
-  border: 1px solid rgba(196, 163, 90, 0.3);
+  position: relative;
+  z-index: 1;
+  width: calc(100% - 56px);
+  height: 30px;
+  margin: -8px auto 0;
+  background: linear-gradient(180deg, #6a4a2a 0%, #3a2816 55%, #24180e 100%);
+  border: 1px solid rgba(196, 163, 90, 0.4);
   border-top: none;
   box-shadow:
-    0 6px 12px rgba(0, 0, 0, 0.35),
-    inset 0 1px 0 rgba(228, 200, 120, 0.2);
-}
-
-/* —— 遮雨帘 —— */
-.rain-curtain {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 3px;
-  height: 56px;
-  margin: 0 14px;
-  padding: 0 8px;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.curtain-strip {
-  flex: 1;
-  min-width: 0;
-  max-width: 26px;
-  border-radius: 0 0 12px 12px;
-  background:
-    linear-gradient(180deg, rgba(90, 24, 20, 0.97), rgba(140, 48, 38, 0.9) 45%, rgba(70, 20, 16, 0.95));
-  border: 1px solid rgba(60, 16, 12, 0.45);
-  border-top: none;
-  transform-origin: top center;
-  animation: curtain-sway 3.8s ease-in-out infinite;
-  box-shadow: inset 0 -8px 10px rgba(0, 0, 0, 0.22);
-}
-
-@keyframes curtain-sway {
-  0%,
-  100% {
-    transform: rotate(-1.4deg) translateY(0);
-  }
-  50% {
-    transform: rotate(1.6deg) translateY(3px);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .curtain-strip {
-    animation: none;
-  }
+    0 8px 14px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(228, 200, 120, 0.22);
 }
 
 .board-beam {
   position: relative;
   z-index: 2;
+  flex-shrink: 0;
   height: 18px;
-  margin: -8px 16px 0;
+  margin: 0 12px;
   background: linear-gradient(180deg, #5a4228, #2a1e12);
   border: 1px solid rgba(196, 163, 90, 0.35);
   box-shadow: inset 0 1px 0 rgba(228, 200, 120, 0.18);
@@ -174,9 +165,10 @@ defineProps<{
 .board-face {
   position: relative;
   z-index: 1;
+  flex: 1;
   margin: 0 12px;
-  min-height: 60vh;
   padding: 0 14px 10px;
+  min-height: 0;
   background-color: #3d3224;
   background-image:
     linear-gradient(180deg, rgba(62, 48, 32, 0.55), rgba(42, 34, 24, 0.35)),
@@ -186,9 +178,11 @@ defineProps<{
   border-top: none;
   box-shadow:
     inset 0 0 0 1px rgba(196, 163, 90, 0.22),
-    inset 0 24px 48px rgba(20, 14, 8, 0.18);
+    inset 0 24px 48px rgba(20, 14, 8, 0.18),
+    0 18px 36px rgba(12, 10, 6, 0.35);
 }
 
+/* 侧立柱：随木板面通高 */
 .board-face::before,
 .board-face::after {
   content: '';
@@ -208,43 +202,54 @@ defineProps<{
   right: 4px;
 }
 
+/* 底脚立柱：贴齐页面底边 */
 .board-legs {
   display: flex;
   justify-content: space-between;
+  flex-shrink: 0;
   margin: 0 32px;
-  height: 32px;
+  height: 36px;
 }
 
 .leg {
   width: 20px;
   height: 100%;
   background: linear-gradient(90deg, #2a1e12, #5a4228 40%, #2a1e12);
-  border-radius: 0 0 3px 3px;
-  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.28);
+  border-radius: 0;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
 }
 
 @media (max-width: 768px) {
-  .notice-stage {
+  .notice-board {
     width: 100%;
-    padding: 0 0 16px;
   }
 
   .board-roof {
-    margin: 0 -4px;
+    width: calc(100% + 80px);
+    margin: 0 -40px;
+  }
+
+  .roof-tiles,
+  .roof-tiles-thickness {
+    height: clamp(50px, 13vw, 70px);
   }
 
   .roof-tiles {
-    height: clamp(72px, 22vw, 110px);
-    clip-path: polygon(0.5% 0, 99.5% 0, 100% 100%, 0 100%);
+    background-size: 120px 100%;
   }
 
-  .rain-curtain {
-    height: 40px;
-    margin: 0 6px;
+  .roof-tiles-thickness {
+    top: 4px;
+  }
+
+  .roof-eave {
+    width: calc(100% - 28px);
+    height: 24px;
+    margin-top: -6px;
   }
 
   .board-beam {
-    margin: -6px 6px 0;
+    margin: 0 4px;
   }
 
   .board-face {
@@ -260,7 +265,7 @@ defineProps<{
 
   .board-legs {
     margin: 0 18px;
-    height: 20px;
+    height: 28px;
   }
 
   .leg {

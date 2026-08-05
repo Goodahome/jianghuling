@@ -7,7 +7,7 @@ import type { BountyListItem } from '@/types/models'
 import { bountyTypeLabel, formatAmount } from '@/utils/labels'
 import StatusTag from '@/components/StatusTag.vue'
 import EmptyState from '@/components/EmptyState.vue'
-import HallBackBar from '@/components/HallBackBar.vue'
+import JhPageHeader from '@/components/JhPageHeader.vue'
 
 const router = useRouter()
 const list = ref<BountyListItem[]>([])
@@ -46,9 +46,7 @@ onMounted(load)
 <template>
   <section class="jh-section">
     <div class="jh-container">
-      <HallBackBar to="/hall" />
-      <h1 class="brand-title">令审队列</h1>
-      <p class="jh-muted">待审发令 · 点进详情可览令状后落判</p>
+      <JhPageHeader title="令审队列" subtitle="待审发令 · 点进详情可览令状后落判" />
 
       <div v-loading="loading" class="list">
         <EmptyState v-if="!loading && !list.length" title="暂无待审发令" />

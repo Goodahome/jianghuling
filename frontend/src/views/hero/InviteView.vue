@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { createInvite, listMyInvites } from '@/api/user'
+import JhPageHeader from '@/components/JhPageHeader.vue'
 
 const code = ref('')
 const link = ref('')
@@ -39,8 +40,7 @@ onMounted(load)
 <template>
   <section class="jh-section">
     <div class="jh-container narrow">
-      <h1 class="brand-title">邀请同道</h1>
-      <p class="jh-muted">受每日额度限制 · 被邀请人凭码注册</p>
+      <JhPageHeader title="邀请同道" subtitle="受每日额度限制 · 被邀请人凭码注册" />
       <div class="jh-panel block">
         <el-button type="primary" class="jh-btn-seal" :loading="loading" @click="onCreate">
           生成邀请码

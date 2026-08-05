@@ -5,6 +5,7 @@ import type { NoticeCategory } from '@/types/api'
 import type { Notice } from '@/types/models'
 import { noticeCategoryLabel } from '@/utils/labels'
 import EmptyState from '@/components/EmptyState.vue'
+import JhPageHeader from '@/components/JhPageHeader.vue'
 
 const category = ref<'' | NoticeCategory>('')
 const list = ref<Notice[]>([])
@@ -30,8 +31,7 @@ onMounted(load)
 <template>
   <section class="jh-section">
     <div class="jh-container">
-      <h1 class="brand-title">告示栏</h1>
-      <p class="jh-muted">规则、防骗、遵义租房须知</p>
+      <JhPageHeader title="告示栏" subtitle="规则、防骗、遵义租房须知" />
       <el-radio-group v-model="category" class="tabs" @change="load">
         <el-radio-button value="">全部</el-radio-button>
         <el-radio-button v-for="(label, key) in noticeCategoryLabel" :key="key" :value="key">

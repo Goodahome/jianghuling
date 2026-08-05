@@ -7,6 +7,7 @@ import { useAuthStore } from '@/stores/auth'
 import type { LevelProgress } from '@/types/models'
 import { formatAmount } from '@/utils/labels'
 import ImageUpload from '@/components/ImageUpload.vue'
+import JhPageHeader from '@/components/JhPageHeader.vue'
 
 const auth = useAuthStore()
 const level = ref<LevelProgress | null>(null)
@@ -40,7 +41,7 @@ async function saveRealName() {
 <template>
   <section class="jh-section">
     <div class="jh-container narrow">
-      <h1 class="brand-title">侠士资料</h1>
+      <JhPageHeader title="侠士资料" subtitle="名号与江湖履历" />
       <div class="jh-panel block">
         <p>
           等级：{{ level?.levelTitle || auth.me?.levelTitle }} · 侠义

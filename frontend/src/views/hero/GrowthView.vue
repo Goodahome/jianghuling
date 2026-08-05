@@ -11,6 +11,7 @@ import {
 import { getGrowthConfig } from '@/api/meta'
 import type { GrowthConfig, LevelProgress, Product } from '@/types/models'
 import { useAuthStore } from '@/stores/auth'
+import JhPageHeader from '@/components/JhPageHeader.vue'
 
 const auth = useAuthStore()
 const level = ref<LevelProgress | null>(null)
@@ -49,7 +50,7 @@ async function onRedeem(id: number) {
 <template>
   <section class="jh-section">
     <div class="jh-container">
-      <h1 class="brand-title">成长与兑换</h1>
+      <JhPageHeader title="成长与兑换" subtitle="等级、体力与奖品兑换" />
       <div class="jh-panel block">
         <p>
           当前 {{ level?.levelTitle }} · 侠义 {{ level?.chivalry }} · 体力 {{ auth.me?.stamina }}

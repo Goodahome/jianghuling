@@ -5,6 +5,7 @@ import { applyLord, getMyLordApplication, getMyRank, getRanks } from '@/api/rank
 import type { RankType } from '@/types/api'
 import type { RankItem } from '@/types/models'
 import { useAuthStore } from '@/stores/auth'
+import JhPageHeader from '@/components/JhPageHeader.vue'
 
 const auth = useAuthStore()
 const type = ref<RankType>('REPUTATION')
@@ -38,7 +39,7 @@ onMounted(load)
 <template>
   <section class="jh-section">
     <div class="jh-container">
-      <h1 class="brand-title">英雄谱</h1>
+      <JhPageHeader title="英雄榜" subtitle="声望与侠义排行" />
       <div v-if="lord" class="lord jh-panel">
         <span>武林盟主荣耀位</span>
         <strong>{{ lord.nickname }}</strong>

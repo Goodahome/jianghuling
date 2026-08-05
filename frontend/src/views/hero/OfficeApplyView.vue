@@ -8,6 +8,7 @@ import {
   listOfficeDefs,
 } from '@/api/office'
 import type { OfficeBrief, OfficeDef } from '@/types/models'
+import JhPageHeader from '@/components/JhPageHeader.vue'
 
 const defs = ref<OfficeDef[]>([])
 const mine = ref<OfficeBrief[]>([])
@@ -34,8 +35,7 @@ onMounted(load)
 <template>
   <section class="jh-section">
     <div class="jh-container narrow">
-      <h1 class="brand-title">职司申请</h1>
-      <p class="jh-muted">令审使 / 验功使 · 由武林盟授予 · 持职后可进入执事堂</p>
+      <JhPageHeader title="职司申请" subtitle="令审使 / 验功使 · 由武林盟授予 · 持职后可进入执事堂" />
       <div v-if="mine.length" class="jh-panel block">
         <h2>我的职司</h2>
         <el-tag v-for="o in mine" :key="o.code" style="margin-right: 8px">

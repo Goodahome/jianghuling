@@ -5,6 +5,7 @@ import { getWalletAccount, listLedgers, recharge, withdraw } from '@/api/wallet'
 import type { WalletAccount, WalletLedger } from '@/types/models'
 import { clientRequestId, formatAmount, ledgerTypeLabel } from '@/utils/labels'
 import EmptyState from '@/components/EmptyState.vue'
+import JhPageHeader from '@/components/JhPageHeader.vue'
 
 const account = ref<WalletAccount | null>(null)
 const ledgers = ref<WalletLedger[]>([])
@@ -54,8 +55,7 @@ onMounted(async () => {
 <template>
   <section class="jh-section">
     <div class="jh-container">
-      <h1 class="brand-title">模拟钱庄</h1>
-      <p class="jh-muted">单位：两 · 非真实货币 · 发令将冻结赏银</p>
+      <JhPageHeader title="模拟钱庄" subtitle="单位：两 · 非真实货币 · 发令将冻结赏银" />
       <p class="jh-muted tip">银两主要由注册赠送、邀新奖励、管理员发放与悬赏流转构成。</p>
 
       <div class="stats">

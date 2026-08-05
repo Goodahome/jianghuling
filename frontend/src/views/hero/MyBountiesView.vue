@@ -6,6 +6,7 @@ import type { BountyListItem } from '@/types/models'
 import { bountyTypeLabel, formatAmount } from '@/utils/labels'
 import StatusTag from '@/components/StatusTag.vue'
 import EmptyState from '@/components/EmptyState.vue'
+import JhPageHeader from '@/components/JhPageHeader.vue'
 
 const router = useRouter()
 const tab = ref('published')
@@ -37,7 +38,7 @@ onMounted(load)
 <template>
   <section class="jh-section">
     <div class="jh-container">
-      <h1 class="brand-title">我的悬赏</h1>
+      <JhPageHeader title="我的悬赏" subtitle="我发布的与我揭榜的" />
       <el-tabs v-model="tab" @tab-change="load">
         <el-tab-pane label="我发布的" name="published" />
         <el-tab-pane label="我揭榜的" name="claimed" />

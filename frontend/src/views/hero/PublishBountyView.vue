@@ -8,6 +8,7 @@ import { getTopNotices } from '@/api/notice'
 import type { BountyType, Difficulty } from '@/types/api'
 import type { ChecklistTemplate, Notice, RewardSuggest, WarrantTemplate } from '@/types/models'
 import { difficultyLabel } from '@/utils/labels'
+import JhPageHeader from '@/components/JhPageHeader.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -176,15 +177,14 @@ async function onSubmit() {
 <template>
   <section class="jh-section" v-loading="draftLoading">
     <div class="jh-container narrow">
-      <h1 class="brand-title">{{ isRepublish ? '再发一令' : '张贴悬赏令' }}</h1>
-      <p class="jh-muted">
-        <template v-if="isRepublish">
-          基于原令 #{{ republishFromId }} 复制新建 · 须重新托管赏银并审核 · 原单不变
-        </template>
-        <template v-else>
-          结构化租房令状 · 最低赏银 {{ suggest?.minReward ?? 200 }} 两 · 模拟银两托管
-        </template>
-      </p>
+      <JhPageHeader
+        :title="isRepublish ? '再发一令' : '张贴悬赏令'"
+        :subtitle="
+          isRepublish
+            ? `基于原令 #${republishFromId} 复制新建 · 须重新托管赏银并审核 · 原单不变`
+            : `结构化租房令状 · 最低赏银 ${suggest?.minReward ?? 200} 两 · 模拟银两托管`
+        "
+      />
 
       <div v-if="tops.length" class="tips jh-panel">
         <strong>发令前必读</strong>

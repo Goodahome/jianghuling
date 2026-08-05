@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { listSubmissionReviews } from '@/api/hall'
 import type { Submission } from '@/types/models'
 import EmptyState from '@/components/EmptyState.vue'
-import HallBackBar from '@/components/HallBackBar.vue'
+import JhPageHeader from '@/components/JhPageHeader.vue'
 
 type Row = Submission & { bountyId?: number; bountyTitle?: string }
 
@@ -32,9 +32,7 @@ onMounted(load)
 <template>
   <section class="jh-section">
     <div class="jh-container">
-      <HallBackBar to="/hall" />
-      <h1 class="brand-title">验功队列</h1>
-      <p class="jh-muted">待审成果 · 点进详情可阅清单与举证</p>
+      <JhPageHeader title="验功队列" subtitle="待审成果 · 点进详情可阅清单与举证" />
 
       <div v-loading="loading" class="list">
         <EmptyState v-if="!loading && !list.length" title="暂无待审成果" />

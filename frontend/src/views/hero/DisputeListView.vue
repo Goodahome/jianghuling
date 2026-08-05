@@ -6,6 +6,7 @@ import { createDispute, listMyDisputes } from '@/api/dispute'
 import type { Dispute } from '@/types/models'
 import EmptyState from '@/components/EmptyState.vue'
 import ImageUpload from '@/components/ImageUpload.vue'
+import JhPageHeader from '@/components/JhPageHeader.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -55,7 +56,7 @@ watch(
 <template>
   <section class="jh-section">
     <div class="jh-container narrow">
-      <h1 class="brand-title">我的纠纷</h1>
+      <JhPageHeader title="我的纠纷" subtitle="结算后七日之内可发起" />
       <el-form class="jh-panel block" label-position="top" @submit.prevent="onCreate">
         <h2>发起纠纷</h2>
         <el-form-item label="悬赏令 ID" required>

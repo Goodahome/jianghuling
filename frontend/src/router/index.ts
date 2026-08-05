@@ -8,7 +8,8 @@ const routes: RouteRecordRaw[] = [
     path: '/',
     component: () => import('@/layouts/HeroLayout.vue'),
     children: [
-      { path: '', name: 'home', component: () => import('@/views/hero/HomeView.vue'), meta: { title: '悬赏广场' } },
+      { path: '', name: 'home', component: () => import('@/views/hero/HomeView.vue'), meta: { title: '首页' } },
+      { path: 'plaza', name: 'plaza', component: () => import('@/views/hero/BountyPlazaView.vue'), meta: { title: '悬赏广场' } },
       { path: 'login', name: 'login', component: () => import('@/views/hero/LoginView.vue'), meta: { guest: true, title: '登录' } },
       { path: 'register', name: 'register', component: () => import('@/views/hero/RegisterView.vue'), meta: { guest: true, title: '邀请注册' } },
       { path: 'r/:code', name: 'invite-landing', component: () => import('@/views/hero/RegisterView.vue'), meta: { guest: true, title: '邀请注册' } },
@@ -22,7 +23,7 @@ const routes: RouteRecordRaw[] = [
       { path: 'profile', name: 'profile', component: () => import('@/views/hero/ProfileView.vue'), meta: { auth: true, title: '侠士资料' } },
       { path: 'notices', name: 'notices', component: () => import('@/views/hero/NoticesView.vue'), meta: { title: '告示栏' } },
       { path: 'notices/:id', name: 'notice-detail', component: () => import('@/views/hero/NoticeDetailView.vue'), meta: { title: '告示详情' } },
-      { path: 'ranks', name: 'ranks', component: () => import('@/views/hero/RankView.vue'), meta: { title: '英雄谱' } },
+      { path: 'ranks', name: 'ranks', component: () => import('@/views/hero/RankView.vue'), meta: { title: '英雄榜' } },
       { path: 'growth', name: 'growth', component: () => import('@/views/hero/GrowthView.vue'), meta: { auth: true, title: '成长兑换' } },
       { path: 'offices', name: 'offices', component: () => import('@/views/hero/OfficeApplyView.vue'), meta: { auth: true, title: '职司申请' } },
       { path: 'messages', name: 'messages', component: () => import('@/views/hero/MessagesView.vue'), meta: { auth: true, title: '站内消息' } },

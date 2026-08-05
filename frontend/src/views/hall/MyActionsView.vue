@@ -2,7 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { listMyActions } from '@/api/hall'
 import EmptyState from '@/components/EmptyState.vue'
-import HallBackBar from '@/components/HallBackBar.vue'
+import JhPageHeader from '@/components/JhPageHeader.vue'
 
 type ActionRow = {
   id?: number
@@ -69,9 +69,7 @@ onMounted(async () => {
 <template>
   <section class="jh-section">
     <div class="jh-container">
-      <HallBackBar to="/hall" />
-      <h1 class="brand-title">履职记录</h1>
-      <p class="jh-muted">你在执事堂做过的令审 / 验功，可点进查看当时对象</p>
+      <JhPageHeader title="履职记录" subtitle="你在执事堂做过的令审 / 验功，可点进查看当时对象" />
 
       <div v-loading="loading" class="list">
         <EmptyState v-if="!loading && !list.length" title="暂无履职记录" />
