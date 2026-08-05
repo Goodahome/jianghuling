@@ -1,15 +1,17 @@
 spring:
   datasource:
-    url: jdbc:mysql://${MYSQL_HOST:127.0.0.1}:${MYSQL_PORT:3306}/${MYSQL_DB:jianghu_ling}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
-    username: ${MYSQL_USER:root}
-    password: ${MYSQL_PASSWORD:root}
+    url: jdbc:mysql://127.0.0.1:3306/jianghu_ling?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+    username: root
+    # 与本机 MySQL root 密码一致；含特殊字符建议加引号
+    password: "Admin@123"
     driver-class-name: com.mysql.cj.jdbc.Driver
   data:
     redis:
-      host: ${REDIS_HOST:127.0.0.1}
-      port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:}
-      database: ${REDIS_DB:0}
+      host: 127.0.0.1
+      port: 6379
+      # 含 # 必须加引号，否则后面会被当成 YAML 注释
+      password: "ks#Kus$_!^545kiwp_@.c&U9dK6s"
+      database: 0
 
 logging:
   level:
