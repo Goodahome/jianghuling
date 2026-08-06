@@ -39,8 +39,8 @@ defineProps<{
   max-width: 100%;
   margin: 0;
   padding: 0;
-  min-height: 100vh;
-  min-height: 100dvh;
+  /* 扣除 html zoom，避免一屏内容被放大后撑出滚动条 */
+  min-height: var(--jh-viewport-min);
   display: flex;
   flex-direction: column;
   overflow-x: clip;
@@ -52,10 +52,10 @@ defineProps<{
   width: min(1220px, calc(100% - 20px));
   max-width: 100%;
   margin: 0 auto;
-  flex: 1;
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-  min-height: 100%;
+  min-height: var(--jh-viewport-min);
   min-width: 0;
   box-shadow: none;
   box-sizing: border-box;
@@ -75,8 +75,8 @@ defineProps<{
   width: 100%;
   /* clip-path 会裁掉 box-shadow，用 drop-shadow 做外轮廓立体 */
   filter:
-    drop-shadow(0 10px 14px rgba(0, 0, 0, 0.42))
-    drop-shadow(0 3px 0 rgba(20, 18, 14, 0.35));
+    drop-shadow(0 8px 12px rgba(0, 0, 0, 0.4))
+    drop-shadow(0 2px 0 rgba(20, 18, 14, 0.32));
 }
 
 /* 厚度层：略下错，形成瓦檐侧面厚度 */
@@ -84,8 +84,8 @@ defineProps<{
   position: absolute;
   left: 0;
   right: 0;
-  top: 6px;
-  height: clamp(66px, 9vw, 94px);
+  top: 4px;
+  height: clamp(48px, 6.5vw, 68px);
   background: linear-gradient(180deg, #3a424c 0%, #1e242c 100%);
   clip-path: polygon(4% 0, 96% 0, 100% 100%, 0 100%);
   z-index: 0;
@@ -95,10 +95,10 @@ defineProps<{
   position: relative;
   z-index: 1;
   width: 100%;
-  height: clamp(66px, 9vw, 94px);
+  height: clamp(48px, 6.5vw, 68px);
   background-color: #5a6570;
   background-image: url('/textures/roof-tiles.png');
-  background-size: 160px 100%;
+  background-size: 140px 100%;
   background-repeat: repeat-x;
   background-position: center top;
   clip-path: polygon(4% 0, 96% 0, 100% 100%, 0 100%);
@@ -122,7 +122,7 @@ defineProps<{
   left: 2%;
   right: 2%;
   bottom: 0;
-  height: 9px;
+  height: 7px;
   pointer-events: none;
   background: linear-gradient(180deg, rgba(80, 90, 100, 0.15), rgba(15, 18, 22, 0.55));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
@@ -132,13 +132,13 @@ defineProps<{
   position: relative;
   z-index: 1;
   width: calc(100% - 56px);
-  height: 30px;
-  margin: -8px auto 0;
+  height: 22px;
+  margin: -6px auto 0;
   background: linear-gradient(180deg, #6a4a2a 0%, #3a2816 55%, #24180e 100%);
   border: 1px solid rgba(196, 163, 90, 0.4);
   border-top: none;
   box-shadow:
-    0 8px 14px rgba(0, 0, 0, 0.3),
+    0 6px 12px rgba(0, 0, 0, 0.28),
     inset 0 1px 0 rgba(228, 200, 120, 0.22);
 }
 
@@ -146,7 +146,7 @@ defineProps<{
   position: relative;
   z-index: 2;
   flex-shrink: 0;
-  height: 18px;
+  height: 14px;
   margin: 0 12px;
   background: linear-gradient(180deg, #5a4228, #2a1e12);
   border: 1px solid rgba(196, 163, 90, 0.35);
@@ -155,10 +155,10 @@ defineProps<{
 
 .beam-notch {
   position: absolute;
-  top: 3px;
+  top: 2px;
   left: 12px;
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: radial-gradient(circle at 35% 35%, #6a5234, #1a120a);
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5);
@@ -171,9 +171,10 @@ defineProps<{
 .board-face {
   position: relative;
   z-index: 1;
-  flex: 1;
+  /* 木面吃满剩余高度，避免立柱被拉长、牌面显矮 */
+  flex: 1 1 auto;
   margin: 0 12px;
-  padding: 0 14px 10px;
+  padding: 0 14px 8px;
   min-height: 0;
   /* 侧栏 absolute 滑出时由舞台 overflow-x 裁切，木面保持定位上下文 */
   isolation: isolate;
@@ -210,13 +211,14 @@ defineProps<{
   right: 4px;
 }
 
-/* 底脚立柱：贴齐页面底边 */
+/* 底脚立柱：固定短脚，贴齐浏览器底边 */
 .board-legs {
   display: flex;
   justify-content: space-between;
+  flex: 0 0 auto;
   flex-shrink: 0;
   margin: 0 32px;
-  height: 36px;
+  height: 28px;
 }
 
 .leg {
@@ -230,17 +232,14 @@ defineProps<{
 @media (max-width: 768px) {
   .notice-stage {
     overflow-x: hidden;
-    /* 兜底：不支持 clip 时仍防整页横滚 */
   }
 
   .notice-board {
-    /* 左右留白，瓦顶微伸出也不顶出视口 */
     width: calc(100% - 12px);
     max-width: calc(100% - 12px);
   }
 
   .board-roof {
-    /* 窄屏仅微伸出，避免 ±40px 负边距造成横向滚动 */
     width: calc(100% + 20px);
     max-width: none;
     margin: 0 -10px;
@@ -248,11 +247,11 @@ defineProps<{
 
   .roof-tiles,
   .roof-tiles-thickness {
-    height: clamp(44px, 12vw, 64px);
+    height: clamp(36px, 10vw, 52px);
   }
 
   .roof-tiles {
-    background-size: 100px 100%;
+    background-size: 90px 100%;
     clip-path: polygon(2.5% 0, 97.5% 0, 100% 100%, 0 100%);
   }
 
@@ -263,19 +262,19 @@ defineProps<{
 
   .roof-eave {
     width: calc(100% - 16px);
-    height: 20px;
-    margin-top: -5px;
+    height: 16px;
+    margin-top: -4px;
   }
 
   .board-beam {
     margin: 0 2px;
-    height: 14px;
+    height: 12px;
   }
 
   .board-face {
     margin: 0 2px;
     border-width: 2px;
-    padding: 0 10px 10px;
+    padding: 0 10px 8px;
   }
 
   .board-face::before,
@@ -285,7 +284,7 @@ defineProps<{
 
   .board-legs {
     margin: 0 14px;
-    height: 22px;
+    height: 18px;
   }
 
   .leg {
@@ -305,7 +304,7 @@ defineProps<{
   }
 
   .board-face {
-    padding: 0 8px 8px;
+    padding: 0 8px 6px;
   }
 }
 </style>

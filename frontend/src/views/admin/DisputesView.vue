@@ -5,6 +5,7 @@ import { adminGetDispute, adminListDisputes, adminVerdictDispute } from '@/api/a
 
 const list = ref<Record<string, unknown>[]>([])
 const detail = ref<Record<string, unknown> | null>(null)
+const detailVisible = ref(false)
 
 async function load() {
   const data = await adminListDisputes({ page: 1, pageSize: 50 })
@@ -13,6 +14,12 @@ async function load() {
 
 async function open(id: number) {
   detail.value = await adminGetDispute(id)
+  detailVisible.value = true
+}
+
+function closeDetail() {
+  detailVisible.value = false
+  detail.value = null
 }
 
 async function verdict(id: number) {
@@ -24,6 +31,9 @@ async function verdict(id: number) {
   await adminVerdictDispute(id, { action: action.trim(), comment: rest.join(',').trim() })
   ElMessage.success('裁决已执行')
   await load()
+  if (detail.value && Number(detail.value.id) === id) {
+    detail.value = await adminGetDispute(id)
+  }
 }
 
 onMounted(load)
@@ -44,8 +54,30 @@ onMounted(load)
         </template>
       </el-table-column>
     </el-table>
-    <el-card v-if="detail" style="margin-top: 12px">
-      <pre>{{ detail }}</pre>
-    </el-card>
+
+    <el-dialog
+      v-model="detailVisible"
+      title="纠纷详情"
+      width="640px"
+      destroy-on-close
+      @closed="detail = null"
+    >
+      <pre class="detail-pre">{{ detail }}</pre>
+      <template #footer>
+        <el-button @click="closeDetail">关闭</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
+
+<style scoped>
+.detail-pre {
+  margin: 0;
+  max-height: 60vh;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 13px;
+  line-height: 1.5;
+}
+</style>

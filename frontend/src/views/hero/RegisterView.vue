@@ -61,7 +61,7 @@ async function onSubmit() {
 <template>
   <div class="auth-page">
     <div class="panel">
-      <h1 class="brand-title">持令入江湖</h1>
+      <h1 class="brand-title">初入江湖</h1>
       <p class="slogan">MVP 仅邀请注册 · 内测中</p>
       <el-form label-position="top" @submit.prevent="onSubmit">
         <el-form-item label="邀请码">
@@ -103,12 +103,12 @@ async function onSubmit() {
           :disabled="!agreed"
           style="width: 100%"
         >
-          注册并登录
+          初入江湖
         </el-button>
       </el-form>
       <p class="foot">
         已有身份？
-        <RouterLink to="/login">去登录</RouterLink>
+        <RouterLink to="/login">踏入江湖</RouterLink>
       </p>
     </div>
   </div>

@@ -560,3 +560,19 @@
 | 复测 | `KW-USERNAME/PHONE/NICKNAME` 均 Pass（`docs/_qa_run/dfilter_retest.txt`） |
 
 **本批结论：有筛选页主功能 Pass；D-FILTER-001 已关闭**
+
+---
+
+## 17. requirements §9.11 子页返回抽查（v1.8.6）
+
+> 对照 §6.22 / §9.11。2026-08-06 静态抽查。证据 `docs/_qa_run/nav_back_spotcheck.txt`。
+
+| ID | 验收项 | 结果 |
+|----|--------|------|
+| NAV-01 | chat / submit / settle「返回悬赏详情」→ `/bounties/:id` | **Pass** |
+| NAV-02 | 告示详情 / 发令 / 条款 / 纠纷详情有返回 | **Pass** |
+| NAV-03 | 一级页未误加返回条 | **Pass** |
+| NAV-04 | 执事堂令审/验功详情 → 回队列 | **Pass** |
+| NAV-05 | Admin 纠纷详情弹层可关闭 | **Pass** |
+
+**结论：抽查项 Pass**（无阻断缺陷；已回填 `requirements.md` §9.11）

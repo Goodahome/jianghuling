@@ -413,8 +413,13 @@ public class BountyService {
         checkSubmitRate(claim.getId(), userId);
         List<BountyChecklist> checklist = checklistMapper.selectList(new LambdaQueryWrapper<BountyChecklist>()
                 .eq(BountyChecklist::getBountyId, bountyId));
-        Set<String> required = checklist.stream().filter(BountyChecklist::getRequired)
-                .map(BountyChecklist::getItemCode).collect(Collectors.toSet());
+        Map<String, String> requiredLabels = checklist.stream()
+                .filter(BountyChecklist::getRequired)
+                .collect(Collectors.toMap(
+                        BountyChecklist::getItemCode,
+                        c -> StringUtils.hasText(c.getItemName()) ? c.getItemName() : c.getItemCode(),
+                        (a, b) -> a,
+                        LinkedHashMap::new));
         Map<String, SubmitRequest.Item> itemMap = new HashMap<>();
         for (SubmitRequest.Item item : req.getItems()) {
             itemMap.put(item.getItemCode(), item);
@@ -430,11 +435,16 @@ public class BountyService {
         if (!anyContent && !StringUtils.hasText(req.getSummary())) {
             throw new BizException(ErrorCode.SUBMISSION_INVALID, "提交内容不能为空");
         }
-        for (String code : required) {
-            SubmitRequest.Item item = itemMap.get(code);
+        List<String> missingRequired = new ArrayList<>();
+        for (Map.Entry<String, String> entry : requiredLabels.entrySet()) {
+            SubmitRequest.Item item = itemMap.get(entry.getKey());
             if (item == null || !Boolean.TRUE.equals(item.getDone())) {
-                throw new BizException(ErrorCode.SUBMISSION_INVALID, "必验项未覆盖: " + code);
+                missingRequired.add(entry.getValue());
             }
+        }
+        if (!missingRequired.isEmpty()) {
+            throw new BizException(ErrorCode.SUBMISSION_INVALID,
+                    "以下必验项尚未勾选「已完成」：" + String.join("、", missingRequired));
         }
         Long versionCount = submissionMapper.selectCount(new LambdaQueryWrapper<Submission>()
                 .eq(Submission::getClaimId, claim.getId()));

@@ -2,8 +2,7 @@
 
 .hero-app,
 .hall-app {
-  min-height: 100vh;
-  min-height: 100dvh;
+  min-height: var(--jh-viewport-min);
   display: flex;
   flex-direction: column;
   color: var(--jh-ink);
@@ -22,7 +21,10 @@
 
 .hero-app > .notice-stage,
 .hall-app > .notice-stage {
-  flex: 1;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: var(--jh-viewport-min);
 }
 
 @supports not (background-attachment: fixed) {
@@ -60,6 +62,93 @@
   letter-spacing: 0.04em;
 }
 
+/* 顶栏 / 面包屑共用木牌质感 */
+.hero-app .brand,
+.hall-app .brand,
+.hero-app .nav-link,
+.hall-app .nav-link,
+.hero-app .ghost,
+.hall-app .ghost,
+.hero-app .user-chip,
+.hall-app .user-chip,
+.hero-app .menu-btn,
+.hall-app .menu-btn,
+.hero-app .drawer-user,
+.hall-app .drawer-user,
+.wood-block {
+  background-color: var(--jh-wood-base) !important;
+  background-image: var(--jh-wood-overlay), var(--jh-wood-grain), var(--jh-wood-image) !important;
+  background-size: auto, auto, 130px 130px !important;
+  background-position: center, center, center !important;
+  background-repeat: no-repeat, repeat, repeat !important;
+  border-color: rgba(90, 66, 40, 0.4) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 252, 240, 0.28),
+    inset 0 -2px 4px rgba(90, 66, 40, 0.12),
+    0 1px 0 rgba(42, 34, 24, 0.16) !important;
+}
+
+.hero-app .nav-link:hover,
+.hall-app .nav-link:hover,
+.hero-app .ghost:hover,
+.hall-app .ghost:hover,
+.wood-block.link:hover {
+  background-image:
+    linear-gradient(165deg, rgba(255, 253, 246, 0.4) 0%, rgba(250, 235, 205, 0.18) 50%, rgba(180, 140, 90, 0.12) 100%),
+    var(--jh-wood-grain),
+    var(--jh-wood-image) !important;
+  filter: brightness(1.02);
+}
+
+.hero-app .nav-link.is-active,
+.hall-app .nav-link.is-active,
+.wood-block.current {
+  /* 背景与未选中木牌一致，仅文字改朱砂 */
+  background-color: var(--jh-wood-base) !important;
+  background-image: var(--jh-wood-overlay), var(--jh-wood-grain), var(--jh-wood-image) !important;
+  border-color: rgba(90, 66, 40, 0.4) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 252, 240, 0.28),
+    inset 0 -2px 4px rgba(90, 66, 40, 0.12),
+    0 1px 0 rgba(42, 34, 24, 0.16) !important;
+  filter: none;
+}
+
+/* 木牌文字：茶墨填字（轻阴刻，避免叠影） */
+.hero-app .brand,
+.hall-app .brand,
+.hero-app .nav-link,
+.hall-app .nav-link,
+.hero-app .ghost,
+.hall-app .ghost,
+.hero-app .user-chip .user-name,
+.hall-app .user-chip .user-name,
+.hero-app .drawer-user .user-name,
+.hall-app .drawer-user .user-name,
+.wood-block {
+  color: var(--jh-wood-text-paint) !important;
+  text-shadow: var(--jh-wood-text-shine) !important;
+}
+
+.hero-app .user-chip .user-title,
+.hall-app .user-chip .user-title,
+.hero-app .drawer-user .user-title,
+.hall-app .drawer-user .user-title {
+  color: var(--jh-wood-text-paint-deep) !important;
+  text-shadow:
+    -0.5px -0.5px 0 rgba(12, 8, 4, 0.3),
+    0.5px 0.5px 0 rgba(255, 248, 230, 0.35) !important;
+}
+
+.hero-app .nav-link.is-active,
+.hall-app .nav-link.is-active,
+.wood-block.current {
+  color: var(--jh-wood-text-active) !important;
+  text-shadow:
+    -0.5px -0.5px 0 rgba(50, 12, 8, 0.4),
+    0.5px 0.5px 0 rgba(255, 220, 200, 0.4) !important;
+}
+
 /* 大标题统一：对齐悬赏金榜配色（亮金 + 轻阴影） */
 .hero-app h1,
 .hall-app h1,
@@ -68,6 +157,14 @@
   font-family: var(--jh-font-display);
   color: var(--jh-gold-bright);
   text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+}
+
+/* 首页主文案：金榜色 + 轻阴刻（与顶栏同深浅方向，无嵌套 zoom） */
+.hero-app .hero-band .brand-title,
+.hero-app .hero-band .slogan,
+.hero-app .hero-band .belief {
+  color: var(--jh-gold-bright) !important;
+  text-shadow: var(--jh-gold-text-shine) !important;
 }
 
 /* 卡片内文书标题（协议/隐私/告示等）：墨色宋体，勿用金榜艺术字 */
@@ -97,6 +194,16 @@
   font-family: var(--jh-font-doc);
   color: var(--jh-ink);
   text-shadow: none;
+  font-weight: 600;
+}
+
+/* 详情页头卡大标题：卡片上用墨色，不用金榜黄 */
+.hero-app .jh-panel.head h1,
+.hall-app .jh-panel.head h1 {
+  font-family: var(--jh-font-doc);
+  color: var(--jh-ink);
+  text-shadow: none;
+  letter-spacing: 0.04em;
   font-weight: 600;
 }
 
@@ -181,7 +288,20 @@
 }
 
 .jh-section {
-  padding: 24px 0 40px;
+  padding: 12px 0 20px;
+}
+
+/* 内容区文字/按钮/卡片整体缩小；顶栏在 page-main 外不受影响 */
+.hero-app .page-main,
+.hall-app .page-main {
+  zoom: var(--jh-content-scale);
+}
+
+/* 每页居中大标题保持原视觉尺寸（首页主文案改用字号补偿，避免嵌套 zoom 叠影） */
+.hero-app .page-main .jh-page-header,
+.hall-app .page-main .jh-page-header,
+.hero-app .page-main .auth-page .brand-title {
+  zoom: calc(1 / var(--jh-content-scale));
 }
 
 .jh-muted {
@@ -231,7 +351,7 @@
   }
 
   .jh-section {
-    padding: 12px 0 24px;
+    padding: 10px 0 20px;
     overflow-x: clip;
     max-width: 100%;
   }

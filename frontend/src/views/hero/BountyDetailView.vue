@@ -15,6 +15,7 @@ import {
   warrantFieldFallbackLabel,
 } from '@/utils/labels'
 import StatusTag from '@/components/StatusTag.vue'
+import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -24,6 +25,15 @@ const claiming = ref(false)
 const detail = ref<BountyDetail | null>(null)
 const warrantTemplates = ref<WarrantTemplate[]>([])
 const evaluations = ref<Record<string, unknown>[]>([])
+
+const crumbs = computed(() => {
+  const title = detail.value?.title?.trim()
+  const short = title && title.length > 12 ? `${title.slice(0, 12)}…` : title || '悬赏详情'
+  return [
+    { label: '悬赏广场', to: '/plaza' },
+    { label: short },
+  ]
+})
 
 const canClaim = computed(() => {
   if (!detail.value || !auth.isLoggedIn) return false
@@ -126,6 +136,7 @@ onMounted(load)
 <template>
   <section class="jh-section" v-loading="loading">
     <div class="jh-container" v-if="detail">
+      <PageBreadcrumb :items="crumbs" />
       <div class="head jh-panel">
         <div class="tags">
           <div class="tags-left">
@@ -268,7 +279,11 @@ onMounted(load)
 }
 h1 {
   margin: 0 0 8px;
-  font-size: clamp(24px, 4vw, 34px);
+  font-size: clamp(22px, 4vw, 28px);
+  font-family: var(--jh-font-doc);
+  color: var(--jh-ink);
+  text-shadow: none;
+  font-weight: 600;
 }
 .reward {
   font-size: 18px;

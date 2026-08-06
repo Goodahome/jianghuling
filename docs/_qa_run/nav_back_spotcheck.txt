@@ -1,0 +1,30 @@
+§9.11 / §6.22 返回导航抽查
+日期: 2026-08-06
+方式: 静态代码核对（PageBackBar / HallBackBar / Admin Dialog）对照 requirements §6.22 / §9.11
+
+=== 侠士端三级 ===
+chat   → PageBackBar to=/bounties/:id label=返回悬赏详情  PASS
+submit → 同上                                           PASS
+settle → 同上                                           PASS
+
+=== 侠士端二级 ===
+NoticeDetail  → to=/notices 返回告示栏                  PASS
+PublishBounty → to=/plaza 或原令详情                   PASS
+LegalDoc      → fallback=/ 返回                         PASS
+DisputeDetail → to=/disputes 返回纠纷列表               PASS
+BountyDetail  → PageBackBar fallback=/plaza             PASS（保持可用）
+
+=== 一级未误加 ===
+Home/Plaza/Notices/Ranks/Mine/Wallet/Growth/Messages/
+Profile/Invite/Office/DisputeList/Login/Register
+均无 PageBackBar/HallBackBar                           PASS
+
+=== 执事堂 ===
+BountyReviewDetail → HallBackBar to=/hall/bounty-reviews PASS
+SubmissionReviewDetail → to=/hall/submission-reviews     PASS
+Hall 列表/首页无 HallBackBar                             PASS
+
+=== 武林盟 ===
+DisputesView 详情 el-dialog + 关闭按钮 closeDetail       PASS
+
+结论: 本批抽查项 Pass（无阻断缺陷）

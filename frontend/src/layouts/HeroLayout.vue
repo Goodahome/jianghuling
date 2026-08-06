@@ -22,6 +22,8 @@ const nav = [
 ]
 
 const visibleNav = computed(() => nav.filter((n) => !n.auth || auth.isLoggedIn))
+/** 桌面顶栏：消息已在右侧入口，不重复占位 */
+const desktopNav = computed(() => visibleNav.value.filter((n) => n.to !== '/messages'))
 const showNav = computed(() => !['login', 'register', 'invite-landing'].includes(String(route.name)))
 const unreadBadge = computed(() => {
   const n = messageStore.unreadCount
@@ -75,7 +77,7 @@ async function onLogout() {
 
           <nav class="nav desktop-only">
             <RouterLink
-              v-for="item in visibleNav.slice(0, 5)"
+              v-for="item in desktopNav"
               :key="item.to"
               :to="item.to"
               class="nav-link"
@@ -94,7 +96,7 @@ async function onLogout() {
                 <span v-if="unreadBadge" class="badge">{{ unreadBadge }}</span>
               </RouterLink>
               <RouterLink v-if="auth.hasOffice" to="/hall" class="ghost">执事堂</RouterLink>
-              <button class="ghost" type="button" @click="onLogout">隐退江湖</button>
+              <button class="ghost" type="button" @click="onLogout">暂别江湖</button>
               <RouterLink
                 to="/profile"
                 class="user-chip"
@@ -108,8 +110,8 @@ async function onLogout() {
               </RouterLink>
             </template>
             <template v-else>
-              <RouterLink to="/login" class="ghost">登录</RouterLink>
-              <RouterLink to="/register" class="cta">持令入江湖</RouterLink>
+              <RouterLink to="/login" class="ghost">踏入江湖</RouterLink>
+              <RouterLink to="/register" class="cta">初入江湖</RouterLink>
             </template>
           </div>
 
@@ -131,13 +133,12 @@ async function onLogout() {
       <div v-if="showNav && menuOpen" class="drawer-mask mobile-only" @click="menuOpen = false" />
       <aside v-if="showNav" class="drawer mobile-only" :class="{ open: menuOpen }">
         <div class="drawer-head">
-          <strong class="brand-title">江湖令</strong>
-          <button type="button" class="link-btn" @click="menuOpen = false">关闭</button>
+          <button type="button" class="ghost" @click="menuOpen = false">关闭</button>
         </div>
         <RouterLink
           v-if="auth.isLoggedIn"
           to="/profile"
-          class="drawer-user"
+          class="user-chip drawer-chip"
           active-class=""
           exact-active-class=""
           @click="menuOpen = false"
@@ -153,7 +154,7 @@ async function onLogout() {
             v-for="item in visibleNav"
             :key="item.to"
             :to="item.to"
-            class="drawer-link"
+            class="nav-link"
             :class="{ 'is-active': isNavActive(item.to) }"
             active-class=""
             exact-active-class=""
@@ -164,19 +165,19 @@ async function onLogout() {
           <RouterLink
             v-if="auth.hasOffice"
             to="/hall"
-            class="drawer-link"
+            class="nav-link"
             :class="{ 'is-active': isNavActive('/hall') }"
             active-class=""
             exact-active-class=""
           >
             执事堂
           </RouterLink>
-          <RouterLink v-if="!auth.isLoggedIn" to="/login" class="drawer-link" active-class="" exact-active-class="">登录</RouterLink>
-          <RouterLink v-if="!auth.isLoggedIn" to="/register" class="drawer-link accent" active-class="" exact-active-class="">持令入江湖</RouterLink>
+          <RouterLink v-if="!auth.isLoggedIn" to="/login" class="ghost" active-class="" exact-active-class="">踏入江湖</RouterLink>
+          <RouterLink v-if="!auth.isLoggedIn" to="/register" class="cta" active-class="" exact-active-class="">初入江湖</RouterLink>
+          <button v-if="auth.isLoggedIn" type="button" class="ghost" @click="onLogout">
+            暂别江湖
+          </button>
         </nav>
-        <button v-if="auth.isLoggedIn" type="button" class="ghost drawer-ghost" @click="onLogout">
-          隐退江湖
-        </button>
       </aside>
 
       <main class="page-main">
@@ -195,31 +196,6 @@ async function onLogout() {
         </div>
       </footer>
     </NoticeBoardShell>
-
-    <nav v-if="showNav" class="tabbar mobile-only">
-      <RouterLink to="/" class="tab" :class="{ 'is-active': isNavActive('/') }" active-class="" exact-active-class="">首页</RouterLink>
-      <RouterLink to="/plaza" class="tab" :class="{ 'is-active': isNavActive('/plaza') }" active-class="" exact-active-class="">广场</RouterLink>
-      <RouterLink to="/notices" class="tab" :class="{ 'is-active': isNavActive('/notices') }" active-class="" exact-active-class="">告示</RouterLink>
-      <RouterLink
-        :to="auth.isLoggedIn ? '/mine' : '/login'"
-        class="tab"
-        :class="{ 'is-active': isNavActive(auth.isLoggedIn ? '/mine' : '/login') }"
-        active-class=""
-        exact-active-class=""
-      >
-        我的
-      </RouterLink>
-      <RouterLink
-        :to="auth.isLoggedIn ? '/messages' : '/register'"
-        class="tab with-badge"
-        :class="{ 'is-active': isNavActive(auth.isLoggedIn ? '/messages' : '/register') }"
-        active-class=""
-        exact-active-class=""
-      >
-        {{ auth.isLoggedIn ? '消息' : '入江湖' }}
-        <span v-if="auth.isLoggedIn && unreadBadge" class="badge tab-badge">{{ unreadBadge }}</span>
-      </RouterLink>
-    </nav>
   </div>
 </template>
 
@@ -230,13 +206,13 @@ async function onLogout() {
   z-index: 30;
   background: transparent;
   border-bottom: none;
-  padding: calc(10px + env(safe-area-inset-top)) 0 12px;
+  padding: calc(6px + env(safe-area-inset-top)) 0 8px;
 }
 .bar-inner {
   display: flex;
   align-items: center;
   gap: 10px;
-  min-height: 64px;
+  min-height: 52px;
   flex-wrap: wrap;
 }
 /* 空白木牌刻字 */
@@ -251,6 +227,7 @@ async function onLogout() {
   background:
     linear-gradient(180deg, #f7f0dd 0%, #e8d9b8 100%);
   border: 1px solid rgba(90, 66, 40, 0.45);
+  border-radius: var(--jh-wood-radius);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.65),
     inset 0 -2px 4px rgba(90, 66, 40, 0.12),
@@ -275,6 +252,7 @@ async function onLogout() {
   background:
     linear-gradient(180deg, #fbf6e8 0%, #eadfc8 100%);
   border: 1px solid rgba(90, 66, 40, 0.35);
+  border-radius: var(--jh-wood-radius);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.55),
     0 1px 0 rgba(42, 34, 24, 0.15);
@@ -286,14 +264,6 @@ async function onLogout() {
 .nav-link:hover {
   transform: translateY(-1px);
   border-color: rgba(138, 107, 42, 0.65);
-}
-.nav-link.is-active {
-  color: var(--jh-seal);
-  border-color: rgba(178, 58, 45, 0.55);
-  box-shadow:
-    inset 0 0 0 1px rgba(178, 58, 45, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5),
-    0 1px 0 rgba(42, 34, 24, 0.15);
 }
 .actions {
   display: flex;
@@ -311,16 +281,11 @@ async function onLogout() {
   padding: 7px 10px;
   background: linear-gradient(180deg, #fbf6e8, #eadfc8);
   border: 1px solid rgba(90, 66, 40, 0.35);
+  border-radius: var(--jh-wood-radius);
   letter-spacing: 0.08em;
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
   cursor: pointer;
   white-space: nowrap;
-}
-.drawer-ghost {
-  width: 100%;
-  flex-shrink: 0;
-  margin-top: 8px;
-  min-height: 44px;
 }
 .with-badge {
   position: relative;
@@ -348,6 +313,7 @@ async function onLogout() {
   background: linear-gradient(180deg, #c45a4a, var(--jh-seal));
   padding: 7px 12px;
   border: 1px solid rgba(90, 30, 24, 0.45);
+  border-radius: var(--jh-wood-radius);
   letter-spacing: 0.08em;
   white-space: nowrap;
 }
@@ -360,6 +326,7 @@ async function onLogout() {
   padding: 4px 10px 4px 4px;
   background: linear-gradient(180deg, #fbf6e8 0%, #eadfc8 100%);
   border: 1px solid rgba(90, 66, 40, 0.4);
+  border-radius: var(--jh-wood-radius);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.55),
     0 1px 0 rgba(42, 34, 24, 0.15);
@@ -401,23 +368,15 @@ async function onLogout() {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.drawer-user {
+.drawer-chip {
   display: flex;
   align-items: center;
   flex-shrink: 0;
-  gap: 10px;
-  margin: 0 0 12px;
-  padding: 10px 12px;
-  background: linear-gradient(180deg, #fbf6e8, #eadfc8);
-  border: 1px solid rgba(90, 66, 40, 0.35);
-}
-.drawer-user .user-avatar {
-  width: 36px;
-  height: 36px;
-  font-size: 16px;
-}
-.drawer-user .user-name {
-  font-size: 16px;
+  gap: 8px;
+  margin: 0 0 10px;
+  text-decoration: none;
+  width: fit-content;
+  max-width: 100%;
 }
 .link-btn {
   border: none;
@@ -434,6 +393,7 @@ async function onLogout() {
   width: 44px;
   height: 44px;
   border: 1px solid rgba(90, 66, 40, 0.45);
+  border-radius: var(--jh-wood-radius);
   background: linear-gradient(180deg, #fbf6e8, #eadfc8);
   display: none;
   flex-direction: column;
@@ -463,7 +423,7 @@ async function onLogout() {
   /* 相对告示板木面，不盖瓦顶 */
   position: absolute;
   inset: 0;
-  background: rgba(28, 36, 48, 0.45);
+  background: rgba(20, 14, 8, 0.28);
   z-index: 40;
 }
 .drawer {
@@ -474,15 +434,15 @@ async function onLogout() {
   bottom: auto;
   display: flex;
   flex-direction: column;
-  width: min(260px, 72%);
+  width: min(240px, 78%);
   height: auto;
   max-height: 100%;
-  background: #fff;
+  background: transparent;
   z-index: 50;
   transform: translateX(100%);
   transition: transform 0.22s ease;
-  padding: 16px 16px 24px;
-  border-left: 1px solid var(--jh-line);
+  padding: 12px 12px 16px;
+  border: none;
   box-sizing: border-box;
   overflow: hidden;
 }
@@ -495,83 +455,34 @@ async function onLogout() {
 }
 .drawer-head {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   flex-shrink: 0;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
 }
 .drawer-nav {
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
-  gap: 4px;
+  gap: 8px;
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
+  align-items: stretch;
 }
-.drawer-link {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 14px 12px;
-  border-radius: var(--jh-radius);
-  font-size: 16px;
-  color: var(--jh-ink);
-  flex-shrink: 0;
-}
-.drawer-link.is-active,
-.drawer-link.accent {
-  background: var(--jh-mist);
-  color: var(--jh-seal);
-}
-.drawer-link.as-btn {
+.drawer-nav .nav-link,
+.drawer-nav .ghost,
+.drawer-nav .cta {
   width: 100%;
+  box-sizing: border-box;
+  justify-content: space-between;
   text-align: left;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  font: inherit;
-}
-.tabbar {
-  display: none;
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 25;
-  background: rgba(251, 246, 232, 0.96);
-  border-top: 1px solid rgba(138, 107, 42, 0.35);
-  padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
-  grid-template-columns: repeat(5, 1fr);
-}
-.tab {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 44px;
-  font-size: 12px;
-  color: var(--jh-muted);
-}
-.tab.is-active {
-  color: var(--jh-seal);
-  font-weight: 600;
-}
-.tab-badge {
-  position: absolute;
-  top: 2px;
-  right: calc(50% - 28px);
-  margin-left: 0;
-  min-width: 16px;
-  height: 16px;
-  font-size: 10px;
 }
 .footer {
   border-top: 1px solid rgba(196, 163, 90, 0.3);
-  padding: 28px 0 40px;
-  margin-top: 24px;
+  padding: 16px 0 20px;
+  margin-top: 12px;
   color: rgba(247, 240, 221, 0.85);
 }
 .footer .brand-title {
@@ -621,9 +532,6 @@ async function onLogout() {
   .drawer-mask.mobile-only {
     display: block;
   }
-  .tabbar {
-    display: grid;
-  }
   .topbar {
     padding: calc(8px + env(safe-area-inset-top)) 0 8px;
   }
@@ -643,50 +551,36 @@ async function onLogout() {
     text-overflow: ellipsis;
   }
   .page-main {
-    padding-bottom: calc(64px + env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom);
     min-width: 0;
     max-width: 100%;
     overflow-x: clip;
   }
   .footer {
-    padding: 20px 0 calc(88px + env(safe-area-inset-bottom));
+    padding: 14px 0 calc(20px + env(safe-area-inset-bottom));
   }
   .drawer {
-    width: min(220px, 68%);
+    width: min(220px, 72%);
     max-width: 220px;
-    /* 瓦顶 + 底栏约占高，侧栏限制在可视主内容区 */
-    max-height: calc(100vh - 9.5rem);
-    max-height: calc(100dvh - 9.5rem - env(safe-area-inset-bottom, 0px));
-    background: linear-gradient(180deg, #fbf6e8 0%, #f3ead4 100%);
-    border-left: 1px solid rgba(90, 66, 40, 0.35);
-    padding: 12px 12px 14px;
+    max-height: calc(var(--jh-viewport-min) - 5.5rem);
+    max-height: calc(var(--jh-viewport-min) - 5.5rem - env(safe-area-inset-bottom, 0px));
+    background: transparent;
+    border: none;
+    padding: 10px 10px 14px;
     padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
     overflow: hidden;
   }
   .drawer-head {
-    margin-bottom: 12px;
-  }
-  .drawer-head .brand-title {
-    color: #3a2a18;
-  }
-  .drawer-user {
-    margin-bottom: 10px;
-    padding: 9px 11px;
+    margin-bottom: 8px;
   }
   .drawer-nav {
-    gap: 2px;
+    gap: 8px;
   }
-  .drawer-link {
-    padding: 11px 11px;
-    font-size: 15px;
-  }
-  .drawer-ghost {
-    margin-top: 8px;
-    min-height: 42px;
-  }
-  .link-btn {
-    color: #5a4630;
-    text-shadow: none;
+  .drawer-nav .nav-link,
+  .drawer-nav .ghost,
+  .drawer-nav .cta {
+    font-size: 14px;
+    padding: 8px 12px;
   }
 }
 </style>

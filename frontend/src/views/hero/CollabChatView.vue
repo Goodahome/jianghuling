@@ -4,9 +4,16 @@ import { useRoute } from 'vue-router'
 import { listMessages, sendMessage } from '@/api/bounty'
 import type { BountyMessage } from '@/types/models'
 import { useAuthStore } from '@/stores/auth'
+import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
 
 const route = useRoute()
 const auth = useAuthStore()
+const bountyId = String(route.params.id || '')
+const crumbs = [
+  { label: '悬赏广场', to: '/plaza' },
+  { label: '悬赏详情', to: `/bounties/${bountyId}` },
+  { label: '协作会话' },
+]
 const list = ref<BountyMessage[]>([])
 const content = ref('')
 const box = ref<HTMLElement | null>(null)
@@ -35,22 +42,25 @@ onUnmounted(() => clearInterval(timer))
 
 <template>
   <section class="jh-section">
-    <div class="jh-container narrow jh-panel chat">
-      <h1>协作会话</h1>
-      <div ref="box" class="messages">
-        <div
-          v-for="m in list"
-          :key="m.id"
-          class="msg"
-          :class="{ mine: m.senderId === auth.user?.id }"
-        >
-          <div class="meta">{{ m.senderNickname }} · {{ m.createdAt }}</div>
-          <div class="bubble">{{ m.content }}</div>
+    <div class="jh-container narrow">
+      <PageBreadcrumb :items="crumbs" />
+      <div class="jh-panel chat">
+        <h1>协作会话</h1>
+        <div ref="box" class="messages">
+          <div
+            v-for="m in list"
+            :key="m.id"
+            class="msg"
+            :class="{ mine: m.senderId === auth.user?.id }"
+          >
+            <div class="meta">{{ m.senderNickname }} · {{ m.createdAt }}</div>
+            <div class="bubble">{{ m.content }}</div>
+          </div>
         </div>
-      </div>
-      <div class="composer">
-        <el-input v-model="content" type="textarea" :rows="2" placeholder="回复同道…" @keyup.ctrl.enter="onSend" />
-        <el-button type="primary" class="jh-btn-seal" @click="onSend">发送</el-button>
+        <div class="composer">
+          <el-input v-model="content" type="textarea" :rows="2" placeholder="回复同道…" @keyup.ctrl.enter="onSend" />
+          <el-button type="primary" class="jh-btn-seal" @click="onSend">发送</el-button>
+        </div>
       </div>
     </div>
   </section>
@@ -59,6 +69,8 @@ onUnmounted(() => clearInterval(timer))
 <style scoped>
 .narrow {
   max-width: 720px;
+}
+.chat {
   padding: 16px;
 }
 h1 {

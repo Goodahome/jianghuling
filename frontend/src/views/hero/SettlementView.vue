@@ -5,9 +5,16 @@ import { ElMessage } from 'element-plus'
 import { previewSettlement, submitEvaluation, submitSettlement } from '@/api/bounty'
 import type { SettlementPreview } from '@/types/models'
 import { formatAmount } from '@/utils/labels'
+import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
 
 const route = useRoute()
 const router = useRouter()
+const bountyId = String(route.params.id || '')
+const crumbs = [
+  { label: '悬赏广场', to: '/plaza' },
+  { label: '悬赏详情', to: `/bounties/${bountyId}` },
+  { label: '完结分配' },
+]
 const preview = ref<SettlementPreview | null>(null)
 const amounts = ref<Record<number, number>>({})
 const chivalry = ref<Record<number, number>>({})
@@ -43,6 +50,7 @@ async function onSettle() {
       })),
     )
     ElMessage.success('结算成功，赏银已入账')
+    router.replace(`/bounties/${route.params.id}`)
   } finally {
     loading.value = false
   }
@@ -51,13 +59,14 @@ async function onSettle() {
 async function onEval() {
   await submitEvaluation(route.params.id as string, evalForm.value)
   ElMessage.success('评价已提交')
-  router.push(`/bounties/${route.params.id}`)
+  router.replace(`/bounties/${route.params.id}`)
 }
 </script>
 
 <template>
   <section class="jh-section">
     <div class="jh-container narrow" v-if="preview">
+      <PageBreadcrumb :items="crumbs" />
       <h1 class="brand-title">完结分配</h1>
       <div class="jh-panel block">
         <p>托管赏银 {{ formatAmount(preview.rewardB) }} 两</p>

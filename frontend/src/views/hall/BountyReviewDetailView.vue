@@ -94,7 +94,12 @@ onMounted(load)
 <template>
   <section class="jh-section" v-loading="loading">
     <div class="jh-container" v-if="detail">
-      <HallBackBar to="/hall/bounty-reviews">
+      <HallBackBar
+        :items="[
+          { label: '令审队列', to: '/hall/bounty-reviews' },
+          { label: '令审详情' },
+        ]"
+      >
         <el-button class="jh-btn-seal" :loading="submitting" @click="decide('APPROVE')">通过</el-button>
         <el-button class="jh-btn-ink" :loading="submitting" @click="decide('REJECT')">驳回</el-button>
       </HallBackBar>

@@ -89,22 +89,27 @@ watch(
       <div v-if="menuOpen" class="drawer-mask mobile-only" @click="menuOpen = false" />
       <aside class="drawer mobile-only" :class="{ open: menuOpen }">
           <div class="drawer-head">
-            <strong class="brand-title">执事堂</strong>
-            <button type="button" class="link-btn" @click="menuOpen = false">关闭</button>
+            <button type="button" class="ghost" @click="menuOpen = false">关闭</button>
           </div>
-          <div class="drawer-user">
+          <RouterLink
+            to="/profile"
+            class="user-chip drawer-chip"
+            active-class=""
+            exact-active-class=""
+            @click="menuOpen = false"
+          >
             <span class="user-avatar" aria-hidden="true">{{ nameInitial }}</span>
             <span class="user-meta">
               <span class="user-name">{{ displayName }}</span>
               <span class="user-title">{{ levelTitle }}</span>
             </span>
-          </div>
+          </RouterLink>
           <nav class="drawer-nav">
             <RouterLink
               v-for="m in menus"
               :key="m.path"
               :to="m.path"
-              class="drawer-link"
+              class="nav-link"
               :class="{ 'is-active': isActive(m.path, m.exact) }"
               active-class=""
               exact-active-class=""
@@ -112,7 +117,7 @@ watch(
             >
               {{ m.label }}
             </RouterLink>
-            <RouterLink to="/" class="drawer-link" active-class="" exact-active-class="" @click="menuOpen = false">
+            <RouterLink to="/" class="nav-link" active-class="" exact-active-class="" @click="menuOpen = false">
               返回江湖
             </RouterLink>
           </nav>
@@ -139,13 +144,13 @@ watch(
   z-index: 30;
   background: transparent;
   border-bottom: none;
-  padding: calc(10px + env(safe-area-inset-top)) 0 12px;
+  padding: calc(6px + env(safe-area-inset-top)) 0 8px;
 }
 .bar-inner {
   display: flex;
   align-items: center;
   gap: 10px;
-  min-height: 64px;
+  min-height: 52px;
   flex-wrap: wrap;
 }
 .brand {
@@ -158,6 +163,7 @@ watch(
   color: #3a2a18;
   background: linear-gradient(180deg, #f7f0dd 0%, #e8d9b8 100%);
   border: 1px solid rgba(90, 66, 40, 0.45);
+  border-radius: var(--jh-wood-radius);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.65),
     inset 0 -2px 4px rgba(90, 66, 40, 0.12),
@@ -181,16 +187,13 @@ watch(
   padding: 8px 12px;
   background: linear-gradient(180deg, #fbf6e8 0%, #eadfc8 100%);
   border: 1px solid rgba(90, 66, 40, 0.35);
+  border-radius: var(--jh-wood-radius);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.55),
     0 1px 0 rgba(42, 34, 24, 0.15);
   text-shadow:
     0 1px 0 rgba(255, 255, 255, 0.4),
     0 -0.5px 0 rgba(42, 34, 24, 0.2);
-}
-.nav-link.is-active {
-  color: var(--jh-seal);
-  border-color: rgba(178, 58, 45, 0.55);
 }
 .actions {
   display: flex;
@@ -207,6 +210,7 @@ watch(
   padding: 4px 10px 4px 4px;
   background: linear-gradient(180deg, #fbf6e8 0%, #eadfc8 100%);
   border: 1px solid rgba(90, 66, 40, 0.4);
+  border-radius: var(--jh-wood-radius);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.55),
     0 1px 0 rgba(42, 34, 24, 0.15);
@@ -252,6 +256,7 @@ watch(
   padding: 7px 10px;
   background: linear-gradient(180deg, #fbf6e8, #eadfc8);
   border: 1px solid rgba(90, 66, 40, 0.35);
+  border-radius: var(--jh-wood-radius);
   letter-spacing: 0.08em;
 }
 .menu-btn {
@@ -259,6 +264,7 @@ watch(
   width: 44px;
   height: 44px;
   border: 1px solid rgba(90, 66, 40, 0.45);
+  border-radius: var(--jh-wood-radius);
   background: linear-gradient(180deg, #fbf6e8, #eadfc8);
   display: none;
   flex-direction: column;
@@ -279,7 +285,7 @@ watch(
   /* 相对告示板木面，不盖瓦顶 */
   position: absolute;
   inset: 0;
-  background: rgba(28, 36, 48, 0.45);
+  background: rgba(20, 14, 8, 0.28);
   z-index: 40;
 }
 .drawer {
@@ -290,15 +296,15 @@ watch(
   bottom: auto;
   display: flex;
   flex-direction: column;
-  width: min(260px, 72%);
+  width: min(240px, 78%);
   height: auto;
   max-height: 100%;
-  background: #fff;
+  background: transparent;
   z-index: 50;
   transform: translateX(100%);
   transition: transform 0.22s ease;
-  padding: 16px 16px 24px;
-  border-left: 1px solid var(--jh-line);
+  padding: 12px 12px 16px;
+  border: none;
   box-sizing: border-box;
   overflow: hidden;
 }
@@ -311,50 +317,38 @@ watch(
 }
 .drawer-head {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   flex-shrink: 0;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
 }
-.drawer-user {
+.drawer-chip {
   display: flex;
   align-items: center;
   flex-shrink: 0;
-  gap: 10px;
-  margin: 0 0 12px;
-  padding: 10px 12px;
-  background: linear-gradient(180deg, #fbf6e8, #eadfc8);
-  border: 1px solid rgba(90, 66, 40, 0.35);
-}
-.drawer-user .user-avatar {
-  width: 36px;
-  height: 36px;
-  font-size: 16px;
-}
-.drawer-user .user-name {
-  font-size: 16px;
+  gap: 8px;
+  margin: 0 0 10px;
+  text-decoration: none;
+  width: fit-content;
+  max-width: 100%;
 }
 .drawer-nav {
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
-  gap: 4px;
+  gap: 8px;
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
+  align-items: stretch;
 }
-.drawer-link {
-  display: block;
-  padding: 14px 12px;
-  border-radius: var(--jh-radius);
-  font-size: 16px;
-  color: var(--jh-ink);
-  flex-shrink: 0;
-}
-.drawer-link.is-active {
-  background: var(--jh-mist);
-  color: var(--jh-seal);
+.drawer-nav .nav-link,
+.drawer-nav .ghost {
+  width: 100%;
+  box-sizing: border-box;
+  justify-content: flex-start;
+  text-align: left;
 }
 .link-btn {
   border: none;
@@ -365,12 +359,12 @@ watch(
   padding: 0 4px;
 }
 .page-main {
-  min-height: 50vh;
+  min-height: 0;
 }
 .footer {
   border-top: 1px solid rgba(196, 163, 90, 0.3);
-  padding: 28px 0 40px;
-  margin-top: 24px;
+  padding: 16px 0 20px;
+  margin-top: 12px;
   color: rgba(247, 240, 221, 0.85);
 }
 .footer .brand-title {
@@ -423,32 +417,26 @@ watch(
     text-overflow: ellipsis;
   }
   .drawer {
-    width: min(220px, 68%);
+    width: min(220px, 72%);
     max-width: 220px;
-    max-height: calc(100vh - 5.75rem);
-    max-height: calc(100dvh - 5.75rem - env(safe-area-inset-bottom, 0px));
-    background: linear-gradient(180deg, #fbf6e8 0%, #f3ead4 100%);
-    border-left: 1px solid rgba(90, 66, 40, 0.35);
-    padding: 12px 12px 14px;
+    max-height: calc(var(--jh-viewport-min) - 5.5rem);
+    max-height: calc(var(--jh-viewport-min) - 5.5rem - env(safe-area-inset-bottom, 0px));
+    background: transparent;
+    border: none;
+    padding: 10px 10px 14px;
     padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
     overflow: hidden;
   }
   .drawer-head {
-    margin-bottom: 12px;
-  }
-  .drawer-head .brand-title {
-    color: #3a2a18;
-  }
-  .drawer-user {
-    margin-bottom: 10px;
-    padding: 9px 11px;
+    margin-bottom: 8px;
   }
   .drawer-nav {
-    gap: 2px;
+    gap: 8px;
   }
-  .drawer-link {
-    padding: 11px 11px;
-    font-size: 15px;
+  .drawer-nav .nav-link,
+  .drawer-nav .ghost {
+    font-size: 14px;
+    padding: 8px 12px;
   }
   .page-main {
     padding-bottom: env(safe-area-inset-bottom);
@@ -457,7 +445,7 @@ watch(
     overflow-x: clip;
   }
   .footer {
-    padding: 20px 0 28px;
+    padding: 14px 0 20px;
   }
 }
 </style>

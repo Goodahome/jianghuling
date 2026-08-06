@@ -9,6 +9,7 @@ import type { BountyType, Difficulty } from '@/types/api'
 import type { ChecklistTemplate, Notice, RewardSuggest, WarrantTemplate } from '@/types/models'
 import { difficultyLabel } from '@/utils/labels'
 import JhPageHeader from '@/components/JhPageHeader.vue'
+import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -27,6 +28,20 @@ const republishFromId = computed(() => {
   return Number.isFinite(n) && n > 0 ? n : null
 })
 const isRepublish = computed(() => republishFromId.value != null)
+
+const crumbs = computed(() => {
+  if (isRepublish.value && republishFromId.value) {
+    return [
+      { label: '悬赏广场', to: '/plaza' },
+      { label: '原令详情', to: `/bounties/${republishFromId.value}` },
+      { label: '再发一令' },
+    ]
+  }
+  return [
+    { label: '悬赏广场', to: '/plaza' },
+    { label: '张贴悬赏' },
+  ]
+})
 
 const form = reactive({
   type: 'RENT_SEEK' as BountyType,
@@ -177,6 +192,7 @@ async function onSubmit() {
 <template>
   <section class="jh-section" v-loading="draftLoading">
     <div class="jh-container narrow">
+      <PageBreadcrumb :items="crumbs" />
       <JhPageHeader
         :title="isRepublish ? '再发一令' : '张贴悬赏令'"
         :subtitle="

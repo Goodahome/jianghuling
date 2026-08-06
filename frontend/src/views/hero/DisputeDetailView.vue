@@ -3,12 +3,17 @@ import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { getDispute } from '@/api/dispute'
 import type { Dispute } from '@/types/models'
+import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
 
 const route = useRoute()
 const detail = ref<(Dispute & { evidenceUrls?: string[]; evidenceText?: string; verdictJson?: string }) | null>(
   null,
 )
 const loading = ref(false)
+const crumbs = [
+  { label: '我的纠纷', to: '/disputes' },
+  { label: '纠纷详情' },
+]
 
 onMounted(async () => {
   loading.value = true
@@ -23,6 +28,7 @@ onMounted(async () => {
 <template>
   <section class="jh-section" v-loading="loading">
     <div class="jh-container narrow" v-if="detail">
+      <PageBreadcrumb :items="crumbs" />
       <h1 class="brand-title">纠纷详情 #{{ detail.id }}</h1>
       <div class="jh-panel block">
         <p>
@@ -41,7 +47,6 @@ onMounted(async () => {
           </a>
         </div>
       </div>
-      <RouterLink to="/disputes" class="back">返回纠纷列表</RouterLink>
     </div>
   </section>
 </template>
@@ -74,10 +79,5 @@ h2 {
   object-fit: cover;
   border: 1px solid var(--jh-line);
   border-radius: var(--jh-radius);
-}
-.back {
-  display: inline-block;
-  margin-top: 12px;
-  color: var(--jh-seal);
 }
 </style>

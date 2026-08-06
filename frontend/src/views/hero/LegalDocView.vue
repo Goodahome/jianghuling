@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { renderMarkdown } from '@/utils/markdown'
 import userAgreementMd from '@/content/legal/user-agreement.md?raw'
 import privacyPolicyMd from '@/content/legal/privacy-policy.md?raw'
+import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -30,6 +31,10 @@ const docKey = computed(() => {
 
 const doc = computed(() => (docKey.value ? DOC_MAP[docKey.value] : null))
 
+const crumbs = computed(() => [
+  { label: '首页', to: '/' },
+  { label: doc.value?.title || '法律条款' },
+])
 const html = computed(() => {
   if (!doc.value) return ''
   // 页头已展示标题，正文去掉文首一级标题避免重复
@@ -51,7 +56,9 @@ watchEffect(() => {
 
 <template>
   <section v-if="doc" class="jh-section legal-page">
-    <div class="jh-container narrow jh-panel legal">
+    <div class="jh-container narrow">
+      <PageBreadcrumb :items="crumbs" />
+      <div class="jh-panel legal">
       <p class="meta jh-muted">
         内测稿 · 版本 {{ doc.version }} · 生效日期以本页展示为准
       </p>
@@ -65,6 +72,7 @@ watchEffect(() => {
         <span>·</span>
         <RouterLink to="/">返回江湖</RouterLink>
       </div>
+      </div>
     </div>
   </section>
 </template>
@@ -75,6 +83,8 @@ watchEffect(() => {
 }
 .narrow {
   max-width: 780px;
+}
+.legal {
   padding: 24px 22px 28px;
 }
 .meta {

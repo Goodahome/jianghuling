@@ -62,7 +62,12 @@ onMounted(load)
 <template>
   <section class="jh-section" v-loading="loading">
     <div class="jh-container" v-if="current">
-      <HallBackBar to="/hall/submission-reviews">
+      <HallBackBar
+        :items="[
+          { label: '验功队列', to: '/hall/submission-reviews' },
+          { label: '验功详情' },
+        ]"
+      >
         <el-button class="jh-btn-seal" :loading="submitting" @click="submitReview">提交审核</el-button>
       </HallBackBar>
 

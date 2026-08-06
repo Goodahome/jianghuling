@@ -72,12 +72,12 @@ async function onSubmit() {
           </el-form-item>
         </template>
         <el-button class="jh-btn-seal" type="primary" native-type="submit" :loading="auth.loading" style="width: 100%">
-          重出江湖
+          踏入江湖
         </el-button>
       </el-form>
       <p class="foot">
         尚无身份？
-        <RouterLink to="/register">持邀请码注册</RouterLink>
+        <RouterLink to="/register">初入江湖</RouterLink>
       </p>
       <p class="legal-links">
         <RouterLink to="/legal/user-agreement">用户协议</RouterLink>

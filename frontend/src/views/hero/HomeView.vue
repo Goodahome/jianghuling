@@ -12,6 +12,20 @@
         </div>
       </div>
     </div>
+
+    <!-- 挂到告示板木面，贴底且不挤占页脚文档流 -->
+    <Teleport to=".hero-app .board-face">
+      <aside class="home-swordsman" aria-hidden="true">
+        <img
+          class="swordsman-img"
+          src="/textures/home-hero-swordsman.png?v=2"
+          alt=""
+          width="480"
+          height="640"
+          decoding="async"
+        />
+      </aside>
+    </Teleport>
   </section>
 </template>
 
@@ -19,43 +33,58 @@
 .hero-band {
   min-height: auto;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   padding: 28px clamp(12px, 4vw, 32px) 12px;
-  color: #f7f0dd;
 }
 .band-inner {
   width: 100%;
   max-width: 1120px;
   margin: 0 auto;
+  min-width: 0;
 }
 .copy {
-  max-width: 36em;
-  padding: 18px 20px;
-  background: rgba(28, 22, 16, 0.45);
-  border: 1px solid rgba(196, 163, 90, 0.35);
+  max-width: min(36em, 58%);
+  padding: 8px 0 12px;
+  background: none;
+  border: none;
+  position: relative;
+  z-index: 1;
+}
+/* 金榜色 + 轻阴刻；字号按内容区缩放反补，避免嵌套 zoom 叠影 */
+.brand-title,
+.slogan,
+.belief {
+  font-family: var(--jh-font-display);
+  color: var(--jh-gold-bright);
+  text-shadow: var(--jh-gold-text-shine);
 }
 .brand-title {
   margin: 0;
-  font-size: clamp(36px, 6vw, 56px);
+  font-size: clamp(
+    calc(36px / var(--jh-content-scale)),
+    calc(6vw / var(--jh-content-scale)),
+    calc(56px / var(--jh-content-scale))
+  );
   line-height: 1.1;
   letter-spacing: 0.12em;
+  font-weight: normal;
 }
 .slogan {
   margin: 12px 0 6px;
-  font-family: var(--jh-font-display);
-  font-size: clamp(18px, 2.8vw, 24px);
+  font-size: clamp(
+    calc(18px / var(--jh-content-scale)),
+    calc(2.8vw / var(--jh-content-scale)),
+    calc(24px / var(--jh-content-scale))
+  );
   letter-spacing: 0.06em;
   line-height: 1.4;
-  color: var(--jh-gold-bright);
 }
 .belief {
   margin: 0 0 20px;
   padding-left: 1ch;
-  font-family: var(--jh-font-display);
-  font-size: 15px;
+  font-size: calc(15px / var(--jh-content-scale));
   letter-spacing: 0.06em;
   line-height: 1.4;
-  color: var(--jh-gold-bright);
 }
 .cta-row {
   display: flex;
@@ -93,21 +122,29 @@
   }
   .copy {
     max-width: 100%;
-    padding: 14px 14px 16px;
+    padding: 4px 0 0;
     box-sizing: border-box;
   }
   .brand-title {
-    font-size: clamp(30px, 11vw, 42px);
+    font-size: clamp(
+      calc(30px / var(--jh-content-scale)),
+      calc(11vw / var(--jh-content-scale)),
+      calc(42px / var(--jh-content-scale))
+    );
     letter-spacing: 0.08em;
     word-break: keep-all;
   }
   .slogan {
-    font-size: clamp(16px, 4.5vw, 20px);
+    font-size: clamp(
+      calc(16px / var(--jh-content-scale)),
+      calc(4.5vw / var(--jh-content-scale)),
+      calc(20px / var(--jh-content-scale))
+    );
     letter-spacing: 0.04em;
   }
   .belief {
     margin-bottom: 16px;
-    font-size: 14px;
+    font-size: calc(14px / var(--jh-content-scale));
     padding-left: 0;
   }
   .cta-row {
@@ -117,6 +154,61 @@
   .btn {
     width: 100%;
     box-sizing: border-box;
+  }
+}
+</style>
+
+<!-- Teleport 内容在 board-face 下，需非 scoped 才能稳贴木面底 -->
+<style>
+.hero-app .board-face {
+  display: flex;
+  flex-direction: column;
+}
+.hero-app:has(.hero-band) .page-main {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.hero-app:has(.hero-band) .footer {
+  position: relative;
+  z-index: 3;
+  flex: 0 0 auto;
+  /* 右侧留给侠士站位，避免页脚被视觉挤压 */
+  padding-right: min(42%, 420px);
+}
+.home-swordsman {
+  position: absolute;
+  right: clamp(8px, 2vw, 28px);
+  bottom: 0;
+  /* 顶部留出顶栏菜单高度，避免头部被木牌按钮挡住 */
+  top: 4.75rem;
+  z-index: 1;
+  width: min(38%, 360px);
+  margin: 0;
+  pointer-events: none;
+  line-height: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+}
+.home-swordsman .swordsman-img {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: 100%;
+  object-fit: contain;
+  object-position: right bottom;
+  filter: saturate(0.92) contrast(1.04);
+}
+@media (max-width: 768px) {
+  .hero-app:has(.hero-band) .footer {
+    padding-right: 0;
+  }
+  .home-swordsman {
+    right: 4px;
+    top: 3.75rem;
+    width: min(46%, 200px);
+    opacity: 0.92;
   }
 }
 </style>
