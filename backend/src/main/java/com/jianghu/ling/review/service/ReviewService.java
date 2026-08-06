@@ -68,11 +68,27 @@ public class ReviewService {
                         .eq(Bounty::getStatus, st)
                         .ne(Bounty::getPublisherId, userId)
                         .orderByAsc(Bounty::getId));
+        List<Bounty> records = p.getRecords();
         // also exclude claimed by reviewer
-        List<Map<String, Object>> list = p.getRecords().stream()
+        List<Bounty> filtered = records.stream()
                 .filter(b -> claimMapper.selectCount(new LambdaQueryWrapper<BountyClaim>()
                         .eq(BountyClaim::getBountyId, b.getId())
                         .eq(BountyClaim::getUserId, userId)) == 0)
+                .toList();
+
+        Map<Long, Long> claimCountMap;
+        if (!filtered.isEmpty()) {
+            List<Long> bountyIds = filtered.stream().map(Bounty::getId).toList();
+            claimCountMap = claimMapper.selectList(
+                    new LambdaQueryWrapper<BountyClaim>()
+                            .in(BountyClaim::getBountyId, bountyIds)
+                            .eq(BountyClaim::getStatus, "ACTIVE")
+            ).stream().collect(Collectors.groupingBy(BountyClaim::getBountyId, Collectors.counting()));
+        } else {
+            claimCountMap = Map.of();
+        }
+
+        List<Map<String, Object>> list = filtered.stream()
                 .map(b -> {
                     Map<String, Object> m = new LinkedHashMap<>();
                     m.put("id", b.getId());
@@ -83,6 +99,7 @@ public class ReviewService {
                     m.put("publisherId", b.getPublisherId());
                     m.put("createdAt", b.getCreatedAt());
                     m.put("status", b.getStatus());
+                    m.put("claimCount", claimCountMap.getOrDefault(b.getId(), 0L));
                     return m;
                 }).collect(Collectors.toList());
         return PageResult.of(list, p.getTotal(), page, pageSize);

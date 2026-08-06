@@ -65,8 +65,8 @@ defineProps<{
   position: relative;
   z-index: 5;
   flex-shrink: 0;
-  width: calc(100% + 240px);
-  margin: 0 -120px;
+  width: calc(100% + 140px);
+  margin: 0 -70px;
 }
 
 .roof-tiles-stack {

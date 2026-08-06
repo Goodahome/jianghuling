@@ -79,7 +79,22 @@ public class BountyService {
                 .like(StringUtils.hasText(keyword), Bounty::getTitle, keyword)
                 .orderByDesc(Bounty::getId);
         Page<Bounty> p = bountyMapper.selectPage(new Page<>(page, pageSize), q);
-        List<Map<String, Object>> list = p.getRecords().stream().map(this::briefView).collect(Collectors.toList());
+        List<Bounty> records = p.getRecords();
+        List<Map<String, Object>> list = records.stream().map(this::briefView).collect(Collectors.toList());
+
+        if (!records.isEmpty()) {
+            List<Long> bountyIds = records.stream().map(Bounty::getId).toList();
+            Map<Long, Long> claimCountMap = claimMapper.selectList(
+                    new LambdaQueryWrapper<BountyClaim>()
+                            .in(BountyClaim::getBountyId, bountyIds)
+                            .eq(BountyClaim::getStatus, "ACTIVE")
+            ).stream().collect(Collectors.groupingBy(BountyClaim::getBountyId, Collectors.counting()));
+            for (Map<String, Object> m : list) {
+                Long id = (Long) m.get("id");
+                m.put("claimCount", claimCountMap.getOrDefault(id, 0L));
+            }
+        }
+
         return PageResult.of(list, p.getTotal(), page, pageSize);
     }
 
@@ -300,7 +315,23 @@ public class BountyService {
                 .eq(StringUtils.hasText(status), Bounty::getStatus, status)
                 .orderByDesc(Bounty::getId);
         Page<Bounty> p = bountyMapper.selectPage(new Page<>(page, pageSize), q);
-        return PageResult.of(p.getRecords().stream().map(this::briefView).toList(), p.getTotal(), page, pageSize);
+        List<Bounty> records = p.getRecords();
+        List<Map<String, Object>> list = records.stream().map(this::briefView).collect(Collectors.toList());
+
+        if (!records.isEmpty()) {
+            List<Long> bountyIds = records.stream().map(Bounty::getId).toList();
+            Map<Long, Long> claimCountMap = claimMapper.selectList(
+                    new LambdaQueryWrapper<BountyClaim>()
+                            .in(BountyClaim::getBountyId, bountyIds)
+                            .eq(BountyClaim::getStatus, "ACTIVE")
+            ).stream().collect(Collectors.groupingBy(BountyClaim::getBountyId, Collectors.counting()));
+            for (Map<String, Object> m : list) {
+                Long id = (Long) m.get("id");
+                m.put("claimCount", claimCountMap.getOrDefault(id, 0L));
+            }
+        }
+
+        return PageResult.of(list, p.getTotal(), page, pageSize);
     }
 
     public PageResult<Map<String, Object>> mineClaimed(String status, long page, long pageSize) {
@@ -317,7 +348,23 @@ public class BountyService {
                 .eq(StringUtils.hasText(status), Bounty::getStatus, status)
                 .orderByDesc(Bounty::getId);
         Page<Bounty> p = bountyMapper.selectPage(new Page<>(page, pageSize), q);
-        return PageResult.of(p.getRecords().stream().map(this::briefView).toList(), p.getTotal(), page, pageSize);
+        List<Bounty> records2 = p.getRecords();
+        List<Map<String, Object>> list2 = records2.stream().map(this::briefView).collect(Collectors.toList());
+
+        if (!records2.isEmpty()) {
+            List<Long> ids2 = records2.stream().map(Bounty::getId).toList();
+            Map<Long, Long> claimCountMap2 = claimMapper.selectList(
+                    new LambdaQueryWrapper<BountyClaim>()
+                            .in(BountyClaim::getBountyId, ids2)
+                            .eq(BountyClaim::getStatus, "ACTIVE")
+            ).stream().collect(Collectors.groupingBy(BountyClaim::getBountyId, Collectors.counting()));
+            for (Map<String, Object> m : list2) {
+                Long id = (Long) m.get("id");
+                m.put("claimCount", claimCountMap2.getOrDefault(id, 0L));
+            }
+        }
+
+        return PageResult.of(list2, p.getTotal(), page, pageSize);
     }
 
     @Transactional

@@ -27,6 +27,7 @@ import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -46,7 +47,21 @@ public class AdminBountyService {
                 .like(StringUtils.hasText(keyword), Bounty::getTitle, keyword)
                 .orderByDesc(Bounty::getId);
         Page<Bounty> p = bountyMapper.selectPage(new Page<>(page, pageSize), q);
-        List<Map<String, Object>> list = p.getRecords().stream().map(b -> {
+        List<Bounty> records = p.getRecords();
+
+        Map<Long, Long> claimCountMap;
+        if (!records.isEmpty()) {
+            List<Long> bountyIds = records.stream().map(Bounty::getId).toList();
+            claimCountMap = claimMapper.selectList(
+                    new LambdaQueryWrapper<BountyClaim>()
+                            .in(BountyClaim::getBountyId, bountyIds)
+                            .eq(BountyClaim::getStatus, "ACTIVE")
+            ).stream().collect(Collectors.groupingBy(BountyClaim::getBountyId, Collectors.counting()));
+        } else {
+            claimCountMap = Map.of();
+        }
+
+        List<Map<String, Object>> list = records.stream().map(b -> {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("id", b.getId());
             m.put("title", b.getTitle());
@@ -56,6 +71,7 @@ public class AdminBountyService {
             m.put("publisherId", b.getPublisherId());
             m.put("deadlineAt", b.getDeadlineAt());
             m.put("createdAt", b.getCreatedAt());
+            m.put("claimCount", claimCountMap.getOrDefault(b.getId(), 0L));
             return m;
         }).toList();
         return PageResult.of(list, p.getTotal(), page, pageSize);

@@ -14,7 +14,7 @@
     </div>
 
     <!-- 挂到告示板木面，贴底且不挤占页脚文档流 -->
-    <Teleport to=".hero-app .board-face">
+    <Teleport to=".hero-app .board-face" defer>
       <aside class="home-swordsman" aria-hidden="true">
         <img
           class="swordsman-img"
