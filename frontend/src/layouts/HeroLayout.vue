@@ -13,7 +13,7 @@ const menuOpen = ref(false)
 
 const nav = [
   { to: '/', label: '首页' },
-  { to: '/plaza', label: '悬赏' },
+  { to: '/plaza', label: '悬赏榜' },
   { to: '/notices', label: '告示栏' },
   { to: '/ranks', label: '英雄榜' },
   { to: '/mine', label: '我的悬赏', auth: true },
