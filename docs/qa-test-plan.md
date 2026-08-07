@@ -537,7 +537,7 @@
 
 | 页面 | 筛选项 | 结果 | 说明 |
 |------|--------|------|------|
-| 悬赏广场 `/plaza` | type / district / keyword | **Pass** | 与 api `GET /bounties` 一致；无匹配 keyword→0 |
+| 悬赏榜 `/plaza` | type / district / keyword | **Pass** | 与 api `GET /bounties` 一致；无匹配 keyword→0 |
 | 告示栏 `/notices` | category | **Pass** | 分类互斥正确 |
 | 英雄榜 `/ranks` | type 三榜 | **Pass** | |
 | 站内消息 `/messages` | 仅未读 | **Pass** | `unreadOnly=true` |

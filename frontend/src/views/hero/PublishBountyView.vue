@@ -32,13 +32,13 @@ const isRepublish = computed(() => republishFromId.value != null)
 const crumbs = computed(() => {
   if (isRepublish.value && republishFromId.value) {
     return [
-      { label: '悬赏广场', to: '/plaza' },
+      { label: '悬赏榜', to: '/plaza' },
       { label: '原令详情', to: `/bounties/${republishFromId.value}` },
       { label: '再发一令' },
     ]
   }
   return [
-    { label: '悬赏广场', to: '/plaza' },
+    { label: '悬赏榜', to: '/plaza' },
     { label: '张贴悬赏' },
   ]
 })

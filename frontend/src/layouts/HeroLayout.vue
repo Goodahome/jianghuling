@@ -13,7 +13,7 @@ const menuOpen = ref(false)
 
 const nav = [
   { to: '/', label: '首页' },
-  { to: '/plaza', label: '悬赏广场' },
+  { to: '/plaza', label: '悬赏' },
   { to: '/notices', label: '告示栏' },
   { to: '/ranks', label: '英雄榜' },
   { to: '/mine', label: '我的悬赏', auth: true },
@@ -201,9 +201,9 @@ async function onLogout() {
 
 <style scoped>
 .topbar {
-  position: sticky;
-  top: 0;
+  position: relative;
   z-index: 30;
+  flex: 0 0 auto;
   background: transparent;
   border-bottom: none;
   padding: calc(6px + env(safe-area-inset-top)) 0 8px;
@@ -479,27 +479,50 @@ async function onLogout() {
   justify-content: space-between;
   text-align: left;
 }
+.page-main {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 0 0 8px;
+}
 .footer {
+  flex: 0 0 auto;
+  min-height: 52px;
   border-top: 1px solid rgba(196, 163, 90, 0.3);
-  padding: 16px 0 20px;
-  margin-top: 12px;
+  padding: 8px 0 calc(8px + env(safe-area-inset-bottom, 0px));
+  margin-top: 0;
   color: rgba(247, 240, 221, 0.85);
+  background: linear-gradient(180deg, rgba(28, 20, 10, 0.18), rgba(18, 12, 8, 0.28));
+}
+.footer .jh-container {
+  display: flex;
+  align-items: center;
+  gap: 10px 16px;
+  min-height: 35px;
+}
+.footer .jh-container > * {
+  margin: 0;
 }
 .footer .brand-title {
-  font-size: 22px;
-  margin: 0 0 6px;
+  flex-shrink: 0;
+  font-size: 18px;
   color: var(--jh-gold-bright);
 }
 .footer .jh-muted {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   color: rgba(247, 240, 221, 0.65);
 }
 .footer-legal {
-  margin: 10px 0 0;
   display: flex;
-  flex-wrap: wrap;
+  flex: 0 0 auto;
   gap: 8px;
   align-items: center;
-  font-size: 13px;
+  white-space: nowrap;
+  font-size: 12px;
   color: rgba(247, 240, 221, 0.45);
 }
 .footer-legal a {
@@ -551,13 +574,30 @@ async function onLogout() {
     text-overflow: ellipsis;
   }
   .page-main {
-    padding-bottom: env(safe-area-inset-bottom);
+    padding-bottom: 6px;
     min-width: 0;
     max-width: 100%;
     overflow-x: clip;
   }
   .footer {
-    padding: 14px 0 calc(20px + env(safe-area-inset-bottom));
+    min-height: 48px;
+    padding: 7px 0 calc(7px + env(safe-area-inset-bottom, 0px));
+  }
+  .footer .jh-container {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    row-gap: 4px;
+  }
+  .footer .brand-title {
+    font-size: 16px;
+  }
+  .footer .jh-muted,
+  .footer-legal {
+    font-size: 11px;
+  }
+  .footer-legal {
+    grid-column: 1 / -1;
   }
   .drawer {
     width: min(220px, 72%);

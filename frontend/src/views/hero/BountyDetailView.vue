@@ -30,7 +30,7 @@ const crumbs = computed(() => {
   const title = detail.value?.title?.trim()
   const short = title && title.length > 12 ? `${title.slice(0, 12)}…` : title || '悬赏详情'
   return [
-    { label: '悬赏广场', to: '/plaza' },
+    { label: '悬赏榜', to: '/plaza' },
     { label: short },
   ]
 })

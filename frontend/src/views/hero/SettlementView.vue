@@ -11,7 +11,7 @@ const route = useRoute()
 const router = useRouter()
 const bountyId = String(route.params.id || '')
 const crumbs = [
-  { label: '悬赏广场', to: '/plaza' },
+  { label: '悬赏榜', to: '/plaza' },
   { label: '悬赏详情', to: `/bounties/${bountyId}` },
   { label: '完结分配' },
 ]

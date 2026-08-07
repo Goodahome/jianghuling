@@ -6,7 +6,11 @@ html,
 body,
 #app {
   margin: 0;
-  min-height: var(--jh-viewport-min);
+  width: 100%;
+  height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: hidden;
 }
 
 html {
@@ -14,14 +18,14 @@ html {
   text-size-adjust: 100%;
   /* 主体与内容整体放大，便于顶栏木牌文字可读 */
   zoom: var(--jh-ui-scale);
-  overflow-x: clip;
+  overflow: hidden;
 }
 
 body {
   font-family: var(--jh-font-body), 'Noto Sans SC', sans-serif;
   color: #1c2430;
   background: #f4f4f5;
-  overflow-x: clip;
+  overflow: hidden;
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
 }

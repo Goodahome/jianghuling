@@ -1,6 +1,6 @@
 :root {
   /* 整页 UI 缩放（含顶栏菜单）；浏览器 zoom 语义，1 = 100% */
-  --jh-ui-scale: 1.3;
+  --jh-ui-scale: 1.2;
   /* zoom 后的可视一屏高度，避免 100vh × zoom 溢出产生滚动条 */
   --jh-viewport-min: calc(100vh / var(--jh-ui-scale));
   --jh-viewport-min: calc(100dvh / var(--jh-ui-scale));

@@ -104,8 +104,8 @@ onBeforeUnmount(() => {
 <template>
   <section class="jh-section plaza-section">
     <div class="jh-container">
-      <div class="jinbang-board" aria-label="悬赏金榜">
-        <JhPageHeader title="悬赏金榜" subtitle="揭榜行侠 · 赏银分明" />
+      <div class="jinbang-board" aria-label="悬赏榜">
+        <JhPageHeader title="悬赏榜" subtitle="揭榜行侠 · 赏银分明" />
 
         <div class="toolbar">
           <el-radio-group v-model="query.type" @change="query.page = 1; load()">

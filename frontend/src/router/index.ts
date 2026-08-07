@@ -9,7 +9,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/layouts/HeroLayout.vue'),
     children: [
       { path: '', name: 'home', component: () => import('@/views/hero/HomeView.vue'), meta: { title: '首页' } },
-      { path: 'plaza', name: 'plaza', component: () => import('@/views/hero/BountyPlazaView.vue'), meta: { title: '悬赏广场' } },
+      { path: 'plaza', name: 'plaza', component: () => import('@/views/hero/BountyPlazaView.vue'), meta: { title: '悬赏榜' } },
       { path: 'login', name: 'login', component: () => import('@/views/hero/LoginView.vue'), meta: { guest: true, title: '登录' } },
       { path: 'register', name: 'register', component: () => import('@/views/hero/RegisterView.vue'), meta: { guest: true, title: '邀请注册' } },
       { path: 'r/:code', name: 'invite-landing', component: () => import('@/views/hero/RegisterView.vue'), meta: { guest: true, title: '邀请注册' } },

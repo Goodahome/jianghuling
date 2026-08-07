@@ -38,35 +38,40 @@ defineProps<{
   width: 100%;
   max-width: 100%;
   margin: 0;
-  padding: 0;
+  padding: 0 90px;
   /* 扣除 html zoom，避免一屏内容被放大后撑出滚动条 */
+  height: var(--jh-viewport-min);
   min-height: var(--jh-viewport-min);
+  max-height: var(--jh-viewport-min);
   display: flex;
   flex-direction: column;
-  overflow-x: clip;
+  overflow: hidden;
   box-sizing: border-box;
 }
 
 .notice-board {
   position: relative;
-  width: min(1220px, calc(100% - 20px));
+  width: min(1220px, 100%);
   max-width: 100%;
   margin: 0 auto;
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-  min-height: var(--jh-viewport-min);
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
   min-width: 0;
   box-shadow: none;
   box-sizing: border-box;
+  overflow: visible;
 }
 
 .board-roof {
   position: relative;
   z-index: 5;
   flex-shrink: 0;
-  width: calc(100% + 140px);
-  margin: 0 -70px;
+  width: calc(100% + 180px);
+  margin: 0 -90px;
 }
 
 .roof-tiles-stack {
@@ -85,9 +90,9 @@ defineProps<{
   left: 0;
   right: 0;
   top: 4px;
-  height: clamp(48px, 6.5vw, 68px);
+  height: clamp(52px, 6.8vw, 74px);
   background: linear-gradient(180deg, #3a424c 0%, #1e242c 100%);
-  clip-path: polygon(4% 0, 96% 0, 100% 100%, 0 100%);
+  clip-path: polygon(12% 0, 88% 0, 100% 100%, 0 100%);
   z-index: 0;
 }
 
@@ -95,13 +100,13 @@ defineProps<{
   position: relative;
   z-index: 1;
   width: 100%;
-  height: clamp(48px, 6.5vw, 68px);
+  height: clamp(52px, 6.8vw, 74px);
   background-color: #5a6570;
   background-image: url('/textures/roof-tiles.png');
   background-size: 140px 100%;
   background-repeat: repeat-x;
   background-position: center top;
-  clip-path: polygon(4% 0, 96% 0, 100% 100%, 0 100%);
+  clip-path: polygon(6% 0, 96% 0, 100% 100%, 0 100%);
 }
 
 /* 瓦面内缘立体：顶亮、底暗、两侧收口 */
@@ -131,9 +136,9 @@ defineProps<{
 .roof-eave {
   position: relative;
   z-index: 1;
-  width: calc(100% - 56px);
+  width: calc(100% - 96px);
   height: 22px;
-  margin: -6px auto 0;
+  margin: -8px auto 0;
   background: linear-gradient(180deg, #6a4a2a 0%, #3a2816 55%, #24180e 100%);
   border: 1px solid rgba(196, 163, 90, 0.4);
   border-top: none;
@@ -173,9 +178,12 @@ defineProps<{
   z-index: 1;
   /* 木面吃满剩余高度，避免立柱被拉长、牌面显矮 */
   flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
   margin: 0 12px;
   padding: 0 14px 8px;
   min-height: 0;
+  max-height: 100%;
   /* 侧栏 absolute 滑出时由舞台 overflow-x 裁切，木面保持定位上下文 */
   isolation: isolate;
   background-color: #3d3224;
@@ -189,6 +197,7 @@ defineProps<{
     inset 0 0 0 1px rgba(196, 163, 90, 0.22),
     inset 0 24px 48px rgba(20, 14, 8, 0.18),
     0 18px 36px rgba(12, 10, 6, 0.35);
+  overflow: hidden;
 }
 
 /* 侧立柱：随木板面通高 */
@@ -231,39 +240,40 @@ defineProps<{
 
 @media (max-width: 768px) {
   .notice-stage {
+    padding: 0 18px;
     overflow-x: hidden;
   }
 
   .notice-board {
-    width: calc(100% - 12px);
-    max-width: calc(100% - 12px);
+    width: 100%;
+    max-width: 100%;
   }
 
   .board-roof {
-    width: calc(100% + 20px);
+    width: calc(100% + 36px);
     max-width: none;
-    margin: 0 -10px;
+    margin: 0 -18px;
   }
 
   .roof-tiles,
   .roof-tiles-thickness {
-    height: clamp(36px, 10vw, 52px);
+    height: clamp(38px, 10.5vw, 56px);
   }
 
   .roof-tiles {
     background-size: 90px 100%;
-    clip-path: polygon(2.5% 0, 97.5% 0, 100% 100%, 0 100%);
+    clip-path: polygon(10% 0, 90% 0, 100% 100%, 0 100%);
   }
 
   .roof-tiles-thickness {
     top: 3px;
-    clip-path: polygon(2.5% 0, 97.5% 0, 100% 100%, 0 100%);
+    clip-path: polygon(10% 0, 90% 0, 100% 100%, 0 100%);
   }
 
   .roof-eave {
-    width: calc(100% - 16px);
+    width: calc(100% - 28px);
     height: 16px;
-    margin-top: -4px;
+    margin-top: -5px;
   }
 
   .board-beam {
@@ -293,14 +303,18 @@ defineProps<{
 }
 
 @media (max-width: 400px) {
+  .notice-stage {
+    padding: 0 10px;
+  }
+
   .notice-board {
-    width: calc(100% - 8px);
-    max-width: calc(100% - 8px);
+    width: 100%;
+    max-width: 100%;
   }
 
   .board-roof {
-    width: calc(100% + 12px);
-    margin: 0 -6px;
+    width: calc(100% + 20px);
+    margin: 0 -10px;
   }
 
   .board-face {

@@ -54,7 +54,7 @@ async function logout() {
       </el-menu>
     </el-aside>
 
-    <el-container>
+    <el-container class="content-shell">
       <el-header class="header">
         <el-button class="menu-trigger" text @click="drawer = true">菜单</el-button>
         <span class="title">运营后台 · L0</span>
@@ -66,6 +66,12 @@ async function logout() {
       <el-main class="main">
         <RouterView />
       </el-main>
+      <el-footer class="footer">
+        <div class="footer-inner">
+          <span class="footer-brand">武林盟后台</span>
+          <span class="footer-text">内测环境 · 顶部导航与底栏固定，内容区独立滚动</span>
+        </div>
+      </el-footer>
     </el-container>
 
     <el-drawer v-model="drawer" direction="ltr" size="80%" title="武林盟" class="admin-drawer">
@@ -83,12 +89,23 @@ async function logout() {
 
 <style scoped>
 .admin-layout {
+  height: 100vh;
+  height: 100dvh;
   min-height: 100vh;
   min-height: 100dvh;
+  overflow: hidden;
+}
+.admin-layout > .el-container,
+.content-shell {
+  min-height: 0;
+}
+.content-shell {
+  overflow: hidden;
 }
 .aside {
   background: #1f2a37;
   border-right: 1px solid rgba(255, 255, 255, 0.06);
+  overflow: hidden;
 }
 .brand {
   color: #fff;
@@ -145,6 +162,7 @@ async function logout() {
   gap: 8px;
   background: #fff;
   border-bottom: 1px solid #ebeef5;
+  flex: 0 0 auto;
   height: auto !important;
   min-height: 56px;
   padding: 8px 12px;
@@ -170,7 +188,40 @@ async function logout() {
   display: none;
 }
 .main {
+  flex: 1 1 auto;
+  min-height: 0;
   padding: 16px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.footer {
+  --el-footer-padding: 0;
+  flex: 0 0 auto;
+  height: auto !important;
+  min-height: 40px;
+  padding: 0;
+  background: #fff;
+  border-top: 1px solid #ebeef5;
+}
+.footer-inner {
+  min-height: 40px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #606266;
+  font-size: 12px;
+}
+.footer-brand {
+  flex-shrink: 0;
+  font-weight: 600;
+  color: #303133;
+}
+.footer-text {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 @media (max-width: 768px) {
@@ -182,6 +233,12 @@ async function logout() {
   }
   .main {
     padding: 12px;
+  }
+  .footer-inner {
+    min-height: 38px;
+    padding: 0 12px;
+    gap: 8px;
+    font-size: 11px;
   }
   .main :deep(.el-col) {
     max-width: 100% !important;

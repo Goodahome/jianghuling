@@ -4,7 +4,7 @@
 明细: docs/_qa_run/filter_results.json
 
 === 范围内（有筛选/搜索 UI）===
-悬赏广场 /plaza: type / district / keyword / 组合          ALL PASS
+悬赏榜 /plaza: type / district / keyword / 组合          ALL PASS
 告示栏 /notices: category 分类                            ALL PASS
 英雄榜 /ranks: REPUTATION|CHIVALRY|COMPLETED              ALL PASS
 站内消息 /messages: unreadOnly                            PASS
