@@ -16,10 +16,16 @@ defineProps<{
 </template>
 
 <style scoped>
+.jh-empty {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
 .title {
   font-family: var(--jh-font-display);
   font-size: 20px;
   margin: 0 0 8px;
+  color: rgba(247, 240, 221, 0.88);
 }
 .actions {
   margin-top: 16px;

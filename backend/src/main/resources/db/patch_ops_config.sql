@@ -60,13 +60,13 @@ WHERE NOT EXISTS (SELECT 1 FROM user_level_config LIMIT 1);
 
 INSERT INTO warrant_field_config (template_code, template_name, field_key, label, field_type, required, mask_until_claimed, sort_no)
 SELECT * FROM (
-  SELECT 'RENT_SEEK' AS template_code, '求租令状' AS template_name, 'district' AS field_key, '区域' AS label, 'text' AS field_type, 1 AS required, 0 AS mask_until_claimed, 1 AS sort_no
-  UNION ALL SELECT 'RENT_SEEK', '求租令状', 'rentBudgetMin', '预算下限(元/月)', 'number', 1, 0, 2
-  UNION ALL SELECT 'RENT_SEEK', '求租令状', 'rentBudgetMax', '预算上限(元/月)', 'number', 1, 0, 3
-  UNION ALL SELECT 'RENT_SEEK', '求租令状', 'layout', '户型', 'text', 1, 0, 4
-  UNION ALL SELECT 'RENT_SEEK', '求租令状', 'expectMoveInDate', '期望入住', 'date', 1, 0, 5
-  UNION ALL SELECT 'RENT_SEEK', '求租令状', 'acceptAgency', '是否接受中介', 'boolean', 1, 0, 6
-  UNION ALL SELECT 'RENT_SEEK', '求租令状', 'extra', '补充说明', 'textarea', 0, 0, 7
+  SELECT 'RENT_SEEK' AS template_code, '租房令状' AS template_name, 'district' AS field_key, '区域' AS label, 'text' AS field_type, 1 AS required, 0 AS mask_until_claimed, 1 AS sort_no
+  UNION ALL SELECT 'RENT_SEEK', '租房令状', 'rentBudgetMin', '预算下限(元/月)', 'number', 1, 0, 2
+  UNION ALL SELECT 'RENT_SEEK', '租房令状', 'rentBudgetMax', '预算上限(元/月)', 'number', 1, 0, 3
+  UNION ALL SELECT 'RENT_SEEK', '租房令状', 'layout', '户型', 'text', 1, 0, 4
+  UNION ALL SELECT 'RENT_SEEK', '租房令状', 'expectMoveInDate', '期望入住', 'date', 1, 0, 5
+  UNION ALL SELECT 'RENT_SEEK', '租房令状', 'acceptAgency', '是否接受中介', 'boolean', 1, 0, 6
+  UNION ALL SELECT 'RENT_SEEK', '租房令状', 'extra', '补充说明', 'textarea', 0, 0, 7
   UNION ALL SELECT 'RENT_OUT', '出租令状', 'district', '区域', 'text', 1, 0, 1
   UNION ALL SELECT 'RENT_OUT', '出租令状', 'exactAddress', '精确位置', 'text', 1, 1, 2
   UNION ALL SELECT 'RENT_OUT', '出租令状', 'rentPrice', '租金(元/月)', 'number', 1, 0, 3
@@ -74,6 +74,14 @@ SELECT * FROM (
   UNION ALL SELECT 'RENT_OUT', '出租令状', 'availableDate', '可入住日期', 'date', 1, 0, 5
   UNION ALL SELECT 'RENT_OUT', '出租令状', 'furniture', '家具家电', 'text', 0, 0, 6
   UNION ALL SELECT 'RENT_OUT', '出租令状', 'extra', '补充说明', 'textarea', 0, 0, 7
+  UNION ALL SELECT 'RENT_TRANSFER', '转租令状', 'district', '区域', 'text', 1, 0, 1
+  UNION ALL SELECT 'RENT_TRANSFER', '转租令状', 'exactAddress', '精确位置', 'text', 1, 1, 2
+  UNION ALL SELECT 'RENT_TRANSFER', '转租令状', 'rentPrice', '租金(元/月)', 'number', 1, 0, 3
+  UNION ALL SELECT 'RENT_TRANSFER', '转租令状', 'layout', '户型', 'text', 1, 0, 4
+  UNION ALL SELECT 'RENT_TRANSFER', '转租令状', 'availableDate', '可入住日期', 'date', 1, 0, 5
+  UNION ALL SELECT 'RENT_TRANSFER', '转租令状', 'complianceNote', '转租合规说明', 'textarea', 0, 0, 6
+  UNION ALL SELECT 'RENT_TRANSFER', '转租令状', 'furniture', '家具家电', 'text', 0, 0, 7
+  UNION ALL SELECT 'RENT_TRANSFER', '转租令状', 'extra', '补充说明', 'textarea', 0, 0, 8
 ) t
 WHERE NOT EXISTS (SELECT 1 FROM warrant_field_config LIMIT 1);
 

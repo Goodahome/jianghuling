@@ -3,13 +3,19 @@ import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useMessageStore } from '@/stores/message'
+import { useMineAttentionStore } from '@/stores/mineAttention'
+import { useHallAttentionStore } from '@/stores/hallAttention'
 import NoticeBoardShell from '@/components/NoticeBoardShell.vue'
 
 const auth = useAuthStore()
 const messageStore = useMessageStore()
+const mineAttention = useMineAttentionStore()
+const hallAttention = useHallAttentionStore()
 const route = useRoute()
 const router = useRouter()
 const menuOpen = ref(false)
+/** 打开消息页前的路径，再次点击消息可返回 */
+const messagesReturnTo = ref<string | null>(null)
 
 const nav = [
   { to: '/', label: '首页' },
@@ -25,11 +31,14 @@ const visibleNav = computed(() => nav.filter((n) => !n.auth || auth.isLoggedIn))
 /** 桌面顶栏：消息已在右侧入口，不重复占位 */
 const desktopNav = computed(() => visibleNav.value.filter((n) => n.to !== '/messages'))
 const showNav = computed(() => !['login', 'register', 'invite-landing'].includes(String(route.name)))
+const onMessagesPage = computed(() => route.path === '/messages' || route.name === 'messages')
 const unreadBadge = computed(() => {
   const n = messageStore.unreadCount
   if (!n || n <= 0) return ''
   return n > 99 ? '99+' : String(n)
 })
+const mineAttentionDot = computed(() => auth.isLoggedIn && mineAttention.hasAttention)
+const hallAttentionDot = computed(() => auth.isLoggedIn && auth.hasOffice && hallAttention.hasAttention)
 const displayName = computed(() => auth.user?.nickname || auth.me?.nickname || '未名侠士')
 const levelTitle = computed(() => auth.me?.levelTitle || auth.user?.levelTitle || '侠士')
 const nameInitial = computed(() => {
@@ -41,7 +50,20 @@ const nameInitial = computed(() => {
 function isNavActive(to: string) {
   const path = route.path
   if (to === '/') return path === '/'
+  if (to === '/messages') return onMessagesPage.value
   return path === to || path.startsWith(`${to}/`)
+}
+
+function toggleMessages() {
+  menuOpen.value = false
+  if (onMessagesPage.value) {
+    const back = messagesReturnTo.value || '/'
+    messagesReturnTo.value = null
+    router.push(back)
+    return
+  }
+  messagesReturnTo.value = route.fullPath
+  router.push('/messages')
 }
 
 watch(
@@ -54,15 +76,34 @@ watch(
 watch(
   () => auth.isLoggedIn,
   (loggedIn) => {
-    if (loggedIn) messageStore.startPolling()
-    else messageStore.clear()
+    if (loggedIn) {
+      messageStore.startPolling()
+      mineAttention.startPolling()
+      if (auth.hasOffice) hallAttention.startPolling()
+      else hallAttention.clear()
+    } else {
+      messageStore.clear()
+      mineAttention.clear()
+      hallAttention.clear()
+    }
   },
   { immediate: true },
+)
+
+watch(
+  () => auth.hasOffice,
+  (has) => {
+    if (!auth.isLoggedIn) return
+    if (has) hallAttention.startPolling()
+    else hallAttention.clear()
+  },
 )
 
 async function onLogout() {
   menuOpen.value = false
   messageStore.clear()
+  mineAttention.clear()
+  hallAttention.clear()
   await auth.logout()
   router.push({ name: 'login' })
 }
@@ -86,16 +127,38 @@ async function onLogout() {
               exact-active-class=""
             >
               {{ item.label }}
+              <span
+                v-if="item.to === '/mine' && mineAttentionDot"
+                class="nav-dot"
+                aria-label="我的悬赏有更新"
+              />
             </RouterLink>
           </nav>
 
           <div class="actions desktop-only">
             <template v-if="auth.isLoggedIn">
-              <RouterLink to="/messages" class="ghost with-badge">
+              <button
+                type="button"
+                class="ghost with-badge"
+                :class="{ 'is-active': onMessagesPage }"
+                @click="toggleMessages"
+              >
                 消息
                 <span v-if="unreadBadge" class="badge">{{ unreadBadge }}</span>
+              </button>
+              <RouterLink
+                v-if="auth.hasOffice"
+                to="/hall"
+                class="ghost with-badge"
+                :class="{ 'is-active': isNavActive('/hall') }"
+              >
+                执事堂
+                <span
+                  v-if="hallAttentionDot"
+                  class="nav-dot"
+                  aria-label="执事堂有待审"
+                />
               </RouterLink>
-              <RouterLink v-if="auth.hasOffice" to="/hall" class="ghost">执事堂</RouterLink>
               <button class="ghost" type="button" @click="onLogout">暂别江湖</button>
               <RouterLink
                 to="/profile"
@@ -117,9 +180,10 @@ async function onLogout() {
 
           <button
             class="menu-btn mobile-only"
+            :class="{ 'is-open': menuOpen }"
             type="button"
             :aria-expanded="menuOpen"
-            aria-label="打开菜单"
+            :aria-label="menuOpen ? '收起菜单' : '打开菜单'"
             @click="menuOpen = !menuOpen"
           >
             <span />
@@ -132,9 +196,6 @@ async function onLogout() {
 
       <div v-if="showNav && menuOpen" class="drawer-mask mobile-only" @click="menuOpen = false" />
       <aside v-if="showNav" class="drawer mobile-only" :class="{ open: menuOpen }">
-        <div class="drawer-head">
-          <button type="button" class="ghost" @click="menuOpen = false">关闭</button>
-        </div>
         <RouterLink
           v-if="auth.isLoggedIn"
           to="/profile"
@@ -150,18 +211,33 @@ async function onLogout() {
           </span>
         </RouterLink>
         <nav class="drawer-nav">
-          <RouterLink
-            v-for="item in visibleNav"
-            :key="item.to"
-            :to="item.to"
-            class="nav-link"
-            :class="{ 'is-active': isNavActive(item.to) }"
-            active-class=""
-            exact-active-class=""
-          >
-            <span>{{ item.label }}</span>
-            <span v-if="item.to === '/messages' && unreadBadge" class="badge">{{ unreadBadge }}</span>
-          </RouterLink>
+          <template v-for="item in visibleNav" :key="item.to">
+            <button
+              v-if="item.to === '/messages'"
+              type="button"
+              class="nav-link"
+              :class="{ 'is-active': onMessagesPage }"
+              @click="toggleMessages"
+            >
+              <span>{{ item.label }}</span>
+              <span v-if="unreadBadge" class="badge">{{ unreadBadge }}</span>
+            </button>
+            <RouterLink
+              v-else
+              :to="item.to"
+              class="nav-link"
+              :class="{ 'is-active': isNavActive(item.to) }"
+              active-class=""
+              exact-active-class=""
+            >
+              <span>{{ item.label }}</span>
+              <span
+                v-if="item.to === '/mine' && mineAttentionDot"
+                class="nav-dot"
+                aria-label="我的悬赏有更新"
+              />
+            </RouterLink>
+          </template>
           <RouterLink
             v-if="auth.hasOffice"
             to="/hall"
@@ -170,7 +246,12 @@ async function onLogout() {
             active-class=""
             exact-active-class=""
           >
-            执事堂
+            <span>执事堂</span>
+            <span
+              v-if="hallAttentionDot"
+              class="nav-dot"
+              aria-label="执事堂有待审"
+            />
           </RouterLink>
           <RouterLink v-if="!auth.isLoggedIn" to="/login" class="ghost" active-class="" exact-active-class="">踏入江湖</RouterLink>
           <RouterLink v-if="!auth.isLoggedIn" to="/register" class="cta" active-class="" exact-active-class="">初入江湖</RouterLink>
@@ -189,6 +270,8 @@ async function onLogout() {
           <p class="brand-title">江湖令</p>
           <p class="jh-muted">天下有悬赏，江湖有侠士。 · 内测中 · 模拟银两非真实货币</p>
           <p class="footer-legal">
+            <RouterLink to="/feedbacks">意见反馈</RouterLink>
+            <span>·</span>
             <RouterLink to="/legal/user-agreement">用户协议</RouterLink>
             <span>·</span>
             <RouterLink to="/legal/privacy">隐私政策</RouterLink>
@@ -244,6 +327,7 @@ async function onLogout() {
   align-items: center;
 }
 .nav-link {
+  position: relative;
   font-family: var(--jh-font-display);
   font-size: 14px;
   letter-spacing: 0.12em;
@@ -272,6 +356,7 @@ async function onLogout() {
   font-size: 14px;
 }
 .ghost {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -306,6 +391,17 @@ async function onLogout() {
   font-size: 11px;
   font-weight: 600;
   line-height: 1;
+}
+.nav-dot {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #c62828;
+  box-shadow: 0 0 0 1px rgba(251, 246, 232, 0.95);
+  pointer-events: none;
 }
 .cta {
   font-family: var(--jh-font-display);
@@ -374,6 +470,7 @@ async function onLogout() {
   flex-shrink: 0;
   gap: 8px;
   margin: 0 0 10px;
+  margin-left: auto;
   text-decoration: none;
   width: fit-content;
   max-width: 100%;
@@ -390,32 +487,43 @@ async function onLogout() {
 }
 .menu-btn {
   margin-left: auto;
-  width: 44px;
-  height: 44px;
-  border: 1px solid rgba(90, 66, 40, 0.45);
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(90, 66, 40, 0.4);
   border-radius: var(--jh-wood-radius);
   background: linear-gradient(180deg, #fbf6e8, #eadfc8);
   display: none;
   flex-direction: column;
   justify-content: center;
-  gap: 5px;
-  padding: 10px;
+  gap: 4px;
+  padding: 7px;
   cursor: pointer;
   position: relative;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
 }
 .menu-btn span:not(.menu-dot) {
   display: block;
-  height: 2px;
+  height: 1.5px;
   background: #3a2a18;
   border-radius: 2px;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  transform-origin: center;
+}
+.menu-btn.is-open span:not(.menu-dot):nth-child(1) {
+  transform: translateY(5.5px) rotate(45deg);
+}
+.menu-btn.is-open span:not(.menu-dot):nth-child(2) {
+  opacity: 0;
+}
+.menu-btn.is-open span:not(.menu-dot):nth-child(3) {
+  transform: translateY(-5.5px) rotate(-45deg);
 }
 .menu-dot {
   position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 8px;
-  height: 8px;
+  top: 5px;
+  right: 5px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: var(--jh-seal);
 }
@@ -427,21 +535,22 @@ async function onLogout() {
   z-index: 40;
 }
 .drawer {
-  /* 落在 board-face 内，避免 fixed 顶到视口被瓦面遮挡 */
+  /* 落在 board-face 内；顶栏下展开，由同一菜单钮开关 */
   position: absolute;
-  top: 0;
+  top: 3.6rem;
   right: 0;
   bottom: auto;
   display: flex;
   flex-direction: column;
+  align-items: flex-end;
   width: min(240px, 78%);
   height: auto;
-  max-height: 100%;
+  max-height: calc(100% - 3.6rem);
   background: transparent;
   z-index: 50;
   transform: translateX(100%);
   transition: transform 0.22s ease;
-  padding: 12px 12px 16px;
+  padding: 8px 12px 16px;
   border: none;
   box-sizing: border-box;
   overflow: hidden;
@@ -453,31 +562,28 @@ async function onLogout() {
   transform: translateX(0);
   pointer-events: auto;
 }
-.drawer-head {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  flex-shrink: 0;
-  margin-bottom: 10px;
-}
 .drawer-nav {
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
+  align-self: stretch;
   gap: 8px;
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
-  align-items: stretch;
+  align-items: flex-end;
 }
 .drawer-nav .nav-link,
 .drawer-nav .ghost,
 .drawer-nav .cta {
-  width: 100%;
+  width: 50%;
+  max-width: 50%;
   box-sizing: border-box;
-  justify-content: space-between;
-  text-align: left;
+  justify-content: center;
+  text-align: center;
+  font: inherit;
+  cursor: pointer;
 }
 .page-main {
   flex: 1 1 auto;
@@ -550,7 +656,9 @@ async function onLogout() {
     flex-shrink: 0;
   }
   .drawer.mobile-only {
-    display: block;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
   }
   .drawer-mask.mobile-only {
     display: block;
@@ -610,17 +718,23 @@ async function onLogout() {
     padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
     overflow: hidden;
   }
-  .drawer-head {
-    margin-bottom: 8px;
+  /* 仅折叠菜单内：名称与导航同列靠右；顶栏侠士芯片不受影响 */
+  .drawer .drawer-chip {
+    margin-left: auto;
+    max-width: 100%;
   }
   .drawer-nav {
+    width: 100%;
     gap: 8px;
+    align-items: flex-end;
   }
   .drawer-nav .nav-link,
   .drawer-nav .ghost,
   .drawer-nav .cta {
+    width: 50%;
+    max-width: 50%;
     font-size: 14px;
-    padding: 8px 12px;
+    padding: 8px 10px;
   }
 }
 </style>

@@ -1,6 +1,5 @@
 package com.jianghu.ling.bounty.controller;
 
-import com.jianghu.ling.bounty.domain.BountyMessage;
 import com.jianghu.ling.bounty.dto.CreateBountyRequest;
 import com.jianghu.ling.bounty.dto.MessageRequest;
 import com.jianghu.ling.bounty.dto.RepublishBountyRequest;
@@ -75,8 +74,19 @@ public class BountyController {
         return ApiResponse.ok(bountyService.claim(id));
     }
 
+    @PostMapping("/{id}/claims/quit")
+    public ApiResponse<Map<String, Object>> quitClaim(
+            @PathVariable Long id,
+            @RequestBody(required = false) Map<String, Object> body) {
+        String reason = null;
+        if (body != null && body.get("reason") != null) {
+            reason = String.valueOf(body.get("reason"));
+        }
+        return ApiResponse.ok(bountyService.quitClaim(id, reason));
+    }
+
     @GetMapping("/{id}/messages")
-    public ApiResponse<PageResult<BountyMessage>> messages(
+    public ApiResponse<PageResult<Map<String, Object>>> messages(
             @PathVariable Long id,
             @RequestParam(defaultValue = "1") long page,
             @RequestParam(defaultValue = "50") long pageSize) {
@@ -84,13 +94,22 @@ public class BountyController {
     }
 
     @PostMapping("/{id}/messages")
-    public ApiResponse<BountyMessage> sendMessage(@PathVariable Long id, @Valid @RequestBody MessageRequest req) {
+    public ApiResponse<Map<String, Object>> sendMessage(@PathVariable Long id, @Valid @RequestBody MessageRequest req) {
         return ApiResponse.ok(bountyService.sendMessage(id, req.getContent()));
     }
 
     @PostMapping("/{id}/submissions")
     public ApiResponse<Map<String, Object>> submit(@PathVariable Long id, @Valid @RequestBody SubmitRequest req) {
         return ApiResponse.ok(bountyService.submit(id, req));
+    }
+
+    @GetMapping("/{id}/submissions")
+    public ApiResponse<PageResult<Map<String, Object>>> submissions(
+            @PathVariable Long id,
+            @RequestParam(required = false) Long claimId,
+            @RequestParam(defaultValue = "1") long page,
+            @RequestParam(defaultValue = "20") long pageSize) {
+        return ApiResponse.ok(bountyService.listSubmissions(id, claimId, page, pageSize));
     }
 
     @GetMapping("/{id}/claims/{claimId}/submissions")

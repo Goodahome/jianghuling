@@ -1,6 +1,16 @@
 import { http } from './request'
-import type { PageQuery, PageResult } from '@/types/api'
-import type { AdminAuthResult, DashboardOverview } from '@/types/models'
+import type { PageQuery, PageResult, UpdateFeedbackStatusRequest } from '@/types/api'
+import type {
+  AdminAuthResult,
+  AdminFeedbackDetail,
+  AdminFeedbackListItem,
+  BountyDetail,
+  DashboardOverview,
+  ReviewSubmissionListItem,
+  SubmissionDetail,
+  SubmissionReviewResult,
+} from '@/types/models'
+import { normalizeSubmissionDetail, normalizeSubmissionListItem } from '@/utils/submission'
 
 export function adminLogin(username: string, password: string) {
   return http<AdminAuthResult>({
@@ -77,6 +87,182 @@ export function adminAdjustAssets(
   })
 }
 
+/** §16.3.2 备注 */
+export function adminUpdateUserRemark(id: number | string, remark: string) {
+  return http<null>({
+    url: `/admin/users/${id}/remark`,
+    method: 'PUT',
+    data: { remark },
+    headers: { 'X-Admin': '1' },
+  })
+}
+
+/** §16.3.4 登录日志 */
+export function adminListUserLoginLogs(id: number | string, params: PageQuery) {
+  return http<PageResult<Record<string, unknown>>>({
+    url: `/admin/users/${id}/login-logs`,
+    method: 'GET',
+    params,
+    headers: { 'X-Admin': '1' },
+  })
+}
+
+/** §16.3.5 实名 */
+export function adminGetUserRealName(id: number | string) {
+  return http<{ realName?: string; idNumber?: string; status?: string }>({
+    url: `/admin/users/${id}/real-name`,
+    method: 'GET',
+    headers: { 'X-Admin': '1' },
+  })
+}
+
+export function adminUpdateUserRealName(id: number | string, status: string) {
+  return http<{ status: string }>({
+    url: `/admin/users/${id}/real-name`,
+    method: 'PUT',
+    data: { status },
+    headers: { 'X-Admin': '1' },
+  })
+}
+
+/** §16.10.1 管理员账号 */
+export function adminListAdmins(params: PageQuery & { keyword?: string; status?: string }) {
+  return http<PageResult<Record<string, unknown>>>({
+    url: '/admin/admins',
+    method: 'GET',
+    params,
+    headers: { 'X-Admin': '1' },
+  })
+}
+
+export function adminGetAdmin(id: number | string) {
+  return http<Record<string, unknown>>({
+    url: `/admin/admins/${id}`,
+    method: 'GET',
+    headers: { 'X-Admin': '1' },
+  })
+}
+
+export function adminCreateAdmin(data: Record<string, unknown>) {
+  return http<Record<string, unknown>>({
+    url: '/admin/admins',
+    method: 'POST',
+    data,
+    headers: { 'X-Admin': '1' },
+  })
+}
+
+export function adminUpdateAdmin(id: number | string, data: Record<string, unknown>) {
+  return http<Record<string, unknown>>({
+    url: `/admin/admins/${id}`,
+    method: 'PUT',
+    data,
+    headers: { 'X-Admin': '1' },
+  })
+}
+
+export function adminResetAdminPassword(id: number | string, newPassword: string) {
+  return http<null>({
+    url: `/admin/admins/${id}/reset-password`,
+    method: 'POST',
+    data: { newPassword },
+    headers: { 'X-Admin': '1' },
+  })
+}
+
+export function adminDisableAdmin(id: number | string) {
+  return http<null>({
+    url: `/admin/admins/${id}/disable`,
+    method: 'POST',
+    headers: { 'X-Admin': '1' },
+  })
+}
+
+export function adminEnableAdmin(id: number | string) {
+  return http<null>({
+    url: `/admin/admins/${id}/enable`,
+    method: 'POST',
+    headers: { 'X-Admin': '1' },
+  })
+}
+
+/** §16.10.2 角色 */
+export function adminListRoles() {
+  return http<Record<string, unknown>[]>({
+    url: '/admin/roles',
+    method: 'GET',
+    headers: { 'X-Admin': '1' },
+  })
+}
+
+export function adminGetRole(code: string) {
+  return http<Record<string, unknown>>({
+    url: `/admin/roles/${code}`,
+    method: 'GET',
+    headers: { 'X-Admin': '1' },
+  })
+}
+
+export function adminPutRolePermissions(code: string, permissions: string[]) {
+  return http<Record<string, unknown>>({
+    url: `/admin/roles/${code}/permissions`,
+    method: 'PUT',
+    data: { permissions },
+    headers: { 'X-Admin': '1' },
+  })
+}
+
+export function adminPermissionCatalog() {
+  return http<Record<string, unknown>[]>({
+    url: '/admin/roles/permission-catalog',
+    method: 'GET',
+    headers: { 'X-Admin': '1' },
+  })
+}
+
+/** §16.10.3 菜单 */
+export function adminMenusTree() {
+  return http<Record<string, unknown>[]>({
+    url: '/admin/menus/tree',
+    method: 'GET',
+    headers: { 'X-Admin': '1' },
+  })
+}
+
+export function adminMenusAll() {
+  return http<Record<string, unknown>[]>({
+    url: '/admin/menus/all',
+    method: 'GET',
+    headers: { 'X-Admin': '1' },
+  })
+}
+
+export function adminCreateMenu(data: Record<string, unknown>) {
+  return http<Record<string, unknown>>({
+    url: '/admin/menus',
+    method: 'POST',
+    data,
+    headers: { 'X-Admin': '1' },
+  })
+}
+
+export function adminUpdateMenu(id: number | string, data: Record<string, unknown>) {
+  return http<Record<string, unknown>>({
+    url: `/admin/menus/${id}`,
+    method: 'PUT',
+    data,
+    headers: { 'X-Admin': '1' },
+  })
+}
+
+export function adminDeleteMenu(id: number | string) {
+  return http<null>({
+    url: `/admin/menus/${id}`,
+    method: 'DELETE',
+    headers: { 'X-Admin': '1' },
+  })
+}
+
 export function adminListInvites(params: PageQuery) {
   return http<PageResult<Record<string, unknown>>>({
     url: '/admin/invites',
@@ -113,9 +299,24 @@ export function adminListBounties(params: PageQuery & Record<string, unknown>) {
 }
 
 export function adminGetBounty(id: number | string) {
-  return http<Record<string, unknown>>({
+  return http<BountyDetail & {
+    claims?: Array<Record<string, unknown>>
+    submissions?: Array<Record<string, unknown>>
+  }>({
     url: `/admin/bounties/${id}`,
     method: 'GET',
+    headers: { 'X-Admin': '1' },
+  })
+}
+
+export function adminListBountyMessages(
+  id: number | string,
+  params: PageQuery = { page: 1, pageSize: 50 },
+) {
+  return http<PageResult<Record<string, unknown>>>({
+    url: `/admin/bounties/${id}/messages`,
+    method: 'GET',
+    params,
     headers: { 'X-Admin': '1' },
   })
 }
@@ -141,11 +342,47 @@ export function adminReviewBounty(
   })
 }
 
+/** §16.12.1 成果审核列表 */
+export function adminListSubmissionReviews(
+  params: PageQuery & {
+    status?: string
+    bountyId?: number | string
+    keyword?: string
+  },
+) {
+  return http<PageResult<ReviewSubmissionListItem>>({
+    url: '/admin/submission-reviews',
+    method: 'GET',
+    params,
+    headers: { 'X-Admin': '1' },
+  }).then((page) => ({
+    ...page,
+    list: (page?.list || []).map((row) => ({
+      ...normalizeSubmissionListItem(row),
+      bountyTitle: (row as ReviewSubmissionListItem).bountyTitle ?? null,
+    })),
+  }))
+}
+
+/** §16.12.2 成果审核详情（§8.0） */
+export function adminGetSubmission(submissionId: number | string) {
+  return http<SubmissionDetail>({
+    url: `/admin/submission-reviews/${submissionId}`,
+    method: 'GET',
+    headers: { 'X-Admin': '1' },
+  }).then(normalizeSubmissionDetail)
+}
+
+/** §16.12.3 通过/驳回（可改判） */
 export function adminReviewSubmission(
   submissionId: number | string,
-  data: { result: string; reason?: string },
+  data: {
+    result: string
+    reason?: string | null
+    itemComments?: { itemCode: string; comment: string }[]
+  },
 ) {
-  return http<null>({
+  return http<SubmissionReviewResult | null>({
     url: `/admin/submission-reviews/${submissionId}`,
     method: 'POST',
     data,
@@ -266,7 +503,9 @@ export function adminRejectLord(id: number | string, reason?: string) {
   })
 }
 
-export function adminListAuditLogs(params: PageQuery) {
+export function adminListAuditLogs(
+  params: PageQuery & { operator?: string; action?: string; keyword?: string },
+) {
   return http<PageResult<Record<string, unknown>>>({
     url: '/admin/audit-logs',
     method: 'GET',
@@ -470,5 +709,36 @@ export function adminDismissLord(reason?: string) {
     method: 'POST',
     data: { reason },
     headers: adminHeaders(),
+  })
+}
+
+/** §16.11.1 用户反馈列表 */
+export function adminListFeedbacks(
+  params: PageQuery & { status?: string; type?: string; keyword?: string },
+) {
+  return http<PageResult<AdminFeedbackListItem>>({
+    url: '/admin/feedbacks',
+    method: 'GET',
+    params,
+    headers: { 'X-Admin': '1' },
+  })
+}
+
+/** §16.11.2 用户反馈详情 */
+export function adminGetFeedback(id: number | string) {
+  return http<AdminFeedbackDetail>({
+    url: `/admin/feedbacks/${id}`,
+    method: 'GET',
+    headers: { 'X-Admin': '1' },
+  })
+}
+
+/** §16.11.3 改状态 */
+export function adminUpdateFeedbackStatus(id: number | string, data: UpdateFeedbackStatusRequest) {
+  return http<AdminFeedbackDetail>({
+    url: `/admin/feedbacks/${id}/status`,
+    method: 'PUT',
+    data,
+    headers: { 'X-Admin': '1' },
   })
 }

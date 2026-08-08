@@ -69,7 +69,7 @@ onMounted(async () => {
 <template>
   <section class="jh-section">
     <div class="jh-container">
-      <JhPageHeader title="履职记录" subtitle="你在执事堂做过的令审 / 验功，可点进查看当时对象" />
+      <JhPageHeader title="履职记录" />
 
       <div v-loading="loading" class="list">
         <EmptyState v-if="!loading && !list.length" title="暂无履职记录" />

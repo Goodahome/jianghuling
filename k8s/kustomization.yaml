@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - 00-namespace.yaml
+  - 01-secrets.yaml
+  - 02-configmap.yaml
+  - 10-redis.yaml
+  # 使用集群现有 MySQL，不再 apply 11-mysql.yaml
+  - 20-backend.yaml
+  - 21-frontend.yaml
+  - 30-ingress.yaml
+
+images:
+  - name: 10.120.20.201:5000/jianghu-ling-backend
+    newTag: latest
+  - name: 10.120.20.201:5000/jianghu-ling-frontend
+    newTag: latest

@@ -1,0 +1,8 @@
+﻿REG A=0 B=0
+CREATE code=0 id=11 status=PENDING_REVIEW typeDisplay=
+ADMIN-REVIEW code=50000 msg=æå¡åé¨éè¯¯
+DETAIL status=PENDING_REVIEW typeDisplay=
+SEND A=0 B=40300
+LIST-A total=1 both=False
+LIST-B total= both=False
+CHAT-MUTUAL=FAIL

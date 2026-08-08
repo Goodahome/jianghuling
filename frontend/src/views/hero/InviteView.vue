@@ -40,7 +40,7 @@ onMounted(load)
 <template>
   <section class="jh-section">
     <div class="jh-container narrow">
-      <JhPageHeader title="邀请同道" subtitle="受每日额度限制 · 被邀请人凭码注册" />
+      <JhPageHeader title="邀请同道" />
       <div class="jh-panel block">
         <el-button type="primary" class="jh-btn-seal" :loading="loading" @click="onCreate">
           生成邀请码
@@ -66,9 +66,6 @@ onMounted(load)
 </template>
 
 <style scoped>
-.narrow {
-  max-width: 720px;
-}
 h1 {
   margin: 0 0 6px;
   font-size: 32px;

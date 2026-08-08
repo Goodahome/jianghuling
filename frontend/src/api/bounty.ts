@@ -4,11 +4,14 @@ import type {
   BountyDetail,
   BountyListItem,
   BountyMessage,
+  BountySubmissionListItem,
+  CancelBountyResult,
   RepublishDraft,
   SettlementPreview,
-  Submission,
+  SubmissionDetail,
   SubmissionItemInput,
 } from '@/types/models'
+import { normalizeSubmissionDetail, normalizeSubmissionListItem } from '@/utils/submission'
 
 export function listBounties(
   params: PageQuery & {
@@ -89,6 +92,11 @@ export function claimBounty(id: number | string) {
   return http<{ claimId: number }>({ url: `/bounties/${id}/claims`, method: 'POST', data: {} })
 }
 
+/** 退出揭榜（capabilities.canQuitClaim）；路径对齐 POST /claims */
+export function quitClaim(id: number | string) {
+  return http<null>({ url: `/bounties/${id}/claims/quit`, method: 'POST', data: {} })
+}
+
 export function listMessages(id: number | string, params: PageQuery) {
   return http<PageResult<BountyMessage>>({
     url: `/bounties/${id}/messages`,
@@ -109,18 +117,37 @@ export function submitResult(
   id: number | string,
   data: { summary: string; items: SubmissionItemInput[] },
 ) {
-  return http<Submission>({ url: `/bounties/${id}/submissions`, method: 'POST', data })
+  return http<SubmissionDetail>({ url: `/bounties/${id}/submissions`, method: 'POST', data })
 }
 
+/** 本令成果总览（令主全部 / 揭榜侠本人），api.md §8.2 */
+export function listBountySubmissions(
+  id: number | string,
+  params?: PageQuery & { claimId?: number },
+) {
+  return http<PageResult<BountySubmissionListItem>>({
+    url: `/bounties/${id}/submissions`,
+    method: 'GET',
+    params,
+  }).then((page) => ({
+    ...page,
+    list: (page?.list || []).map(normalizeSubmissionListItem),
+  }))
+}
+
+/** §8.3 某揭榜关系的成果版本列表 */
 export function listClaimSubmissions(bountyId: number | string, claimId: number | string) {
-  return http<Submission[]>({
+  return http<BountySubmissionListItem[]>({
     url: `/bounties/${bountyId}/claims/${claimId}/submissions`,
     method: 'GET',
-  })
+  }).then((list) => (list || []).map(normalizeSubmissionListItem))
 }
 
+/** §8.4 成果详情（C 端下钻） */
 export function getSubmission(submissionId: number | string) {
-  return http<Submission>({ url: `/submissions/${submissionId}`, method: 'GET' })
+  return http<SubmissionDetail>({ url: `/submissions/${submissionId}`, method: 'GET' }).then(
+    normalizeSubmissionDetail,
+  )
 }
 
 export function previewSettlement(id: number | string) {
@@ -134,8 +161,9 @@ export function submitSettlement(
   return http<null>({ url: `/bounties/${id}/settlement`, method: 'POST', data: { items } })
 }
 
+/** §9.3 令主取消；须按 cancelOutcome 分流 */
 export function cancelBounty(id: number | string, reason: string) {
-  return http<null>({ url: `/bounties/${id}/cancel`, method: 'POST', data: { reason } })
+  return http<CancelBountyResult>({ url: `/bounties/${id}/cancel`, method: 'POST', data: { reason } })
 }
 
 export function submitEvaluation(

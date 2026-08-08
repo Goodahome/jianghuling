@@ -83,7 +83,7 @@ function remove(url: string) {
   border: 1px solid var(--jh-line);
   border-radius: var(--jh-radius);
   overflow: hidden;
-  background: #fff;
+  background: transparent;
 }
 .thumb img {
   display: block;
@@ -95,7 +95,8 @@ function remove(url: string) {
   display: block;
   width: 100%;
   border: none;
-  background: #f3f4f6;
+  background: rgba(196, 163, 90, 0.16);
+  color: var(--jh-ink);
   font-size: 12px;
   padding: 4px 0;
   cursor: pointer;

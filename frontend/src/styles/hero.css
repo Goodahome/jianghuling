@@ -7,6 +7,13 @@
   max-height: var(--jh-viewport-min);
   display: flex;
   flex-direction: column;
+  /* 告示板深色木面：正文用浅金墨，避免白底卡片依赖 */
+  --jh-ink: #f7f0dd;
+  --jh-ink-soft: #e8dcc0;
+  --jh-muted: rgba(247, 240, 221, 0.62);
+  --jh-line: rgba(196, 163, 90, 0.38);
+  --jh-paper: transparent;
+  --jh-mist: rgba(247, 240, 221, 0.1);
   color: var(--jh-ink);
   font-family: var(--jh-font-body);
   /* 古代街巷大背景（顶部不再压纯黑渐变，避免瓦顶上方出现黑条） */
@@ -80,43 +87,43 @@
 .hero-app .menu-btn,
 .hall-app .menu-btn,
 .hero-app .drawer-user,
-.hall-app .drawer-user,
-.wood-block {
+.hall-app .drawer-user {
   background-color: var(--jh-wood-base) !important;
   background-image: var(--jh-wood-overlay), var(--jh-wood-grain), var(--jh-wood-image) !important;
-  background-size: auto, auto, 130px 130px !important;
+  background-size: auto, auto, 140px 140px !important;
   background-position: center, center, center !important;
   background-repeat: no-repeat, repeat, repeat !important;
-  border-color: rgba(90, 66, 40, 0.4) !important;
+  background-blend-mode: normal, normal, soft-light !important;
+  border-color: rgba(160, 120, 55, 0.4) !important;
   box-shadow:
-    inset 0 1px 0 rgba(255, 252, 240, 0.28),
-    inset 0 -2px 4px rgba(90, 66, 40, 0.12),
-    0 1px 0 rgba(42, 34, 24, 0.16) !important;
+    inset 0 1px 0 rgba(255, 236, 190, 0.35),
+    inset 0 -1px 2px rgba(150, 110, 50, 0.12),
+    0 1px 0 rgba(120, 90, 40, 0.14) !important;
 }
 
 .hero-app .nav-link:hover,
 .hall-app .nav-link:hover,
 .hero-app .ghost:hover,
-.hall-app .ghost:hover,
-.wood-block.link:hover {
+.hall-app .ghost:hover {
   background-image:
-    linear-gradient(165deg, rgba(255, 253, 246, 0.4) 0%, rgba(250, 235, 205, 0.18) 50%, rgba(180, 140, 90, 0.12) 100%),
+    linear-gradient(180deg, rgba(245, 216, 148, 0.88) 0%, rgba(232, 196, 118, 0.9) 100%),
     var(--jh-wood-grain),
     var(--jh-wood-image) !important;
-  filter: brightness(1.02);
+  background-blend-mode: normal, normal, soft-light !important;
+  filter: none;
 }
 
 .hero-app .nav-link.is-active,
-.hall-app .nav-link.is-active,
-.wood-block.current {
-  /* 背景与未选中木牌一致，仅文字改朱砂 */
+.hall-app .nav-link.is-active {
+  /* 背景与未选中木牌一致，仅文字改色 */
   background-color: var(--jh-wood-base) !important;
   background-image: var(--jh-wood-overlay), var(--jh-wood-grain), var(--jh-wood-image) !important;
-  border-color: rgba(90, 66, 40, 0.4) !important;
+  background-blend-mode: normal, normal, soft-light !important;
+  border-color: rgba(160, 120, 55, 0.45) !important;
   box-shadow:
-    inset 0 1px 0 rgba(255, 252, 240, 0.28),
-    inset 0 -2px 4px rgba(90, 66, 40, 0.12),
-    0 1px 0 rgba(42, 34, 24, 0.16) !important;
+    inset 0 1px 0 rgba(255, 236, 190, 0.35),
+    inset 0 -1px 2px rgba(150, 110, 50, 0.12),
+    0 1px 0 rgba(120, 90, 40, 0.14) !important;
   filter: none;
 }
 
@@ -130,8 +137,7 @@
 .hero-app .user-chip .user-name,
 .hall-app .user-chip .user-name,
 .hero-app .drawer-user .user-name,
-.hall-app .drawer-user .user-name,
-.wood-block {
+.hall-app .drawer-user .user-name {
   color: var(--jh-wood-text-paint) !important;
   text-shadow: var(--jh-wood-text-shine) !important;
 }
@@ -147,8 +153,7 @@
 }
 
 .hero-app .nav-link.is-active,
-.hall-app .nav-link.is-active,
-.wood-block.current {
+.hall-app .nav-link.is-active {
   color: var(--jh-wood-text-active) !important;
   text-shadow:
     -0.5px -0.5px 0 rgba(50, 12, 8, 0.4),
@@ -173,7 +178,7 @@
   text-shadow: var(--jh-gold-text-shine) !important;
 }
 
-/* 卡片内文书标题（协议/隐私/告示等）：墨色宋体，勿用金榜艺术字 */
+/* 卡片内文书标题（协议/隐私/告示等）：宋体 + 浅宣纸色，勿用金榜艺术字 */
 .hero-app .jh-panel.article h1,
 .hall-app .jh-panel.article h1,
 .hero-app .jh-panel.legal h1,
@@ -183,7 +188,7 @@
 .hero-app .jh-panel.legal .jh-display-title,
 .hall-app .jh-panel.legal .jh-display-title {
   font-family: var(--jh-font-doc);
-  color: var(--jh-ink);
+  color: var(--jh-plaque);
   text-shadow: none;
   letter-spacing: 0.04em;
   font-weight: 600;
@@ -198,16 +203,16 @@
 .hero-app .jh-panel.legal h3,
 .hall-app .jh-panel.legal h3 {
   font-family: var(--jh-font-doc);
-  color: var(--jh-ink);
+  color: var(--jh-plaque);
   text-shadow: none;
   font-weight: 600;
 }
 
-/* 详情页头卡大标题：卡片上用墨色，不用金榜黄 */
+/* 详情页头卡大标题：透明底上用宣纸色，不用金榜黄 */
 .hero-app .jh-panel.head h1,
 .hall-app .jh-panel.head h1 {
   font-family: var(--jh-font-doc);
-  color: var(--jh-ink);
+  color: var(--jh-plaque);
   text-shadow: none;
   letter-spacing: 0.04em;
   font-weight: 600;
@@ -256,28 +261,77 @@
   bottom: 0;
 }
 
-/* Radio Button 分段切换（筛榜等） */
+/* Radio Button 分类切换：与原木按钮（筛榜/张贴等）同语汇 */
+.hero-app .el-radio-group,
+.hall-app .el-radio-group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+.hero-app .el-radio-button,
+.hall-app .el-radio-button {
+  --el-radio-button-checked-bg-color: transparent;
+  --el-radio-button-checked-text-color: var(--jh-wood-text-active);
+  --el-radio-button-checked-border-color: rgba(160, 120, 55, 0.55);
+  --el-button-bg-color: transparent;
+  --el-fill-color-blank: transparent;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  overflow: visible;
+}
 .hero-app .el-radio-button__inner,
 .hall-app .el-radio-button__inner {
-  background: rgba(251, 246, 232, 0.18);
-  border-color: rgba(196, 163, 90, 0.45);
-  color: rgba(247, 240, 221, 0.85);
-  box-shadow: none !important;
+  background-color: var(--jh-wood-base) !important;
+  background-image: var(--jh-wood-overlay), var(--jh-wood-grain), var(--jh-wood-image) !important;
+  background-size: auto, auto, 140px 140px !important;
+  background-position: center, center, center !important;
+  background-repeat: no-repeat, repeat, repeat !important;
+  background-blend-mode: normal, normal, soft-light !important;
+  border: 1px solid rgba(160, 120, 55, 0.45) !important;
+  border-left: 1px solid rgba(160, 120, 55, 0.45) !important;
+  border-radius: var(--jh-wood-radius) !important;
+  color: var(--jh-wood-text-paint) !important;
+  font-family: var(--jh-font-display);
+  letter-spacing: 0.06em;
+  text-shadow: var(--jh-wood-text-shine);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 236, 190, 0.35),
+    inset 0 -1px 2px rgba(150, 110, 50, 0.12) !important;
+}
+.hero-app .el-radio-button__inner:hover,
+.hall-app .el-radio-button__inner:hover {
+  background-image:
+    linear-gradient(180deg, rgba(245, 216, 148, 0.88) 0%, rgba(232, 196, 118, 0.9) 100%),
+    var(--jh-wood-grain),
+    var(--jh-wood-image) !important;
+  background-blend-mode: normal, normal, soft-light !important;
+  border-color: rgba(160, 120, 55, 0.55) !important;
+  color: var(--jh-wood-text-paint) !important;
 }
 .hero-app .el-radio-button__original-radio:checked + .el-radio-button__inner,
 .hall-app .el-radio-button__original-radio:checked + .el-radio-button__inner {
-  background: rgba(196, 163, 90, 0.35);
-  border-color: var(--jh-gold);
-  color: #1c1408;
-  box-shadow: none !important;
+  background-color: var(--jh-wood-base) !important;
+  background-image: var(--jh-wood-overlay), var(--jh-wood-grain), var(--jh-wood-image) !important;
+  background-blend-mode: normal, normal, soft-light !important;
+  border-color: rgba(160, 120, 55, 0.55) !important;
+  border-left-color: rgba(160, 120, 55, 0.55) !important;
+  color: var(--jh-wood-text-active) !important;
+  text-shadow:
+    -0.5px -0.5px 0 rgba(50, 12, 8, 0.35),
+    0.5px 0.5px 0 rgba(255, 220, 200, 0.35);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 236, 190, 0.35),
+    inset 0 -1px 2px rgba(150, 110, 50, 0.12) !important;
 }
 .hero-app .el-radio-button:first-child .el-radio-button__inner,
-.hall-app .el-radio-button:first-child .el-radio-button__inner {
-  border-left-color: rgba(196, 163, 90, 0.45);
-}
-.hero-app .el-radio-button__original-radio:checked + .el-radio-button__inner,
-.hall-app .el-radio-button__original-radio:checked + .el-radio-button__inner {
-  border-left-color: var(--jh-gold);
+.hall-app .el-radio-button:first-child .el-radio-button__inner,
+.hero-app .el-radio-button:last-child .el-radio-button__inner,
+.hall-app .el-radio-button:last-child .el-radio-button__inner {
+  border-radius: var(--jh-wood-radius) !important;
 }
 
 /* link 按钮去蓝 */
@@ -289,8 +343,14 @@
 }
 
 .jh-container {
-  width: min(1120px, calc(100% - 32px));
+  width: min(var(--jh-container-width), calc(100% - 32px));
   margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* 详情/表单/会话等阅读区：全站统一宽度（勿在各页再写 max-width） */
+.jh-container.narrow {
+  width: min(var(--jh-reading-width), calc(100% - 32px));
 }
 
 .jh-section {
@@ -300,43 +360,38 @@
 /* 内容区文字/按钮/卡片整体缩小；顶栏在 page-main 外不受影响 */
 .hero-app .page-main,
 .hall-app .page-main {
-  --jh-page-scrollbar-width: var(--jh-board-side-scrollbar-width, var(--jh-board-scrollbar-width));
-  --jh-page-scrollbar-gutter: var(--jh-board-side-scrollbar-gutter, var(--jh-board-scrollbar-gutter));
+  /*
+   * 滚动条叠在右侧竖木条上：槽在木条内左右均等内缩，拇指再在槽内居中。
+   * 勿按 content-scale 放大外伸（会整体偏右）。
+   * width 外伸 + 负 margin：经典滚动条占位不挤掉版心宽度。
+   */
+  --jh-page-scrollbar-inset: var(--jh-board-scrollbar-inset);
+  /* 槽宽 = 木条 - 左右内缩；外伸使槽右缘对齐「木条右缘 - 半内缩」→ 整槽居中于木条 */
+  --jh-page-scrollbar-width: calc(var(--jh-board-rail-width) - var(--jh-page-scrollbar-inset));
+  --jh-page-rail-extend: calc(
+    var(--jh-board-rail-width) - var(--jh-page-scrollbar-inset) / 2
+  );
+  --jh-page-scrollbar-thumb-inset: calc(
+    (var(--jh-page-scrollbar-width) - var(--jh-board-scrollbar-thumb)) / 2
+  );
   flex: 1 1 auto;
   position: relative;
+  z-index: 2;
   min-height: 0;
-  padding: 0 var(--jh-page-scrollbar-gutter) 8px 0;
-  overflow-y: auto;
+  box-sizing: border-box;
+  width: calc(100% + var(--jh-page-rail-extend));
+  max-width: none;
+  margin-right: calc(-1 * var(--jh-page-rail-extend));
+  padding: 0 0 8px;
+  /* scroll：始终占住木条槽宽，避免无溢出时内容伸进木条 */
+  overflow-y: scroll;
   overflow-x: clip;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
-  scrollbar-width: auto;
-  scrollbar-color: rgba(88, 58, 31, 0.96) rgba(55, 36, 20, 0.42);
-  background-image:
-    linear-gradient(
-      90deg,
-      transparent 0,
-      transparent calc(100% - var(--jh-page-scrollbar-gutter)),
-      rgba(108, 76, 44, 0.14) calc(100% - var(--jh-page-scrollbar-gutter)),
-      rgba(45, 29, 16, 0.26) 100%
-    ),
-    var(--jh-board-scrollbar-track);
-  background-size:
-    100% 100%,
-    var(--jh-page-scrollbar-gutter) 220px,
-    var(--jh-page-scrollbar-gutter) 220px,
-    var(--jh-page-scrollbar-gutter) 220px;
-  background-position:
-    left top,
-    right center,
-    right center,
-    right center;
-  background-repeat:
-    no-repeat,
-    repeat-y,
-    repeat-y,
-    repeat-y;
-  background-clip: padding-box;
+  /* Firefox：细条 + 透明轨，尽量贴木条 */
+  scrollbar-width: thin;
+  scrollbar-color: #8a6238 transparent;
+  background: transparent;
   zoom: var(--jh-content-scale);
 }
 
@@ -347,30 +402,27 @@
 
 .hero-app .page-main::-webkit-scrollbar-track,
 .hall-app .page-main::-webkit-scrollbar-track {
-  border-radius: 999px;
-  background: var(--jh-board-scrollbar-track);
-  background-size: cover, auto, 180px 180px;
-  background-position: center;
-  border: 1px solid rgba(84, 57, 30, 0.5);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 237, 198, 0.18),
-    inset 0 0 8px rgba(32, 19, 10, 0.32);
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
 .hero-app .page-main::-webkit-scrollbar-thumb,
 .hall-app .page-main::-webkit-scrollbar-thumb {
   border-radius: 999px;
-  background: var(--jh-board-scrollbar-thumb);
-  border: 1px solid rgba(52, 31, 16, 0.86);
+  /* 透明边把拇指左右居中在木条宽度内 */
+  border: var(--jh-page-scrollbar-thumb-inset) solid transparent;
+  background: var(--jh-board-scrollbar-thumb-fill);
+  background-clip: padding-box;
   box-shadow:
-    inset 0 1px 0 rgba(255, 237, 198, 0.24),
-    inset 0 -1px 0 rgba(36, 18, 8, 0.45),
-    0 0 0 1px rgba(22, 14, 8, 0.14);
+    inset 0 1px 0 rgba(255, 237, 198, 0.28),
+    inset 0 -1px 0 rgba(36, 18, 8, 0.4);
 }
 
 .hero-app .page-main::-webkit-scrollbar-thumb:hover,
 .hall-app .page-main::-webkit-scrollbar-thumb:hover {
-  background: var(--jh-board-scrollbar-thumb-hover);
+  background: var(--jh-board-scrollbar-thumb-hover-fill);
+  background-clip: padding-box;
 }
 
 .hero-app .page-main::-webkit-scrollbar-corner,
@@ -389,39 +441,290 @@
   color: var(--jh-muted);
 }
 
-.jh-btn-seal {
-  background: var(--jh-seal) !important;
-  border-color: var(--jh-seal) !important;
-  color: #fff !important;
-}
-
-.jh-btn-seal:hover {
-  background: var(--jh-seal-dark) !important;
-  border-color: var(--jh-seal-dark) !important;
-  color: #fff !important;
-}
-
+/* —— 原木色按钮（侠士端 / 执事堂）—— */
+.hero-app .el-button:not(.is-link):not(.is-text),
+.hall-app .el-button:not(.is-link):not(.is-text),
+.jh-btn-seal,
 .jh-btn-ink {
-  background: #fff !important;
-  border-color: var(--jh-ink-soft) !important;
-  color: var(--jh-ink) !important;
+  --el-button-bg-color: var(--jh-wood-base);
+  --el-button-border-color: rgba(160, 120, 55, 0.45);
+  --el-button-text-color: var(--jh-wood-text-paint);
+  --el-button-hover-bg-color: #f5d894;
+  --el-button-hover-border-color: rgba(160, 120, 55, 0.55);
+  --el-button-hover-text-color: var(--jh-wood-text-paint);
+  --el-button-active-bg-color: #e8c478;
+  --el-button-active-border-color: rgba(160, 120, 55, 0.6);
+  --el-button-active-text-color: var(--jh-wood-text-active);
+  --el-button-disabled-bg-color: rgba(239, 209, 151, 0.45);
+  --el-button-disabled-border-color: rgba(160, 120, 55, 0.25);
+  --el-button-disabled-text-color: rgba(42, 28, 18, 0.4);
+  background-color: var(--jh-wood-base) !important;
+  background-image: var(--jh-wood-overlay), var(--jh-wood-grain), var(--jh-wood-image) !important;
+  background-size: auto, auto, 140px 140px !important;
+  background-position: center, center, center !important;
+  background-repeat: no-repeat, repeat, repeat !important;
+  background-blend-mode: normal, normal, soft-light !important;
+  border-color: rgba(160, 120, 55, 0.45) !important;
+  color: var(--jh-wood-text-paint) !important;
+  text-shadow: var(--jh-wood-text-shine);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 236, 190, 0.35),
+    inset 0 -1px 2px rgba(150, 110, 50, 0.12),
+    0 1px 0 rgba(120, 90, 40, 0.14) !important;
 }
-
+.hero-app .el-button:not(.is-link):not(.is-text):hover,
+.hall-app .el-button:not(.is-link):not(.is-text):hover,
+.jh-btn-seal:hover,
 .jh-btn-ink:hover {
-  border-color: var(--jh-seal) !important;
+  background-image:
+    linear-gradient(180deg, rgba(245, 216, 148, 0.88) 0%, rgba(232, 196, 118, 0.9) 100%),
+    var(--jh-wood-grain),
+    var(--jh-wood-image) !important;
+  background-blend-mode: normal, normal, soft-light !important;
+  border-color: rgba(160, 120, 55, 0.55) !important;
+  color: var(--jh-wood-text-paint) !important;
+  filter: none;
+}
+/* 主操作（原朱红 seal）：原木底 + 朱砂字，与顶栏选中同语汇 */
+.hero-app .el-button--primary:not(.is-link):not(.is-text),
+.hall-app .el-button--primary:not(.is-link):not(.is-text),
+.jh-btn-seal {
+  color: var(--jh-wood-text-active) !important;
+  text-shadow:
+    -0.5px -0.5px 0 rgba(50, 12, 8, 0.35),
+    0.5px 0.5px 0 rgba(255, 220, 200, 0.35);
+}
+.hero-app .el-button--primary:not(.is-link):not(.is-text):hover,
+.hall-app .el-button--primary:not(.is-link):not(.is-text):hover,
+.jh-btn-seal:hover {
+  color: var(--jh-wood-text-active) !important;
+}
+.hero-app .el-button--danger:not(.is-link):not(.is-text),
+.hall-app .el-button--danger:not(.is-link):not(.is-text) {
   color: var(--jh-seal) !important;
+}
+.hero-app .el-button.is-plain:not(.is-link):not(.is-text),
+.hall-app .el-button.is-plain:not(.is-link):not(.is-text) {
+  /* plain 同样走原木，避免回白底 */
+  background-color: var(--jh-wood-base) !important;
 }
 
 .jh-empty {
   padding: 40px 16px;
   text-align: center;
   color: var(--jh-muted);
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
 .jh-panel {
-  background: rgba(255, 253, 246, 0.92);
-  border: 1px solid rgba(138, 107, 42, 0.35);
+  background: transparent;
+  border: 1px solid var(--jh-line);
   border-radius: var(--jh-radius);
+  color: var(--jh-ink);
+}
+
+/* 表单控件：透明底 + 金色描边，与告示板一致 */
+.hero-app .el-input__wrapper,
+.hall-app .el-input__wrapper,
+.hero-app .el-textarea__inner,
+.hall-app .el-textarea__inner,
+.hero-app .el-select__wrapper,
+.hall-app .el-select__wrapper {
+  background-color: transparent !important;
+  box-shadow: 0 0 0 1px var(--jh-line) inset !important;
+  color: var(--jh-ink) !important;
+}
+.hero-app .el-input__wrapper:hover,
+.hall-app .el-input__wrapper:hover,
+.hero-app .el-select__wrapper:hover,
+.hall-app .el-select__wrapper:hover {
+  box-shadow: 0 0 0 1px rgba(196, 163, 90, 0.55) inset !important;
+}
+.hero-app .el-input__wrapper.is-focus,
+.hall-app .el-input__wrapper.is-focus,
+.hero-app .el-select__wrapper.is-focused,
+.hall-app .el-select__wrapper.is-focused {
+  box-shadow: 0 0 0 1px var(--jh-gold) inset !important;
+}
+.hero-app .el-input__inner,
+.hall-app .el-input__inner,
+.hero-app .el-textarea__inner,
+.hall-app .el-textarea__inner {
+  color: var(--jh-ink) !important;
+}
+.hero-app .el-input__inner::placeholder,
+.hall-app .el-input__inner::placeholder,
+.hero-app .el-textarea__inner::placeholder,
+.hall-app .el-textarea__inner::placeholder {
+  color: rgba(247, 240, 221, 0.42) !important;
+}
+.hero-app .el-form-item__label,
+.hall-app .el-form-item__label {
+  color: rgba(247, 240, 221, 0.82) !important;
+}
+
+/* 字数计数器：去掉 EP 默认白底 */
+.hero-app .el-input__count,
+.hall-app .el-input__count,
+.hero-app .el-input__count-inner,
+.hall-app .el-input__count-inner,
+.hero-app .el-textarea .el-input__count,
+.hall-app .el-textarea .el-input__count {
+  background: transparent !important;
+  color: rgba(247, 240, 221, 0.55) !important;
+}
+
+/* 数字加减按钮：透明底 + 金色描边，与输入框一致 */
+.hero-app .el-input-number,
+.hall-app .el-input-number {
+  --el-fill-color-blank: transparent;
+  --el-fill-color-light: transparent;
+  width: 100%;
+}
+.hero-app .el-input-number .el-input__wrapper,
+.hall-app .el-input-number .el-input__wrapper {
+  background-color: transparent !important;
+  padding-left: 42px;
+  padding-right: 42px;
+}
+.hero-app .el-input-number__decrease,
+.hall-app .el-input-number__decrease,
+.hero-app .el-input-number__increase,
+.hall-app .el-input-number__increase {
+  background-color: transparent !important;
+  background-image: none !important;
+  color: var(--jh-ink) !important;
+  border-color: var(--jh-line) !important;
+}
+.hero-app .el-input-number__decrease:hover,
+.hall-app .el-input-number__decrease:hover,
+.hero-app .el-input-number__increase:hover,
+.hall-app .el-input-number__increase:hover {
+  color: var(--jh-gold-bright) !important;
+  background-color: rgba(196, 163, 90, 0.12) !important;
+}
+.hero-app .el-input-number.is-controls-right .el-input-number__decrease,
+.hall-app .el-input-number.is-controls-right .el-input-number__decrease,
+.hero-app .el-input-number.is-controls-right .el-input-number__increase,
+.hall-app .el-input-number.is-controls-right .el-input-number__increase {
+  background-color: transparent !important;
+  border-color: var(--jh-line) !important;
+}
+.hero-app .el-input-number__decrease.is-disabled,
+.hall-app .el-input-number__decrease.is-disabled,
+.hero-app .el-input-number__increase.is-disabled,
+.hall-app .el-input-number__increase.is-disabled {
+  color: rgba(247, 240, 221, 0.28) !important;
+  background-color: transparent !important;
+}
+
+.hero-app .el-table,
+.hall-app .el-table {
+  --el-table-bg-color: transparent;
+  --el-table-tr-bg-color: transparent;
+  --el-table-header-bg-color: transparent;
+  --el-table-row-hover-bg-color: rgba(196, 163, 90, 0.12);
+  --el-table-border-color: var(--jh-line);
+  --el-table-text-color: var(--jh-ink);
+  --el-table-header-text-color: var(--jh-gold-bright);
+  background: transparent !important;
+  color: var(--jh-ink);
+}
+.hero-app .el-table th.el-table__cell,
+.hall-app .el-table th.el-table__cell,
+.hero-app .el-table td.el-table__cell,
+.hall-app .el-table td.el-table__cell {
+  background: transparent !important;
+}
+/* 租房令状等 descriptions：去掉 EP 默认白底 */
+.hero-app .el-descriptions,
+.hall-app .el-descriptions {
+  --el-descriptions-table-border: var(--jh-line);
+  --el-descriptions-item-bordered-label-background: transparent;
+  --el-fill-color-blank: transparent;
+  --el-bg-color: transparent;
+  color: var(--jh-ink);
+  background: transparent;
+}
+.hero-app .el-descriptions__body,
+.hall-app .el-descriptions__body,
+.hero-app .el-descriptions__table,
+.hall-app .el-descriptions__table {
+  background: transparent !important;
+}
+.hero-app .el-descriptions__body .el-descriptions__table.is-bordered .el-descriptions__cell,
+.hall-app .el-descriptions__body .el-descriptions__table.is-bordered .el-descriptions__cell,
+.hero-app .el-descriptions__label,
+.hall-app .el-descriptions__label,
+.hero-app .el-descriptions__content,
+.hall-app .el-descriptions__content {
+  background: transparent !important;
+  color: var(--jh-ink) !important;
+  border-color: var(--jh-line) !important;
+}
+.hero-app .el-descriptions__label,
+.hall-app .el-descriptions__label {
+  color: rgba(247, 240, 221, 0.72) !important;
+  font-weight: 500;
+}
+.hero-app .el-tag,
+.hall-app .el-tag {
+  --el-tag-bg-color: transparent;
+  --el-tag-border-color: rgba(196, 163, 90, 0.45);
+  --el-tag-text-color: var(--jh-gold-bright);
+  background-color: transparent !important;
+  border-color: rgba(196, 163, 90, 0.45) !important;
+  color: var(--jh-gold-bright) !important;
+}
+.hero-app .el-tag--danger,
+.hall-app .el-tag--danger {
+  --el-tag-text-color: var(--jh-seal);
+  color: var(--jh-seal) !important;
+  border-color: rgba(178, 58, 45, 0.45) !important;
+}
+.hero-app .el-empty,
+.hall-app .el-empty {
+  --el-empty-fill-color-0: transparent;
+  --el-empty-fill-color-1: rgba(196, 163, 90, 0.2);
+  --el-empty-fill-color-2: rgba(196, 163, 90, 0.12);
+  --el-empty-fill-color-3: rgba(196, 163, 90, 0.08);
+  --el-empty-fill-color-4: rgba(196, 163, 90, 0.15);
+  --el-empty-fill-color-5: rgba(196, 163, 90, 0.1);
+  --el-empty-fill-color-6: rgba(196, 163, 90, 0.18);
+  --el-empty-fill-color-7: rgba(196, 163, 90, 0.14);
+  --el-empty-fill-color-8: rgba(196, 163, 90, 0.22);
+  --el-empty-fill-color-9: rgba(196, 163, 90, 0.16);
+  background: transparent;
+}
+.hero-app .el-empty__description p,
+.hall-app .el-empty__description p {
+  color: var(--jh-muted);
+}
+.hero-app .el-alert,
+.hall-app .el-alert {
+  background: transparent !important;
+  border: 1px solid var(--jh-line);
+  color: var(--jh-ink);
+}
+.hero-app .el-date-editor.el-input__wrapper,
+.hall-app .el-date-editor.el-input__wrapper {
+  background-color: transparent !important;
+}
+.hero-app .el-pagination,
+.hall-app .el-pagination {
+  --el-pagination-bg-color: transparent;
+  --el-pagination-button-bg-color: transparent;
+  --el-pagination-hover-color: var(--jh-gold-bright);
+  color: var(--jh-muted);
+}
+.hero-app .el-pager li,
+.hall-app .el-pager li,
+.hero-app .el-pagination button,
+.hall-app .el-pagination button {
+  background: transparent !important;
+  color: inherit;
 }
 
 @media (max-width: 768px) {
@@ -471,6 +774,12 @@
 
   .hero-app .page-main,
   .hall-app .page-main {
-    padding-right: var(--jh-page-scrollbar-gutter);
+    /* 移动端无侧木条：收回外伸，细滚动条不挤版心 */
+    --jh-page-scrollbar-width: 6px;
+    --jh-page-rail-extend: 0px;
+    --jh-page-scrollbar-thumb-inset: 1px;
+    width: 100%;
+    margin-right: 0;
+    padding-right: 0;
   }
 }

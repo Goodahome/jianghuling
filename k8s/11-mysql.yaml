@@ -1,0 +1,130 @@
+# MySQL 8 StatefulSet（同 namespace，便于一键起）
+#
+# 初始化 schema（仅空数据卷首次启动时执行）：
+#   1) 在构建机/本机（仓库根目录）：
+#      kubectl -n jianghu-ling create configmap mysql-init \
+#        --from-file=01-schema.sql=backend/src/main/resources/db/schema.sql \
+#        --from-file=02-data.sql=backend/src/main/resources/db/data.sql \
+#        --dry-run=client -o yaml | kubectl apply -f -
+#   2) 取消下方 init volume / volumeMount 注释后重新 apply
+#   3) 若库已初始化，改 ConfigMap 不会再跑 initdb；需重建 PVC 才会重跑
+#
+# 补丁脚本（patch_*.sql）请在库就绪后按需手动执行，勿全部塞进 initdb。
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+  namespace: jianghu-ling
+  labels:
+    app.kubernetes.io/name: mysql
+    app.kubernetes.io/part-of: jianghu-ling
+spec:
+  type: ClusterIP
+  clusterIP: None
+  selector:
+    app.kubernetes.io/name: mysql
+  ports:
+    - name: mysql
+      port: 3306
+      targetPort: mysql
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql
+  namespace: jianghu-ling
+  labels:
+    app.kubernetes.io/name: mysql
+    app.kubernetes.io/part-of: jianghu-ling
+spec:
+  serviceName: mysql
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mysql
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mysql
+        app.kubernetes.io/part-of: jianghu-ling
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:8.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: mysql
+              containerPort: 3306
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: jianghu-ling-secrets
+                  key: MYSQL_ROOT_PASSWORD
+            - name: MYSQL_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: jianghu-ling-config
+                  key: MYSQL_DB
+            - name: MYSQL_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: jianghu-ling-config
+                  key: MYSQL_USER
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: jianghu-ling-secrets
+                  key: MYSQL_PASSWORD
+          args:
+            - --character-set-server=utf8mb4
+            - --collation-server=utf8mb4_unicode_ci
+            - --default-authentication-plugin=mysql_native_password
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/mysql
+            # 取消注释前请先创建 ConfigMap mysql-init（见文件头说明）
+            # - name: initdb
+            #   mountPath: /docker-entrypoint-initdb.d
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 2Gi
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - mysqladmin ping -h 127.0.0.1 -uroot -p"$MYSQL_ROOT_PASSWORD"
+            initialDelaySeconds: 40
+            periodSeconds: 20
+            timeoutSeconds: 5
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - mysqladmin ping -h 127.0.0.1 -uroot -p"$MYSQL_ROOT_PASSWORD"
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 5
+      # volumes:
+      #   - name: initdb
+      #     configMap:
+      #       name: mysql-init
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+        labels:
+          app.kubernetes.io/name: mysql
+          app.kubernetes.io/part-of: jianghu-ling
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 20Gi
+        # storageClassName:

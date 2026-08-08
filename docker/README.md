@@ -4,8 +4,9 @@
 
 ## 文件
 
-- `docker-compose.yml`：服务编排（当前含 MySQL / Redis；后端前端待工程生成后启用）
+- `docker-compose.yml`：本地编排（默认 MySQL / Redis；backend/frontend 服务块仍为注释，可按需启用）
 - `.env.example`：环境变量模板（复制为 `.env` 后填写）
+- 镜像构建上下文在仓库：`backend/Dockerfile`、`frontend/Dockerfile`（K8s / 推私有仓用）
 
 ## 启动
 
@@ -14,4 +15,4 @@ cp .env.example .env
 docker compose up -d
 ```
 
-详情见 `docs/deployment.md`。由 **@devops** 维护。
+K8s 部署见 `docs/deployment.md` §8 与 `k8s/`、`scripts/k8s/`。由 **@devops** 维护。

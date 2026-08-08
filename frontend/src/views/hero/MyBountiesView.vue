@@ -1,94 +1,129 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { listMyClaimed, listMyPublished } from '@/api/bounty'
-import type { BountyListItem } from '@/types/models'
-import { bountyTypeLabel, formatAmount } from '@/utils/labels'
+import { storeToRefs } from 'pinia'
+import { useMineAttentionStore } from '@/stores/mineAttention'
+import { difficultyLabel, formatAmount, mineBountySortRank, resolveBountyTypeLabel } from '@/utils/labels'
 import StatusTag from '@/components/StatusTag.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import JhPageHeader from '@/components/JhPageHeader.vue'
+import JhBoardPoster from '@/components/JhBoardPoster.vue'
+import JhBoardPosterGrid from '@/components/JhBoardPosterGrid.vue'
+import '@/components/JhBoardPosterMeta.css'
 
 const router = useRouter()
+const mineAttention = useMineAttentionStore()
+const { published, claimed } = storeToRefs(mineAttention)
+
 const tab = ref('published')
-const list = ref<BountyListItem[]>([])
 const loading = ref(false)
+
+const sourceList = computed(() => (tab.value === 'published' ? published.value : claimed.value))
+
+const sortedList = computed(() => {
+  return [...sourceList.value].sort((a, b) => {
+    const d = mineBountySortRank(a.status) - mineBountySortRank(b.status)
+    if (d !== 0) return d
+    return Number(b.id) - Number(a.id)
+  })
+})
 
 async function load() {
   loading.value = true
   try {
-    const data =
-      tab.value === 'published'
-        ? await listMyPublished({ page: 1, pageSize: 50 })
-        : await listMyClaimed({ page: 1, pageSize: 50 })
-    list.value = data.list || []
+    await mineAttention.refresh()
   } finally {
     loading.value = false
   }
 }
 
-function goRepublish(id: number, e: Event) {
-  e.preventDefault()
-  e.stopPropagation()
+function goRepublish(id: number) {
   router.push({ path: '/bounties/publish', query: { republishFrom: String(id) } })
 }
 
-onMounted(load)
+function bountyLink(id: number) {
+  return { path: `/bounties/${id}`, query: { from: 'mine' } }
+}
+
+function unreadLabel(n?: number | null) {
+  if (!n || n <= 0) return ''
+  return n > 99 ? '99+' : String(n)
+}
+
+onMounted(() => {
+  void load()
+})
 </script>
 
 <template>
   <section class="jh-section">
     <div class="jh-container">
-      <JhPageHeader title="我的悬赏" subtitle="我发布的与我揭榜的" />
-      <el-tabs v-model="tab" @tab-change="load">
+      <JhPageHeader title="我的悬赏" />
+      <el-tabs v-model="tab" class="tabs">
         <el-tab-pane label="我发布的" name="published" />
         <el-tab-pane label="我揭榜的" name="claimed" />
       </el-tabs>
-      <div v-loading="loading" class="list">
-        <EmptyState v-if="!loading && !list.length" title="暂无记录" />
-        <RouterLink
-          v-for="item in list"
+
+      <JhBoardPosterGrid :loading="loading && !sortedList.length" :empty="!loading && !sortedList.length">
+        <template #empty>
+          <EmptyState title="暂无记录" description="" />
+        </template>
+        <JhBoardPoster
+          v-for="(item, index) in sortedList"
           :key="item.id"
-          :to="`/bounties/${item.id}`"
-          class="item jh-panel"
+          :to="bountyLink(item.id)"
+          :title="item.title"
+          :index="index"
+          :show-dot="mineAttention.isPosterHot(item.id)"
+          seal="令"
         >
-          <div class="row">
-            <strong>{{ item.title }}</strong>
-            <StatusTag :status="item.status" />
+          <template #top>
+            <span class="jh-poster-type">{{ resolveBountyTypeLabel(item.type, item.typeDisplayName) }}</span>
+            <StatusTag :status="item.status" scene="mine" />
+          </template>
+          <p>{{ item.district || '遵义' }} · {{ difficultyLabel[item.difficulty] || item.difficulty }}</p>
+          <p>揭榜 {{ item.claimCount || 0 }} 人</p>
+          <div class="jh-poster-stats">
+            <span
+              v-if="item.unreadCollabCount && item.unreadCollabCount > 0"
+              class="jh-poster-badge is-hot"
+              title="协作会话未读"
+            >
+              会话 {{ unreadLabel(item.unreadCollabCount) }}
+            </span>
+            <span class="jh-poster-badge" title="已提交成果数">
+              成果 {{ item.submissionCount ?? 0 }}
+            </span>
           </div>
-          <p class="jh-muted">
-            {{ bountyTypeLabel[item.type] }} · {{ formatAmount(item.rewardAmount) }} 两
-          </p>
-          <div v-if="tab === 'published' && item.canRepublish" class="ops">
-            <el-button size="small" type="primary" @click="goRepublish(item.id, $event)">
+          <template #bottom>
+            <strong class="jh-poster-reward">赏银 {{ formatAmount(item.rewardAmount) }} 两</strong>
+            <span class="jh-poster-deadline">截止 {{ item.deadlineAt?.slice(0, 10) }}</span>
+          </template>
+          <template v-if="tab === 'published' && item.canRepublish" #actions>
+            <el-button size="small" type="primary" class="jh-btn-seal" @click="goRepublish(item.id)">
               再发一令
             </el-button>
-          </div>
-        </RouterLink>
-      </div>
+          </template>
+        </JhBoardPoster>
+      </JhBoardPosterGrid>
     </div>
   </section>
 </template>
 
 <style scoped>
-h1 {
-  margin: 0 0 12px;
-  font-size: 32px;
+.tabs {
+  margin-bottom: 14px;
 }
-.list {
-  display: grid;
-  gap: 10px;
-  min-height: 120px;
+.tabs :deep(.el-tabs__item) {
+  color: rgba(247, 240, 221, 0.75);
 }
-.item {
-  padding: 14px 16px;
+.tabs :deep(.el-tabs__item.is-active) {
+  color: var(--jh-gold-bright);
 }
-.row {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 6px;
+.tabs :deep(.el-tabs__active-bar) {
+  background-color: var(--jh-gold);
 }
-.ops {
-  margin-top: 10px;
+.tabs :deep(.el-tabs__nav-wrap::after) {
+  background-color: rgba(196, 163, 90, 0.25);
 }
 </style>

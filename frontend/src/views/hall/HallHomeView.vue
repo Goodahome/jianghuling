@@ -39,10 +39,7 @@ onMounted(async () => {
 <template>
   <section class="jh-section">
     <div class="jh-container">
-      <JhPageHeader
-        title="执事堂"
-        :subtitle="`欢迎，${auth.user?.nickname || '侠士'}。于此履职，回避由堂规强制。`"
-      />
+      <JhPageHeader title="执事堂" />
 
       <div class="cards">
         <RouterLink

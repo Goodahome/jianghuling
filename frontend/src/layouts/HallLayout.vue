@@ -74,9 +74,10 @@ watch(
           </div>
           <button
             class="menu-btn mobile-only"
+            :class="{ 'is-open': menuOpen }"
             type="button"
             :aria-expanded="menuOpen"
-            aria-label="打开菜单"
+            :aria-label="menuOpen ? '收起菜单' : '打开菜单'"
             @click="menuOpen = !menuOpen"
           >
             <span />
@@ -88,9 +89,6 @@ watch(
 
       <div v-if="menuOpen" class="drawer-mask mobile-only" @click="menuOpen = false" />
       <aside class="drawer mobile-only" :class="{ open: menuOpen }">
-          <div class="drawer-head">
-            <button type="button" class="ghost" @click="menuOpen = false">关闭</button>
-          </div>
           <RouterLink
             to="/profile"
             class="user-chip drawer-chip"
@@ -131,6 +129,9 @@ watch(
         <div class="jh-container">
           <p class="brand-title">执事堂</p>
           <p class="jh-muted">职司履职之所 · 与侠士同江湖</p>
+          <p class="footer-legal">
+            <RouterLink to="/feedbacks">意见反馈</RouterLink>
+          </p>
         </div>
       </footer>
     </NoticeBoardShell>
@@ -261,25 +262,37 @@ watch(
 }
 .menu-btn {
   margin-left: auto;
-  width: 44px;
-  height: 44px;
-  border: 1px solid rgba(90, 66, 40, 0.45);
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(90, 66, 40, 0.4);
   border-radius: var(--jh-wood-radius);
   background: linear-gradient(180deg, #fbf6e8, #eadfc8);
   display: none;
   flex-direction: column;
   justify-content: center;
-  gap: 5px;
-  padding: 10px;
+  gap: 4px;
+  padding: 7px;
   cursor: pointer;
   flex-shrink: 0;
+  position: relative;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
 }
 .menu-btn span {
   display: block;
-  height: 2px;
+  height: 1.5px;
   background: #3a2a18;
   border-radius: 2px;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  transform-origin: center;
+}
+.menu-btn.is-open span:nth-child(1) {
+  transform: translateY(5.5px) rotate(45deg);
+}
+.menu-btn.is-open span:nth-child(2) {
+  opacity: 0;
+}
+.menu-btn.is-open span:nth-child(3) {
+  transform: translateY(-5.5px) rotate(-45deg);
 }
 .drawer-mask {
   /* 相对告示板木面，不盖瓦顶 */
@@ -289,21 +302,22 @@ watch(
   z-index: 40;
 }
 .drawer {
-  /* 落在 board-face 内，避免 fixed 顶到视口被瓦面遮挡 */
+  /* 落在 board-face 内；顶栏下展开，由同一菜单钮开关 */
   position: absolute;
-  top: 0;
+  top: 3.6rem;
   right: 0;
   bottom: auto;
   display: flex;
   flex-direction: column;
+  align-items: flex-end;
   width: min(240px, 78%);
   height: auto;
-  max-height: 100%;
+  max-height: calc(100% - 3.6rem);
   background: transparent;
   z-index: 50;
   transform: translateX(100%);
   transition: transform 0.22s ease;
-  padding: 12px 12px 16px;
+  padding: 8px 12px 16px;
   border: none;
   box-sizing: border-box;
   overflow: hidden;
@@ -315,19 +329,13 @@ watch(
   transform: translateX(0);
   pointer-events: auto;
 }
-.drawer-head {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  flex-shrink: 0;
-  margin-bottom: 10px;
-}
 .drawer-chip {
   display: flex;
   align-items: center;
   flex-shrink: 0;
   gap: 8px;
   margin: 0 0 10px;
+  margin-left: auto;
   text-decoration: none;
   width: fit-content;
   max-width: 100%;
@@ -336,19 +344,21 @@ watch(
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
+  align-self: stretch;
   gap: 8px;
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
-  align-items: stretch;
+  align-items: flex-end;
 }
 .drawer-nav .nav-link,
 .drawer-nav .ghost {
-  width: 100%;
+  width: 50%;
+  max-width: 50%;
   box-sizing: border-box;
-  justify-content: flex-start;
-  text-align: left;
+  justify-content: center;
+  text-align: center;
 }
 .link-btn {
   border: none;
@@ -395,6 +405,21 @@ watch(
   text-overflow: ellipsis;
   color: rgba(247, 240, 221, 0.65);
 }
+.footer-legal {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 8px;
+  align-items: center;
+  white-space: nowrap;
+  font-size: 12px;
+  color: rgba(247, 240, 221, 0.45);
+}
+.footer-legal a {
+  color: rgba(247, 240, 221, 0.78);
+}
+.footer-legal a:hover {
+  color: var(--jh-gold-bright);
+}
 .mobile-only {
   display: none;
 }
@@ -413,7 +438,9 @@ watch(
     display: flex;
   }
   .drawer.mobile-only {
-    display: block;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
   }
   .drawer-mask.mobile-only {
     display: block;
@@ -447,16 +474,21 @@ watch(
     padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
     overflow: hidden;
   }
-  .drawer-head {
-    margin-bottom: 8px;
+  .drawer .drawer-chip {
+    margin-left: auto;
+    max-width: 100%;
   }
   .drawer-nav {
+    width: 100%;
     gap: 8px;
+    align-items: flex-end;
   }
   .drawer-nav .nav-link,
   .drawer-nav .ghost {
+    width: 50%;
+    max-width: 50%;
     font-size: 14px;
-    padding: 8px 12px;
+    padding: 8px 10px;
   }
   .page-main {
     padding-bottom: 6px;

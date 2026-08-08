@@ -43,6 +43,9 @@ public class SettleService {
     /** 平台费记账用虚拟用户，首次使用时自动建账户 */
     public static final long PLATFORM_USER_ID = 0L;
 
+    private static final String KIND_COMPLETE = "COMPLETE";
+    private static final String KIND_CANCEL_ALLOCATE = "CANCEL_ALLOCATE";
+
     private final BountyMapper bountyMapper;
     private final BountyClaimMapper claimMapper;
     private final SubmissionMapper submissionMapper;
@@ -58,27 +61,52 @@ public class SettleService {
     public Map<String, Object> preview(Long bountyId) {
         Long userId = AuthContext.requireUserId();
         Bounty bounty = requirePublisher(bountyId, userId);
+        boolean cancelPending = Boolean.TRUE.equals(bounty.getCancelAllocationPending());
+        if (!cancelPending && !"IN_COLLAB".equals(bounty.getStatus()) && !"PENDING_SETTLE".equals(bounty.getStatus())) {
+            throw new BizException(ErrorCode.BIZ_RULE, "当前状态不可预览结算");
+        }
+        if (!cancelPending && "IN_COLLAB".equals(bounty.getStatus()) && !hasCompleteSettlePrecondition(bountyId)) {
+            throw new BizException(ErrorCode.BIZ_RULE, "尚未满足完结分配条件");
+        }
+
+        String settlementKind = cancelPending ? KIND_CANCEL_ALLOCATE : KIND_COMPLETE;
         BigDecimal feeRate = configService.getDecimal("fee_rate", "0.10");
         BigDecimal rewardB = bounty.getRewardAmount();
         BigDecimal fee = rewardB.multiply(feeRate).setScale(2, RoundingMode.HALF_UP);
         BigDecimal distributable = rewardB.subtract(fee).setScale(2, RoundingMode.HALF_UP);
+
         List<BountyClaim> claims = claimMapper.selectList(new LambdaQueryWrapper<BountyClaim>()
                 .eq(BountyClaim::getBountyId, bountyId));
-        List<Map<String, Object>> claimants = claims.stream().map(c -> {
-            Long approved = submissionMapper.selectCount(new LambdaQueryWrapper<Submission>()
+        List<Map<String, Object>> claimants = new ArrayList<>();
+        for (BountyClaim c : claims) {
+            long submissionCount = submissionMapper.selectCount(new LambdaQueryWrapper<Submission>()
+                    .eq(Submission::getClaimId, c.getId()));
+            long approved = submissionMapper.selectCount(new LambdaQueryWrapper<Submission>()
                     .eq(Submission::getClaimId, c.getId())
                     .eq(Submission::getStatus, "APPROVED"));
+            if (cancelPending) {
+                if (submissionCount < 1) {
+                    continue;
+                }
+            } else if (approved < 1) {
+                continue;
+            }
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("userId", c.getUserId());
             m.put("nickname", nickname(c.getUserId()));
+            m.put("submissionCount", submissionCount);
             m.put("approvedSubmissionCount", approved);
-            return m;
-        }).collect(Collectors.toList());
+            claimants.add(m);
+        }
+
         Map<String, Object> data = new LinkedHashMap<>();
+        data.put("bountyId", bountyId);
+        data.put("settlementKind", settlementKind);
         data.put("rewardB", rewardB);
         data.put("feeRate", feeRate);
         data.put("fee", fee);
         data.put("distributable", distributable);
+        data.put("cancelAllocationPending", cancelPending);
         data.put("claimants", claimants);
         return data;
     }
@@ -87,18 +115,23 @@ public class SettleService {
     public Map<String, Object> settle(Long bountyId, SettleRequest req) {
         Long userId = AuthContext.requireUserId();
         Bounty bounty = requirePublisher(bountyId, userId);
-        if (!"IN_COLLAB".equals(bounty.getStatus()) && !"OPEN".equals(bounty.getStatus())
-                && !"PENDING_SETTLE".equals(bounty.getStatus())) {
-            throw new BizException(ErrorCode.BIZ_RULE, "当前状态不可结算");
+        boolean cancelPending = Boolean.TRUE.equals(bounty.getCancelAllocationPending());
+        String settlementKind = cancelPending ? KIND_CANCEL_ALLOCATE : KIND_COMPLETE;
+
+        if (cancelPending) {
+            // 取消分支：仅分配，完成后 CANCELLED
+            if (!"IN_COLLAB".equals(bounty.getStatus()) && !"PENDING_SETTLE".equals(bounty.getStatus())) {
+                throw new BizException(ErrorCode.CANCEL_ALLOCATE_PENDING, "取消待分配状态异常，不可结案");
+            }
+        } else {
+            if (!"IN_COLLAB".equals(bounty.getStatus()) && !"PENDING_SETTLE".equals(bounty.getStatus())) {
+                throw new BizException(ErrorCode.BIZ_RULE, "当前状态不可结算");
+            }
+            if (!hasCompleteSettlePrecondition(bountyId)) {
+                throw new BizException(ErrorCode.BIZ_RULE, "至少1名揭榜人且需有审核通过成果，否则请取消");
+            }
         }
-        long claimCount = claimMapper.selectCount(new LambdaQueryWrapper<BountyClaim>()
-                .eq(BountyClaim::getBountyId, bountyId));
-        long approved = submissionMapper.selectCount(new LambdaQueryWrapper<Submission>()
-                .eq(Submission::getBountyId, bountyId)
-                .eq(Submission::getStatus, "APPROVED"));
-        if (claimCount < 1 || approved < 1) {
-            throw new BizException(ErrorCode.BIZ_RULE, "至少1名揭榜人且需有审核通过成果，否则请取消");
-        }
+
         BigDecimal feeRate = configService.getDecimal("fee_rate", "0.10");
         BigDecimal rewardB = bounty.getRewardAmount();
         BigDecimal fee = rewardB.multiply(feeRate).setScale(2, RoundingMode.HALF_UP);
@@ -110,11 +143,29 @@ public class SettleService {
         if (sum.compareTo(distributable) != 0) {
             throw new BizException(ErrorCode.WALLET_SETTLE_INVALID);
         }
-        Set<Long> claimantIds = claimMapper.selectList(new LambdaQueryWrapper<BountyClaim>()
-                        .eq(BountyClaim::getBountyId, bountyId))
-                .stream().map(BountyClaim::getUserId).collect(Collectors.toSet());
+
+        Set<Long> eligibleUserIds;
+        if (cancelPending) {
+            eligibleUserIds = claimMapper.selectList(new LambdaQueryWrapper<BountyClaim>()
+                            .eq(BountyClaim::getBountyId, bountyId))
+                    .stream()
+                    .filter(c -> submissionMapper.selectCount(new LambdaQueryWrapper<Submission>()
+                            .eq(Submission::getClaimId, c.getId())) >= 1)
+                    .map(BountyClaim::getUserId)
+                    .collect(Collectors.toSet());
+            if (eligibleUserIds.isEmpty()) {
+                throw new BizException(ErrorCode.CANCEL_ALLOCATE_PENDING, "取消分配候选人无效");
+            }
+        } else {
+            eligibleUserIds = claimMapper.selectList(new LambdaQueryWrapper<BountyClaim>()
+                            .eq(BountyClaim::getBountyId, bountyId))
+                    .stream().map(BountyClaim::getUserId).collect(Collectors.toSet());
+        }
         for (SettleRequest.Item item : req.getItems()) {
-            if (!claimantIds.contains(item.getUserId())) {
+            if (!eligibleUserIds.contains(item.getUserId())) {
+                if (cancelPending) {
+                    throw new BizException(ErrorCode.CANCEL_ALLOCATE_PENDING, "取消分配仅可分给有成果提交的揭榜侠");
+                }
                 throw new BizException(ErrorCode.WALLET_SETTLE_INVALID, "分配对象须为揭榜人");
             }
         }
@@ -126,6 +177,7 @@ public class SettleService {
         settlement.setFee(fee);
         settlement.setDistributable(distributable);
         settlement.setStatus("DONE");
+        settlement.setKind(settlementKind);
         settlement.setCreatedAt(LocalDateTime.now());
         try {
             settlementMapper.insert(settlement);
@@ -154,14 +206,24 @@ public class SettleService {
         userAssetService.onOrderCompleted(bounty.getPublisherId());
         userAssetService.addChivalry(bounty.getPublisherId(), baseChivalry);
 
-        bounty.setStatus("COMPLETED");
+        if (cancelPending) {
+            bounty.setStatus("CANCELLED");
+            bounty.setCancelAllocationPending(false);
+            notifyService.send(bounty.getPublisherId(), "悬赏取消分配完成",
+                    "悬赏「" + bounty.getTitle() + "」已按取消分支分配并关闭", "SETTLEMENT", settlement.getId());
+        } else {
+            bounty.setStatus("COMPLETED");
+            bounty.setCancelAllocationPending(false);
+            notifyService.send(bounty.getPublisherId(), "悬赏已完结",
+                    "悬赏「" + bounty.getTitle() + "」结算完成", "SETTLEMENT", settlement.getId());
+        }
         bounty.setUpdatedAt(LocalDateTime.now());
         bountyMapper.updateById(bounty);
-        notifyService.send(bounty.getPublisherId(), "悬赏已完结",
-                "悬赏「" + bounty.getTitle() + "」结算完成", "SETTLEMENT", settlement.getId());
 
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("settlementId", settlement.getId());
+        data.put("bountyId", bountyId);
+        data.put("settlementKind", settlementKind);
         data.put("status", bounty.getStatus());
         data.put("fee", fee);
         data.put("distributable", distributable);
@@ -172,25 +234,60 @@ public class SettleService {
     public Map<String, Object> cancel(Long bountyId, String reason) {
         Long userId = AuthContext.requireUserId();
         Bounty bounty = requirePublisher(bountyId, userId);
+        if (Boolean.TRUE.equals(bounty.getCancelAllocationPending())) {
+            throw new BizException(ErrorCode.BIZ_RULE, "取消待分配未完成，不可重复取消");
+        }
         if (!List.of("PENDING_REVIEW", "OPEN", "IN_COLLAB", "PENDING_SETTLE").contains(bounty.getStatus())) {
             throw new BizException(ErrorCode.BIZ_RULE, "当前状态不可取消");
         }
-        if ("IN_COLLAB".equals(bounty.getStatus())) {
-            long approved = submissionMapper.selectCount(new LambdaQueryWrapper<Submission>()
-                    .eq(Submission::getBountyId, bountyId)
-                    .eq(Submission::getStatus, "APPROVED"));
-            // 允许取消，全额退回（与超时同类）
-            if (approved > 0) {
-                // still allow cancel per plan: 未结算且规则允许
-            }
+        if (("IN_COLLAB".equals(bounty.getStatus()) || "PENDING_SETTLE".equals(bounty.getStatus()))
+                && !StringUtils.hasText(reason)) {
+            throw new BizException(ErrorCode.PARAM_INVALID, "协作中/待验收取消须填写原因");
         }
+
+        long submissionCount = submissionMapper.selectCount(new LambdaQueryWrapper<Submission>()
+                .eq(Submission::getBountyId, bountyId));
+        boolean hasSubmissions = submissionCount > 0;
+        String cancelReason = StringUtils.hasText(reason) ? reason : "令主取消";
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("bountyId", bountyId);
+
+        if (hasSubmissions) {
+            // 硬拦：有成果禁止全额退（ALLOCATE 分支）
+            if (!"IN_COLLAB".equals(bounty.getStatus()) && !"PENDING_SETTLE".equals(bounty.getStatus())) {
+                // 异常态下有成果仍禁止退款路径
+                throw new BizException(ErrorCode.CANCEL_REFUND_WITH_SUBMISSIONS);
+            }
+            bounty.setCancelAllocationPending(true);
+            bounty.setStatus("PENDING_SETTLE");
+            bounty.setCancelReason(cancelReason);
+            bounty.setUpdatedAt(LocalDateTime.now());
+            bountyMapper.updateById(bounty);
+
+            data.put("status", bounty.getStatus());
+            data.put("cancelOutcome", "ALLOCATE");
+            data.put("hasSubmissions", true);
+            data.put("cancelAllocationPending", true);
+            data.put("settlementRequired", true);
+            return data;
+        }
+
+        // 无成果：全额退
         bounty.setStatus("CANCELLED");
-        bounty.setCancelReason(StringUtils.hasText(reason) ? reason : "令主取消");
+        bounty.setCancelAllocationPending(false);
+        bounty.setCancelReason(cancelReason);
         bounty.setUpdatedAt(LocalDateTime.now());
         bountyMapper.updateById(bounty);
         walletService.unfreezeRefund(bounty.getPublisherId(), bounty.getRewardAmount(),
                 IdempotencyKeys.bizNo("UR"), "BOUNTY", bountyId, "悬赏取消退款");
-        return Map.of("bountyId", bountyId, "status", "CANCELLED");
+
+        data.put("status", "CANCELLED");
+        data.put("cancelOutcome", "REFUND");
+        data.put("hasSubmissions", false);
+        data.put("cancelAllocationPending", false);
+        data.put("settlementRequired", false);
+        return data;
     }
 
     @Transactional
@@ -242,6 +339,15 @@ public class SettleService {
         long good = all.stream().filter(e -> e.getScore() >= 4).count();
         BigDecimal rate = BigDecimal.valueOf(good * 100.0 / all.size()).setScale(2, RoundingMode.HALF_UP);
         userAssetService.refreshGoodRate(userId, rate);
+    }
+
+    private boolean hasCompleteSettlePrecondition(Long bountyId) {
+        long claimCount = claimMapper.selectCount(new LambdaQueryWrapper<BountyClaim>()
+                .eq(BountyClaim::getBountyId, bountyId));
+        long approved = submissionMapper.selectCount(new LambdaQueryWrapper<Submission>()
+                .eq(Submission::getBountyId, bountyId)
+                .eq(Submission::getStatus, "APPROVED"));
+        return claimCount >= 1 && approved >= 1;
     }
 
     private Bounty requirePublisher(Long bountyId, Long userId) {

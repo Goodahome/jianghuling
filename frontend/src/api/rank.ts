@@ -7,7 +7,14 @@ export function getRanks(type: RankType, params: PageQuery) {
 }
 
 export function getMyRank() {
-  return http<Record<string, unknown>>({ url: '/ranks/me', method: 'GET' })
+  return http<{
+    reputationRank?: number | null
+    chivalryRank?: number | null
+    completedRank?: number | null
+    reputationScore?: number | string | null
+    chivalry?: number | null
+    completedOrders?: number | null
+  }>({ url: '/ranks/me', method: 'GET' })
 }
 
 export function applyLord(statement: string) {

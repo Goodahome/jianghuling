@@ -1,0 +1,36 @@
+# Ingress：jianghu.kssrol.com + 已有 TLS Secret kssrol-com-tls
+#
+# 注意：TLS Secret 必须在本 namespace（jianghu-ling）内可读。
+# 若证书在别的 ns，先复制过来，例如：
+#   kubectl get secret kssrol-com-tls -n <源ns> -o yaml \
+#     | sed 's/namespace: .*/namespace: jianghu-ling/' \
+#     | kubectl apply -f -
+#
+# DNS / 解析：jianghu.kssrol.com → Ingress 入口 10.120.20.200
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: jianghu-ling
+  namespace: jianghu-ling
+  labels:
+    app.kubernetes.io/name: jianghu-ling
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "20m"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - jianghu.kssrol.com
+      secretName: kssrol-com-tls
+  rules:
+    - host: jianghu.kssrol.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 80

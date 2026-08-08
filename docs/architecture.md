@@ -1,11 +1,11 @@
 # 系统架构文档（Architecture）
 
-> 由 **架构师 AI（@architect）** 维护。输入：`docs/requirements.md`（**v1.8.0**）。
+> 由 **架构师 AI（@architect）** 维护。输入：`docs/requirements.md`（**v1.8.17**）。
 
-**版本**：v1.0.4  
+**版本**：v1.0.9  
 **状态**：已确认（可进入后端/前端实现）  
-**最后更新**：2026-08-05  
-**变更说明**：v1.0.4 对齐需求 v1.8.0：再发一令（复制新建、`source_bounty_id`、终态约束）。
+**最后更新**：2026-08-07  
+**变更说明**：v1.0.9 对齐需求 v1.8.17：成果详情 VO（api §8.0）、Admin 独立成果审核菜单 path=`/admin/submission-reviews`、令主有成果取消资金分支（`cancel_allocation_pending` / `cancelOutcome`）。
 
 ---
 
@@ -18,7 +18,7 @@
 | 前端 | Vue 3 + Vite + TypeScript | Web 响应式；单工程三区路由 |
 | UI | 侠士端自定义主题；执事堂/武林盟后台 Element Plus | C 端品牌感；后台效率 |
 | 数据库 | MySQL 8 | 主数据 + 账本流水 |
-| 缓存 | Redis | 验证码、日揭榜计数、提交限流、JWT 黑名单、英雄谱缓存 |
+| 缓存 | Redis | 验证码、日揭榜计数、提交限流、**反馈频控**、JWT 黑名单、英雄谱缓存 |
 | 鉴权 | JWT（Access Token）+ Redis 黑名单；可选 Refresh | 统一 `Authorization: Bearer` |
 | 文件 | 本地磁盘 + `FileStorage` 抽象 | 探子清单图片；P1 可换 MinIO/OSS |
 | 短信 | MockSmsAdapter（验证码写日志/可配固定码） | 接口预留真实厂商 |
@@ -58,7 +58,7 @@
 | `growth` | 侠义值/体力/等级/声望公式、兑换体力与奖品 | user, cms |
 | `rank` | 英雄谱三榜、盟主荣耀位 | growth, user |
 | `office` | 职司定义、申请、任期、执事堂授权 | user, growth |
-| `cms` | 告示栏、赏银档位、清单模板、系统参数、等级配置 | DB |
+| `cms` | 告示栏、赏银档位、清单模板、系统参数、等级配置、**用户反馈** | DB |
 | `admin` | 后台 RBAC、工作台聚合、运营管理入口 | 各模块只读/编排 |
 | `notify` | 站内消息（提醒、审核结果、仲裁结果） | DB |
 | `job` | 超时取消、截止提醒、英雄谱刷新、体力重置、职司到期 | 各业务服务 |
@@ -129,15 +129,15 @@ erDiagram
 
 | 表名 | 说明 | 关键字段 / 索引 |
 |------|------|------------------|
-| `bounty` | 悬赏令主表 | `publisher_id`, `type`(求租/出租), `title`, `status`, `city`, `district`, `difficulty`, `reward_amount`, `deadline_at`, `task_tags_json`, `frozen_biz_no`, **`source_bounty_id`**（可空，再发来源）；IDX(`status`,`city`,`deadline_at`)；IDX(`source_bounty_id`) |
+| `bounty` | 悬赏令主表 | `publisher_id`, `type`(`RENT_SEEK`/`RENT_OUT`/`RENT_TRANSFER`), `title`, `status`, `city`, `district`, `difficulty`, `reward_amount`, `deadline_at`, `task_tags_json`, `frozen_biz_no`, **`source_bounty_id`**（可空，再发来源），**`cancel_allocation_pending`**（TINYINT，默认 0；有成果取消待分配），`cancel_reason`；IDX(`status`,`city`,`deadline_at`)；IDX(`source_bounty_id`) |
 | `bounty_warrant` | 结构化令状快照 | `bounty_id`, `template_code`, `fields_json`（见 §3.2.2.1） |
 | `bounty_checklist` | 本单探子清单快照 | `bounty_id`, `item_code`, `item_name`, `required`, `sort` |
-| `bounty_claim` | 揭榜关系 | `bounty_id`, `user_id`, `stamina_cost`, `status`; **UK(`bounty_id`,`user_id`)** |
-| `bounty_message` | 协作会话消息 | `bounty_id`, `sender_id`, `content`, `created_at`; IDX(`bounty_id`,`id`) |
-| `submission` | 成果提交版本 | `claim_id`, `version_no`, `status`(待审/通过/驳回), `content_summary` |
+| `bounty_claim` | 揭榜关系 | `bounty_id`, `user_id`, `stamina_cost`, `status`(`ACTIVE`/`QUIT` 等)；**UK(`bounty_id`,`user_id`)** |
+| `bounty_message` | 协作会话（悬赏级共享流） | `bounty_id`, `sender_id`, `content`, `created_at`；IDX(`bounty_id`,`id`)；**查询不得按 sender 过滤为仅本人** |
+| `submission` | 成果提交版本 | `bounty_id`, `claim_id`, `user_id`, `version_no`, `status`(PENDING/APPROVED/REJECTED), `content_summary`, `reject_reason` |
 | `submission_item` | 按清单项填写 | `submission_id`, `checklist_item_code`, `done`, `text`, `media_urls_json` |
 | `review_record` | 审核记录 | `target_type`(BOUNTY/SUBMISSION), `target_id`, `result`, `reason`, `reviewer_id`, `reviewer_role`, `override_by` |
-| `settlement` | 结算单 | `bounty_id`, `reward_b`, `fee`, `distributable`, `status` |
+| `settlement` | 结算单 | `bounty_id`, `reward_b`, `fee`, `distributable`, `status`, **`kind`**（`COMPLETE`/`CANCEL_ALLOCATE`，v1.8.17） |
 | `settlement_item` | 分配明细 | `settlement_id`, `user_id`, `amount`, `chivalry_bonus` |
 | `evaluation` | 互评 | `bounty_id`, `from_user_id`, `to_user_id`, `score`, `content`; UK(`bounty_id`,`from_user_id`,`to_user_id`) |
 | `dispute` | 纠纷 | `settlement_id`, `bounty_id`, `initiator_id`, `status`, `evidence_json`, `verdict_json`, `deadline_at` |
@@ -195,6 +195,7 @@ erDiagram
 | `rank_snapshot` | 英雄谱物化快照（声望/侠义/完令） |
 | `sys_config` | 系统参数（揭榜日限、体力、费率、提醒等） |
 | `site_message` | 站内消息（`read_flag` + IDX(`user_id`,`read_flag`,`id`) 支撑未读计数） |
+| `user_feedback` | 用户反馈（侠士提交；Admin 处理）：`user_id`, `type`(`BUG`/`SUGGEST`/`COMPLAINT`/`OTHER`), `title`, `content`, `contact`, `related_ref`, `attachment_urls_json`, `status`(`NEW`/`PROCESSING`/`RESOLVED`/`CLOSED`), `handle_remark`, `status_changed_*`；IDX(`user_id`,`id`)；IDX(`status`,`created_at`)；频控见 `sys_config`：`feedback.cooldownSeconds` / `feedback.dailyLimit` |
 | `admin_user` / `admin_role` / `admin_permission` / `admin_role_permission` / `admin_user_role` / `admin_menu` | 后台 RBAC（见 §3.2.4） |
 | `audit_log` | 敏感操作审计 |
 
@@ -387,15 +388,27 @@ erDiagram
 
 ### 7.3 成果与审核
 
-限流通过后写入 `submission` + items → `PENDING` → 验功使/管理员审核；仅通过可作为结算有效贡献与侠义依据。
+1. 限流通过后写入 `submission` + `submission_item` → `PENDING`。  
+2. **查看**：C 端列表 `GET /bounties/{id}/submissions` + 详情 `GET /submissions/{id}`（共享 VO，api §8.0）；令主看全部、揭榜侠看自己；终态只读可看。  
+3. **审核**：验功使走 `/hall/submission-reviews`（含详情 GET）；武林盟走独立侧栏 **`/admin/submission-reviews`**（列表/详情/POST，api §16.12）。管理员可改判。  
+4. 仅 `APPROVED` 可作为 **正常完结** 的有效贡献与侠义依据；**有成果取消分配** 的候选人口径为「任意提交记录」（含待审/驳回）。
 
-### 7.4 结算
+### 7.4 结算与取消资金分支
 
-令主提交分配方案 → 校验分完 → 账本：扣冻结、分账入账、记平台服务费 → `COMPLETED` → 开放互评 → 更新完成单/好评率/声望 → 按规则发侠义值。
+**正常完结**：令主提交分配方案 → 校验分完 → 账本：扣冻结、分账入账、记平台服务费 → `COMPLETED` → 开放互评 → 更新完成单/好评率/声望 → 按规则发侠义值。`settlement.kind=COMPLETE`。
+
+**令主主动取消（v1.8.17 · P0）**：
+
+| 分支 | 判定 | 行为 |
+|------|------|------|
+| `REFUND` | 本令 **0** 条 submission | 全额 `UNFREEZE_REFUND` → `CANCELLED` |
+| `ALLOCATE` | ≥1 条 submission（任意 status） | **禁止**全额退；置 `cancel_allocation_pending=1`；资金保持冻结；令主走分配页；分完后 `kind=CANCEL_ALLOCATE`，终态 **`CANCELLED`**（非 COMPLETED），清 pending 标志 |
+
+API 响应用 `cancelOutcome` 区分分支（api §9.3）。待分配期间禁发会话/禁交成果。超时自动取消与强制关闭口径仍服从需求 §6.23（本分支针对令主主动取消）。
 
 ### 7.5 超时与纠纷
 
-- 超时：`CANCELLED` + 全额解冻退回  
+- 超时：`CANCELLED` + 全额解冻退回（`PENDING_SETTLE` 除外，改走自动完结分配）  
 - 结算后 7 日内可纠纷 → `IN_DISPUTE` → 管理员终裁执行资金调整
 
 ### 7.6 注册赠银与邀新（v1.7）
@@ -410,6 +423,22 @@ erDiagram
 2. **新建** `bounty`（新 ID），`source_bounty_id = 原 id`；复制主信息/令状/清单快照（允许请求覆盖赏银、截止、标题等）；**不**复制揭榜/会话/成果/评价。  
 3. `wallet.freeze(新赏银)` → 新单 `PENDING_REVIEW`。  
 4. **原单状态与资金不动**（禁止把终态改回待审/张贴中）。
+
+### 7.8 协作会话（v1.8.9）
+
+1. 消息挂在 `bounty_id` 上，**全体参与人共享同一流**。  
+2. **读**：令主，或任意揭榜记录持有人（含已 `QUIT`）。  
+3. **写**：令主，或 `claim.status=ACTIVE`；退出后禁发；`cancel_allocation_pending=1` 时禁发。  
+4. API VO 须带 `senderNickname`；实现禁止 `WHERE sender_id=当前用户`。
+
+### 7.9 Admin 成果审核入口（v1.8.17）
+
+| 项 | 约定 |
+|----|------|
+| 前端路由 / 菜单 path | **`/admin/submission-reviews`** |
+| 权限 | 列表/详情 `submission:read`；审核写 `submission:review` |
+| 菜单种子 | 独立 MENU；详情 `/:submissionId` 不进侧栏 |
+| 模块 | `review` + `admin` 编排；详情 VO 与 C 端/执事堂共用 api §8.0 |
 
 ---
 
@@ -430,6 +459,8 @@ erDiagram
 | ADR-11 | 管理员通配符 `*` | 全员 `*` / 废除 `*` / 仅超管 | **保留 `*`，仅 `SUPER_ADMIN`** | 修复 D-003；运维简单且多角色可验 |
 | ADR-12 | MVP 银两入口 | 删除充值提现 / 永久隐藏 / 配置开关 | **配置开关默认关，接口保留** | 需求 v1.7.1；后续真实支付可再开 |
 | ADR-13 | 终态再发 | 原单复活 / 复制新建 | **复制新建 + `source_bounty_id`** | 需求 v1.8；审计清晰、资金隔离 |
+| ADR-14 | 令种枚举 | 两值+文案糊弄 / 三值 | **`RENT_SEEK`/`RENT_OUT`/`RENT_TRANSFER`** | 需求 v1.8.9；出租与转租分档 |
+| ADR-15 | 协作会话模型 | 私聊配对 / 悬赏共享流 | **悬赏级共享消息流** | 多人揭榜可见；修「对方收不到」 |
 
 ---
 
@@ -447,6 +478,12 @@ erDiagram
 | 注册赠银 / 邀新奖励 / 充提开关（v1.7） | §3.3 + §7.6；api §2.3、§4 |
 | 消息未读角标（v1.7） | §6.3；api §14.2 |
 | 再发一令（v1.8） | §7.7；`bounty.source_bounty_id`；api §7.8 |
+| 协作会话双向（v1.8.9） | §7.8；api §7.6–7.7 |
+| 令种三枚举武侠名（v1.8.9） | `bounty.type` + meta；api §5.2 |
+| 用户反馈（v1.8.16） | `user_feedback` + cms；api §14.5 / §16.11；RBAC `feedback:*` |
+| 成果详情可达（v1.8.17） | collab/submission；api §8.0–8.4 |
+| Admin 独立成果审核（v1.8.17） | §7.9；菜单 `/admin/submission-reviews`；api §16.12；`submission:read`/`submission:review` |
+| 有成果取消硬规则（v1.8.17） | §7.4；`bounty.cancel_allocation_pending`；`settlement.kind`；api §9.1–9.3 |
 
 接口契约见 [api.md](./api.md)。部署见 [deployment.md](./deployment.md)。
 
@@ -460,4 +497,9 @@ erDiagram
 | v1.0.1 | 2026-08-05 | **对齐需求 v1.6.1/v1.6.2**：① 新增 §3.2.2.1 令状 `fields_json` 约定；② 自由文本唯一 key=`extra`，label=**补充说明**（废弃「令外叮嘱」文案）；③ 明确主信息 vs 令状 vs 探子清单边界，禁止平行备注 key；④ ADR-10；⑤ `bounty` 表关键字段补 `title`/`task_tags_json` |
 | v1.0.2 | 2026-08-05 | **D-003 管理员 RBAC**：① 新增 §3.2.4 六表结构与种子规则；② §5.2.1 拦截策略；③ ADR-11（`*` 仅超管）；④ 追溯表补四角色 |
 | v1.0.3 | 2026-08-05 | **需求 v1.7.1**：① 流水增 `REGISTER_GRANT`/`INVITE_REWARD`；② 充提开关与 `42004`；③ 未读计数；④ §7.6 注册赠银流程；⑤ ADR-12 |
-| **v1.0.4** | 2026-08-05 | **需求 v1.8.0**：① `bounty.source_bounty_id`；② §7.7 再发一令流程；③ ADR-13（复制新建禁止复活） |
+| v1.0.4 | 2026-08-05 | **需求 v1.8.0**：① `bounty.source_bounty_id`；② §7.7 再发一令流程；③ ADR-13（复制新建禁止复活） |
+| **v1.0.5** | 2026-08-07 | **需求 v1.8.9**：① §7.8 协作会话共享流+读写权限；② 令种三值含 `RENT_TRANSFER`；③ ADR-14/15 |
+| **v1.0.6** | 2026-08-07 | **需求 v1.8.10**：能力矩阵（api §7.9）；终态禁发会话/禁交成果（43008/43009）；令主成果总览 `GET /bounties/{id}/submissions` |
+| **v1.0.7** | 2026-08-07 | **需求 v1.8.11**：后台运营缺口契约收口（api §16.3/§16.7/§16.10）；数据模型无表结构变更 |
+| **v1.0.8** | 2026-08-07 | **需求 v1.8.16**：新增 `user_feedback` 表与反馈频控配置键；契约 api §14.5 / §16.11；RBAC 增 `feedback:*` |
+| **v1.0.9** | 2026-08-07 | **需求 v1.8.17**：① `bounty.cancel_allocation_pending` + `settlement.kind`；② §7.3/7.4/7.9 成果详情与取消资金分支、Admin 菜单 path；③ 追溯表补 §6.34 |

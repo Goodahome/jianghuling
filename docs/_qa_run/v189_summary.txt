@@ -1,0 +1,63 @@
+§9.13 v1.8.9 验收（页眉 / 会话 / 令种名 / 告示 N1–N3）
+日期: 2026-08-07
+方式: 静态代码 + 本地 API 抽检（probe_v189.py / 部分会话烟测）
+
+=== 1. 页眉去副题 + 分割线 ===
+期望: JhPageHeader 无 subtitle；分割线各页统一固定长
+实际:
+- 仍传 subtitle 的页面（Fail）:
+  PublishBountyView, ProfileView, MessagesView, InviteView, GrowthView,
+  DisputeListView, OfficeApplyView,
+  HallHomeView, BountyReviewView, SubmissionReviewView, MyActionsView
+- 已去掉: Plaza/Notices/Ranks/Mine/Wallet 等
+- JhPageHeader 仍 `v-if="subtitle"` 渲染副题
+- 分割线: border-bottom 随容器宽（narrow vs 全宽）变化；左右 ornament 固定 48px
+判定: **Fail** → @frontend
+
+=== 2. 协作会话互发 ===
+期望: 令主与揭榜侠互发，双方可见完整对话
+实现核对:
+- GET messages 按 bountyId 全量、禁止按发送方过滤；assertParticipant
+- POST 令主或 ACTIVE 揭榜可写；响应含 senderNickname
+- 前端轮询 + isMine 数字比较修复
+运行时: 新建令 PENDING_REVIEW；错误路径 admin review 未通；未完成双账号烟测
+判定: **Pass（实现/契约）**；建议补跑双账号烟测（厅审通过后）
+说明: 不因烟测环境阻断；代码已对齐 api.md §7.6/7.7
+
+=== 3. 令种武侠名 ===
+期望: 租房悬赏 / 出租悬赏 / 转租悬赏
+- FE labels + 广场筛/发令三档 + resolveBountyTypeLabel: Pass
+- 后端 MetaService TYPE_DISPLAY_NAME + RENT_TRANSFER 模板: 代码有
+- 运行中 API: plaza.typeDisplayName=null；warrant displayName=null（可能未热更）
+  前端有本地映射兜底，界面仍可显示正确中文
+判定: **Pass（界面）**；P3 建议确认运行实例已部署 typeDisplayName/displayName
+
+=== 4. 告示 N1–N3 + 广场防骗行 ===
+期望: 告示栏可读 N1–N3 **正文完整**（standard-notices.md）；防骗行非空
+实际 DB/API:
+- 存在 RULES/ANTI_FRAUD/ZUNYI_RENT 置顶，标题对齐 N1–N3 主题
+- content 长度约 29–34 字，为 data.sql 短摘要，**不含** standard-notices 全文标志句
+- N4 开山告示有短文；N5/N6 未见独立条目
+- 广场防骗行: 有 ANTI_FRAUD 置顶内容可读（短文非空）→ 行非空 Pass；正文完整 Fail
+判定: **Fail（正文完整）** → @backend（种子/迁移更新 content）或运营后台录入；可选 @pm 确认「短摘要是否算过」
+
+=== 缺陷卡 ===
+
+D-V189-01 [P1] 金榜页眉仍大量展示 subtitle
+- 期望: §6.24 取消 subtitle
+- 实际: 11 处仍传 subtitle；组件仍渲染
+- 归属: @frontend
+
+D-V189-02 [P2] 页眉底部分割线随容器宽度变化
+- 期望: 全站固定长度
+- 实际: border-bottom:100% 容器宽；narrow 页更短
+- 归属: @frontend
+
+D-V189-03 [P1] N1–N3 告示正文未按 standard-notices.md 入库
+- 期望: 打开详情可见完整条款正文
+- 实际: 仅短摘要（len≈30）
+- 归属: @backend（patch/data.sql）或后台发布；文稿已在 docs/notices/standard-notices.md
+
+=== 总评 ===
+§9.13: **Fail（有阻断项）** — 页眉副题未清；N1–N3 正文不完整。
+令种名界面 Pass；会话实现 Pass（建议补烟测）。

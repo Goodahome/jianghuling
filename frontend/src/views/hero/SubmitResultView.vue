@@ -3,7 +3,8 @@ import { onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { getBounty, listClaimSubmissions, submitResult } from '@/api/bounty'
-import type { BountyDetail, Submission } from '@/types/models'
+import type { BountyDetail, BountySubmissionListItem } from '@/types/models'
+import { resolveSubmissionStatusLabel } from '@/utils/labels'
 import ImageUpload from '@/components/ImageUpload.vue'
 import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
 
@@ -16,7 +17,7 @@ const crumbs = [
   { label: '提交成果' },
 ]
 const detail = ref<BountyDetail | null>(null)
-const history = ref<Submission[]>([])
+const history = ref<BountySubmissionListItem[]>([])
 const loading = ref(false)
 const form = reactive({
   summary: '',
@@ -24,11 +25,14 @@ const form = reactive({
     itemCode: string
     itemName: string
     required: boolean
-    done: boolean
     text: string
     mediaUrls: string[]
   }[],
 })
+
+function itemHasContent(item: { text?: string; mediaUrls?: string[] }) {
+  return !!(item.text && item.text.trim()) || !!(item.mediaUrls && item.mediaUrls.length)
+}
 
 onMounted(async () => {
   detail.value = await getBounty(route.params.id as string)
@@ -36,12 +40,12 @@ onMounted(async () => {
     itemCode: c.itemCode,
     itemName: c.itemName,
     required: !!c.required,
-    done: false,
     text: '',
     mediaUrls: [],
   }))
   if (detail.value.claimId) {
-    history.value = await listClaimSubmissions(detail.value.id, detail.value.claimId)
+    const rows = await listClaimSubmissions(detail.value.id, detail.value.claimId)
+    history.value = Array.isArray(rows) ? rows : []
   }
 })
 
@@ -50,21 +54,21 @@ async function onSubmit() {
     ElMessage.warning('请填写成果摘要')
     return
   }
-  const missing = form.items.filter((i) => i.required && !i.done).map((i) => i.itemName || i.itemCode)
+  const missing = form.items
+    .filter((i) => i.required && !itemHasContent(i))
+    .map((i) => i.itemName || i.itemCode)
   if (missing.length) {
-    ElMessage.warning(`以下必验项尚未勾选「已完成」：${missing.join('、')}`)
+    ElMessage.warning(`以下必验项请填写说明或上传凭证：${missing.join('、')}`)
     return
   }
   loading.value = true
   try {
     await submitResult(route.params.id as string, {
       summary: form.summary,
-      items: form.items.map(({ itemCode, done, text, mediaUrls }) => ({
-        itemCode,
-        done,
-        text,
-        mediaUrls,
-      })),
+      items: form.items.map(({ itemCode, text, mediaUrls }) => {
+        const done = itemHasContent({ text, mediaUrls })
+        return { itemCode, done, text, mediaUrls }
+      }),
     })
     ElMessage.success('成果已提交，等待验功')
     router.replace(`/bounties/${route.params.id}`)
@@ -79,7 +83,7 @@ async function onSubmit() {
     <div class="jh-container narrow">
       <PageBreadcrumb :items="crumbs" />
       <h1 class="brand-title">提交成果</h1>
-      <p class="jh-muted">按探子清单逐项填写；可多次提交，受冷却与日限约束</p>
+      <p class="jh-muted">按探子清单逐项填写说明或上传凭证；必验项须有内容方可提交</p>
       <el-form class="jh-panel form" label-position="top" @submit.prevent="onSubmit">
         <el-form-item label="摘要" required>
           <el-input v-model="form.summary" type="textarea" :rows="3" />
@@ -90,7 +94,6 @@ async function onSubmit() {
               {{ item.itemName }}
               <span v-if="item.required" class="req">必验</span>
             </strong>
-            <el-switch v-model="item.done" active-text="已完成" />
           </div>
           <el-input v-model="item.text" type="textarea" :rows="2" placeholder="说明 / 带看记录等" />
           <div class="media">
@@ -105,8 +108,21 @@ async function onSubmit() {
       <div v-if="history.length" class="jh-panel hist">
         <h2>历史版本</h2>
         <el-timeline>
-          <el-timeline-item v-for="h in history" :key="h.id" :timestamp="h.createdAt">
-            v{{ h.versionNo }} · {{ h.status }} · {{ h.contentSummary }}
+          <el-timeline-item
+            v-for="h in history"
+            :key="h.submissionId"
+            :timestamp="h.createdAt"
+          >
+            v{{ h.versionNo }} · {{ resolveSubmissionStatusLabel(h.status) }} ·
+            {{ h.summary || '（无摘要）' }}
+            <el-button
+              link
+              type="primary"
+              size="small"
+              @click="router.push(`/bounties/${bountyId}/submissions/${h.submissionId}`)"
+            >
+              查看正文
+            </el-button>
           </el-timeline-item>
         </el-timeline>
       </div>
@@ -115,9 +131,6 @@ async function onSubmit() {
 </template>
 
 <style scoped>
-.narrow {
-  max-width: 720px;
-}
 h1 {
   margin: 0 0 6px;
   font-size: 32px;

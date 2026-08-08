@@ -3,8 +3,9 @@ import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { listBountyReviews, reviewBounty } from '@/api/hall'
+import { useHallAttentionStore } from '@/stores/hallAttention'
 import type { BountyListItem } from '@/types/models'
-import { bountyTypeLabel, formatAmount } from '@/utils/labels'
+import { formatAmount, resolveBountyTypeLabel } from '@/utils/labels'
 import StatusTag from '@/components/StatusTag.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import JhPageHeader from '@/components/JhPageHeader.vue'
@@ -37,6 +38,7 @@ async function decide(id: number, result: 'APPROVE' | 'REJECT', e: Event) {
   }
   await reviewBounty(id, { result, reason })
   ElMessage.success(result === 'APPROVE' ? '已通过' : '已驳回')
+  void useHallAttentionStore().refresh()
   await load()
 }
 
@@ -46,7 +48,7 @@ onMounted(load)
 <template>
   <section class="jh-section">
     <div class="jh-container">
-      <JhPageHeader title="令审队列" subtitle="待审发令 · 点进详情可览令状后落判" />
+      <JhPageHeader title="令审队列" />
 
       <div v-loading="loading" class="list">
         <EmptyState v-if="!loading && !list.length" title="暂无待审发令" />
@@ -62,7 +64,7 @@ onMounted(load)
             <StatusTag :status="item.status" />
           </div>
           <p class="jh-muted">
-            {{ bountyTypeLabel[item.type] || item.type }} · {{ formatAmount(item.rewardAmount) }} 两
+            {{ resolveBountyTypeLabel(item.type, item.typeDisplayName) || item.type }} · {{ formatAmount(item.rewardAmount) }} 两
           </p>
           <div class="ops">
             <el-button size="small" class="jh-btn-seal" @click="decide(item.id, 'APPROVE', $event)">
@@ -94,7 +96,7 @@ h1 {
   width: 100%;
   text-align: left;
   border: 1px solid var(--jh-line);
-  background: #fff;
+  background: transparent;
   cursor: pointer;
   font: inherit;
   color: inherit;

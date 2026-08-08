@@ -52,9 +52,6 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.narrow {
-  max-width: 720px;
-}
 h1 {
   margin: 0 0 12px;
   font-size: 28px;

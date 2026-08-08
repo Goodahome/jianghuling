@@ -84,7 +84,7 @@ defineProps<{
     drop-shadow(0 2px 0 rgba(20, 18, 14, 0.32));
 }
 
-/* 厚度层：略下错，形成瓦檐侧面厚度 */
+/* 厚度层：略下错，形成瓦檐侧面厚度；左右斜度须对称 */
 .roof-tiles-thickness {
   position: absolute;
   left: 0;
@@ -106,7 +106,8 @@ defineProps<{
   background-size: 140px 100%;
   background-repeat: repeat-x;
   background-position: center top;
-  clip-path: polygon(6% 0, 96% 0, 100% 100%, 0 100%);
+  /* 左右各收 6%，与厚度层同轴对称（勿写成 6%/96% 导致右陡左缓） */
+  clip-path: polygon(6% 0, 94% 0, 100% 100%, 0 100%);
 }
 
 /* 瓦面内缘立体：顶亮、底暗、两侧收口 */
@@ -181,7 +182,8 @@ defineProps<{
   display: flex;
   flex-direction: column;
   margin: 0 12px;
-  padding: 0 14px 8px;
+  /* 左右内边距刚好让出竖向木条，内容区不被滚动条再挤 */
+  padding: 0 var(--jh-board-face-inline) 8px;
   min-height: 0;
   max-height: 100%;
   /* 侧栏 absolute 滑出时由舞台 overflow-x 裁切，木面保持定位上下文 */
@@ -200,24 +202,31 @@ defineProps<{
   overflow: hidden;
 }
 
-/* 侧立柱：随木板面通高 */
+/* 侧立柱：随木板面通高；右侧木条同时作为滚动条承载面 */
 .board-face::before,
 .board-face::after {
   content: '';
   position: absolute;
   top: 10px;
   bottom: 10px;
-  width: 12px;
-  background: linear-gradient(180deg, #5a4228, #3a2a18);
-  border: 1px solid rgba(196, 163, 90, 0.25);
+  width: var(--jh-board-rail-width);
+  box-sizing: border-box;
+  background:
+    linear-gradient(90deg, rgba(20, 12, 6, 0.35) 0%, transparent 28%, transparent 72%, rgba(20, 12, 6, 0.28) 100%),
+    linear-gradient(180deg, #6a4a2a 0%, #4a3420 48%, #2e2014 100%);
+  border: 1px solid rgba(196, 163, 90, 0.28);
+  box-shadow:
+    inset 0 1px 0 rgba(228, 200, 120, 0.16),
+    inset 0 0 6px rgba(20, 12, 6, 0.25);
   pointer-events: none;
-  z-index: 2;
+  /* 低于 page-main，便于透明滚动槽透出木纹 */
+  z-index: 1;
 }
 .board-face::before {
-  left: 4px;
+  left: var(--jh-board-rail-inset);
 }
 .board-face::after {
-  right: 4px;
+  right: var(--jh-board-rail-inset);
 }
 
 /* 底脚立柱：固定短脚，贴齐浏览器底边 */
@@ -240,7 +249,8 @@ defineProps<{
 
 @media (max-width: 768px) {
   .notice-stage {
-    padding: 0 18px;
+    /* 给瓦檐左右留出挑出量，避免相对牌面过短 */
+    padding: 0 32px;
     overflow-x: hidden;
   }
 
@@ -250,30 +260,32 @@ defineProps<{
   }
 
   .board-roof {
-    width: calc(100% + 36px);
+    width: calc(100% + 64px);
     max-width: none;
-    margin: 0 -18px;
+    margin: 0 -32px;
   }
 
   .roof-tiles,
   .roof-tiles-thickness {
-    height: clamp(38px, 10.5vw, 56px);
+    height: clamp(48px, 12vw, 64px);
   }
 
   .roof-tiles {
-    background-size: 90px 100%;
-    clip-path: polygon(10% 0, 90% 0, 100% 100%, 0 100%);
+    background-size: 110px 100%;
+    /* 略缓斜度，左右挑檐更长 */
+    clip-path: polygon(7% 0, 93% 0, 100% 100%, 0 100%);
   }
 
   .roof-tiles-thickness {
     top: 3px;
-    clip-path: polygon(10% 0, 90% 0, 100% 100%, 0 100%);
+    height: clamp(48px, 12vw, 64px);
+    clip-path: polygon(12% 0, 88% 0, 100% 100%, 0 100%);
   }
 
   .roof-eave {
-    width: calc(100% - 28px);
-    height: 16px;
-    margin-top: -5px;
+    width: calc(100% - 36px);
+    height: 20px;
+    margin-top: -6px;
   }
 
   .board-beam {
@@ -285,6 +297,9 @@ defineProps<{
     margin: 0 2px;
     border-width: 2px;
     padding: 0 10px 8px;
+    --jh-board-rail-width: 0px;
+    --jh-board-rail-inset: 0px;
+    --jh-board-face-inline: 10px;
   }
 
   .board-face::before,
@@ -304,7 +319,7 @@ defineProps<{
 
 @media (max-width: 400px) {
   .notice-stage {
-    padding: 0 10px;
+    padding: 0 22px;
   }
 
   .notice-board {
@@ -313,8 +328,18 @@ defineProps<{
   }
 
   .board-roof {
-    width: calc(100% + 20px);
-    margin: 0 -10px;
+    width: calc(100% + 44px);
+    margin: 0 -22px;
+  }
+
+  .roof-tiles,
+  .roof-tiles-thickness {
+    height: clamp(44px, 13vw, 58px);
+  }
+
+  .roof-eave {
+    width: calc(100% - 28px);
+    height: 18px;
   }
 
   .board-face {

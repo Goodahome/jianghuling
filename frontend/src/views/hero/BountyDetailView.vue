@@ -1,50 +1,105 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { cancelBounty, claimBounty, getBounty, listEvaluations } from '@/api/bounty'
+import {
+  cancelBounty,
+  claimBounty,
+  getBounty,
+  listBountySubmissions,
+  listEvaluations,
+  quitClaim,
+} from '@/api/bounty'
 import { getWarrantTemplates } from '@/api/meta'
 import { useAuthStore } from '@/stores/auth'
-import type { BountyDetail, WarrantFieldDef, WarrantTemplate } from '@/types/models'
+import { useMineAttentionStore } from '@/stores/mineAttention'
+import type {
+  BountyCapabilities,
+  BountyDetail,
+  BountySubmissionListItem,
+  WarrantFieldDef,
+  WarrantTemplate,
+} from '@/types/models'
 import {
-  bountyTypeLabel,
   difficultyLabel,
   formatAmount,
   formatWarrantValue,
   isWarrantValueEmpty,
+  resolveBountyTypeLabel,
   warrantFieldFallbackLabel,
 } from '@/utils/labels'
 import StatusTag from '@/components/StatusTag.vue'
 import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
 
+const EMPTY_CAPS: BountyCapabilities = {
+  canCancel: false,
+  canSendMessage: false,
+  canReadMessages: false,
+  canViewSubmissions: false,
+  canSubmit: false,
+  canSettle: false,
+  canQuitClaim: false,
+  canRepublish: false,
+  canDispute: false,
+}
+
+const submissionStatusLabel: Record<BountySubmissionListItem['status'], string> = {
+  PENDING: '待审核',
+  APPROVED: '已通过',
+  REJECTED: '已驳回',
+}
+
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
+const mineAttention = useMineAttentionStore()
 const loading = ref(false)
 const claiming = ref(false)
+const quitting = ref(false)
 const detail = ref<BountyDetail | null>(null)
 const warrantTemplates = ref<WarrantTemplate[]>([])
 const evaluations = ref<Record<string, unknown>[]>([])
+const submissions = ref<BountySubmissionListItem[]>([])
+const submissionsLoading = ref(false)
+const submissionsPanel = ref<HTMLElement | null>(null)
+const showSubmissions = ref(false)
 
 const crumbs = computed(() => {
-  const title = detail.value?.title?.trim()
-  const short = title && title.length > 12 ? `${title.slice(0, 12)}…` : title || '悬赏详情'
+  const from = String(route.query.from || '')
+  if (from === 'mine') {
+    return [
+      { label: '我的悬赏', to: '/mine' },
+      { label: '悬赏详情' },
+    ]
+  }
   return [
     { label: '悬赏榜', to: '/plaza' },
-    { label: short },
+    { label: '悬赏详情' },
   ]
 })
 
+/** 详情已加载但无 capabilities（D-V1810-03）：勿静默藏光全部入口 */
+const capsMissing = computed(
+  () => !!detail.value && detail.value.capabilities == null,
+)
+
+const caps = computed((): BountyCapabilities => {
+  const c = detail.value?.capabilities
+  if (!c) return EMPTY_CAPS
+  return { ...EMPTY_CAPS, ...c }
+})
+
+/** 再发一令：仅认 capabilities（顶层 canRepublish 由后端镜像，不作旁路） */
+const canRepublish = computed(() => caps.value.canRepublish)
+
+/**
+ * 一键揭榜：契约无 canClaim，仍用身份+状态（api.md 揭榜前置）。
+ * 其余操作入口一律只认 capabilities，勿用 IN_COLLAB 等状态旁路藏/显按钮。
+ */
 const canClaim = computed(() => {
   if (!detail.value || !auth.isLoggedIn) return false
   if (detail.value.isPublisher || detail.value.claimedByMe) return false
   return ['OPEN', 'IN_COLLAB'].includes(detail.value.status)
-})
-
-const canDispute = computed(() => {
-  if (!detail.value || !auth.isLoggedIn) return false
-  if (!(detail.value.isPublisher || detail.value.claimedByMe)) return false
-  return detail.value.status === 'COMPLETED' || detail.value.status === 'IN_DISPUTE'
 })
 
 const warrantFieldDefs = computed((): WarrantFieldDef[] => {
@@ -84,6 +139,22 @@ const warrantRows = computed(() => {
   return rows
 })
 
+async function loadSubmissions() {
+  if (!detail.value || !caps.value.canViewSubmissions) {
+    submissions.value = []
+    return
+  }
+  submissionsLoading.value = true
+  try {
+    const data = await listBountySubmissions(detail.value.id, { page: 1, pageSize: 50 })
+    submissions.value = data?.list || []
+  } catch {
+    submissions.value = []
+  } finally {
+    submissionsLoading.value = false
+  }
+}
+
 async function load() {
   loading.value = true
   try {
@@ -101,9 +172,34 @@ async function load() {
     } else {
       evaluations.value = []
     }
+    const viewSub = bounty.capabilities?.canViewSubmissions
+    if (viewSub && showSubmissions.value) {
+      await loadSubmissions()
+    } else if (!viewSub) {
+      showSubmissions.value = false
+      submissions.value = []
+    }
+    // 打开详情：消掉「新成果 / 状态变更」水位；会话未读仍须进协作会话
+    if (bounty?.id) {
+      const subCount =
+        submissions.value.length ||
+        Number(
+          (mineAttention.published.find((x) => x.id === bounty.id) ||
+            mineAttention.claimed.find((x) => x.id === bounty.id))?.submissionCount ?? 0,
+        )
+      mineAttention.markSeenDetail(bounty.id, bounty.status, subCount)
+      void mineAttention.refresh()
+    }
   } finally {
     loading.value = false
   }
+}
+
+async function openSubmissions() {
+  showSubmissions.value = true
+  await loadSubmissions()
+  await nextTick()
+  submissionsPanel.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
 async function onClaim() {
@@ -124,10 +220,82 @@ async function onClaim() {
 }
 
 async function onCancel() {
-  const { value } = await ElMessageBox.prompt('请填写取消原因', '取消悬赏')
-  await cancelBounty(route.params.id as string, value || '取消')
-  ElMessage.success('已取消，托管赏银将退回')
-  await load()
+  if (!detail.value) return
+  const hasSubs = !!detail.value.hasSubmissions
+  if (hasSubs) {
+    await ElMessageBox.confirm(
+      '本令已有成果提交。取消后不可全额退回，须进入分配流程将托管赏银分给有成果的揭榜侠。确认取消并进入分配？',
+      '取消悬赏（须分配）',
+      {
+        type: 'warning',
+        confirmButtonText: '确认取消并分配',
+        cancelButtonText: '再想想',
+      },
+    )
+  } else {
+    await ElMessageBox.confirm(
+      '确认取消悬赏？无成果时托管赏银将全额退回。',
+      '取消悬赏',
+      { type: 'warning', confirmButtonText: '确认取消' },
+    )
+  }
+
+  let reason = '令主取消'
+  if (['IN_COLLAB', 'PENDING_SETTLE'].includes(detail.value.status)) {
+    const { value } = await ElMessageBox.prompt('请填写取消原因', '取消悬赏', {
+      inputPlaceholder: '必填',
+      inputValidator: (v) => (!!(v || '').trim() ? true : '请填写取消原因'),
+    })
+    reason = (value || '').trim()
+  }
+
+  try {
+    const result = await cancelBounty(detail.value.id, reason)
+    const allocate =
+      result?.cancelOutcome === 'ALLOCATE' ||
+      result?.settlementRequired === true ||
+      (result?.hasSubmissions === true && result?.cancelAllocationPending === true)
+
+    if (allocate) {
+      ElMessage.success('已取消进入待分配，请完成成果分配')
+      router.push({
+        path: `/bounties/${detail.value.id}/settle`,
+        query: { settlementKind: 'CANCEL_ALLOCATE' },
+      })
+      return
+    }
+
+    ElMessage.success('已取消，托管赏银已全额退回')
+    await load()
+  } catch {
+    /* 43010/43011 等由 request 层友好提示 */
+  }
+}
+
+function goSubmissionDetail(s: BountySubmissionListItem) {
+  const sid = s.submissionId
+  if (!sid) {
+    ElMessage.warning('成果编号缺失，请刷新后重试')
+    return
+  }
+  router.push(`/bounties/${detail.value?.id}/submissions/${sid}`)
+}
+
+async function onQuitClaim() {
+  await ElMessageBox.confirm(
+    '退出后不可再揭本令，已提交成果保留审计；体力返还，当日揭榜次数不返还。确认退出？',
+    '退出揭榜',
+    { type: 'warning' },
+  )
+  quitting.value = true
+  try {
+    await quitClaim(route.params.id as string)
+    ElMessage.success('已退出揭榜')
+    await auth.fetchMe()
+    await load()
+  } finally {
+    quitting.value = false
+  }
 }
 
 onMounted(load)
@@ -135,12 +303,12 @@ onMounted(load)
 
 <template>
   <section class="jh-section" v-loading="loading">
-    <div class="jh-container" v-if="detail">
+    <div class="jh-container narrow" v-if="detail">
       <PageBreadcrumb :items="crumbs" />
       <div class="head jh-panel">
         <div class="tags">
           <div class="tags-left">
-            <span class="type">{{ bountyTypeLabel[detail.type] }}</span>
+            <span class="type">{{ resolveBountyTypeLabel(detail.type, detail.typeDisplayName) }}</span>
             <StatusTag :status="detail.status" />
           </div>
           <span class="difficulty">{{ difficultyLabel[detail.difficulty] }}</span>
@@ -150,19 +318,41 @@ onMounted(load)
         <p class="jh-muted">
           {{ detail.district || '遵义' }} · 截止 {{ detail.deadlineAt }}
         </p>
+        <el-alert
+          v-if="capsMissing"
+          class="caps-alert"
+          type="warning"
+          show-icon
+          :closable="false"
+          title="能力状态加载失败"
+        >
+          <p class="caps-alert-desc">
+            未能取得本单操作权限，入口已暂时隐藏。请刷新重试。
+          </p>
+          <el-button size="small" type="primary" plain :loading="loading" @click="load">
+            刷新
+          </el-button>
+        </el-alert>
         <div class="actions">
           <el-button v-if="canClaim" type="primary" class="jh-btn-seal action-main" :loading="claiming" @click="onClaim">
             一键揭榜
           </el-button>
           <el-button
-            v-if="detail.claimedByMe || detail.isPublisher"
+            v-if="caps.canReadMessages || caps.canSendMessage"
             class="action-item"
-            @click="router.push(`/bounties/${detail.id}/chat`)"
+            @click="router.push({ path: `/bounties/${detail.id}/chat`, query: { from: route.query.from } })"
           >
             协作会话
           </el-button>
           <el-button
-            v-if="detail.claimedByMe"
+            v-if="caps.canViewSubmissions"
+            class="action-item"
+            @click="openSubmissions"
+          >
+            成果查看
+          </el-button>
+          <el-button
+            v-if="caps.canSubmit"
             type="success"
             class="action-item"
             @click="router.push(`/bounties/${detail.id}/submit`)"
@@ -170,22 +360,39 @@ onMounted(load)
             提交成果
           </el-button>
           <el-button
-            v-if="detail.isPublisher && ['IN_COLLAB', 'PENDING_SETTLE'].includes(detail.status)"
+            v-if="caps.canSettle"
             type="warning"
             class="action-item"
-            @click="router.push(`/bounties/${detail.id}/settle`)"
+            @click="
+              router.push({
+                path: `/bounties/${detail.id}/settle`,
+                query: detail.cancelAllocationPending
+                  ? { settlementKind: 'CANCEL_ALLOCATE' }
+                  : undefined,
+              })
+            "
           >
-            完结分配
+            {{ detail.cancelAllocationPending ? '取消后分配' : '完结分配' }}
           </el-button>
           <el-button
-            v-if="detail.isPublisher && ['OPEN', 'PENDING_REVIEW', 'IN_COLLAB'].includes(detail.status)"
+            v-if="caps.canCancel"
             class="action-item"
             @click="onCancel"
           >
             取消悬赏
           </el-button>
           <el-button
-            v-if="detail.canRepublish"
+            v-if="caps.canQuitClaim"
+            class="action-item"
+            type="danger"
+            plain
+            :loading="quitting"
+            @click="onQuitClaim"
+          >
+            退出揭榜
+          </el-button>
+          <el-button
+            v-if="canRepublish"
             type="primary"
             class="jh-btn-seal action-item"
             @click="router.push({ path: '/bounties/publish', query: { republishFrom: String(detail.id) } })"
@@ -193,7 +400,7 @@ onMounted(load)
             再发一令
           </el-button>
           <el-button
-            v-if="canDispute && detail.status === 'COMPLETED'"
+            v-if="caps.canDispute && detail.status !== 'IN_DISPUTE'"
             class="action-item"
             type="danger"
             @click="router.push({ path: '/disputes', query: { bountyId: String(detail.id) } })"
@@ -208,6 +415,42 @@ onMounted(load)
             查看纠纷
           </el-button>
         </div>
+      </div>
+
+      <div
+        v-if="showSubmissions && caps.canViewSubmissions"
+        ref="submissionsPanel"
+        class="jh-panel block submissions"
+        v-loading="submissionsLoading"
+      >
+        <h2>成果查看</h2>
+        <el-empty v-if="!submissionsLoading && !submissions.length" description="暂无成果提交" />
+        <ul v-else class="sub-list">
+          <li
+            v-for="s in submissions"
+            :key="s.submissionId"
+            class="sub-item sub-clickable"
+            role="button"
+            tabindex="0"
+            @click="goSubmissionDetail(s)"
+            @keydown.enter="goSubmissionDetail(s)"
+          >
+            <div class="sub-head">
+              <strong>{{ s.claimerNickname || (s.claimerUserId ? `侠士#${s.claimerUserId}` : '佚名侠士') }}</strong>
+              <span class="jh-muted"> · v{{ s.versionNo }}</span>
+              <el-tag size="small" class="sub-status">
+                {{ submissionStatusLabel[s.status] || s.status }}
+              </el-tag>
+            </div>
+            <p class="sub-summary">{{ s.summary || '（无摘要）' }}</p>
+            <p class="jh-muted sub-meta">
+              提交 {{ s.createdAt }}
+              <template v-if="s.reviewedAt"> · 审核 {{ s.reviewedAt }}</template>
+            </p>
+            <p v-if="s.reviewReason" class="sub-reason">驳回原因：{{ s.reviewReason }}</p>
+            <p class="sub-link">查看完整正文 →</p>
+          </li>
+        </ul>
       </div>
 
       <div class="cols">
@@ -290,6 +533,14 @@ h1 {
   color: var(--jh-seal);
   margin: 0 0 4px;
 }
+.caps-alert {
+  margin: 12px 0 4px;
+}
+.caps-alert-desc {
+  margin: 0 0 8px;
+  font-size: 13px;
+  line-height: 1.5;
+}
 .actions {
   display: flex;
   flex-wrap: wrap;
@@ -303,6 +554,56 @@ h1 {
 }
 .block {
   padding: 18px;
+}
+.submissions {
+  margin-bottom: 16px;
+}
+.sub-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.sub-item {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--jh-line);
+}
+.sub-clickable {
+  cursor: pointer;
+}
+.sub-clickable:hover .sub-link,
+.sub-clickable:focus .sub-link {
+  color: var(--jh-seal);
+}
+.sub-item:last-child {
+  border-bottom: none;
+}
+.sub-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+.sub-status {
+  margin-left: auto;
+}
+.sub-summary {
+  margin: 0 0 4px;
+  color: var(--jh-ink);
+}
+.sub-meta {
+  margin: 0;
+  font-size: 12px;
+}
+.sub-reason {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--jh-seal);
+}
+.sub-link {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--jh-muted);
 }
 .evals {
   margin-top: 16px;
@@ -356,9 +657,10 @@ h2 {
     z-index: 10;
     margin: 12px -4px 0;
     padding: 10px;
-    background: #fff;
+    background: transparent;
     border: 1px solid var(--jh-line);
     border-radius: var(--jh-radius);
+    backdrop-filter: blur(6px);
   }
   .action-main,
   .action-item {
@@ -367,6 +669,9 @@ h2 {
   }
   .action-main {
     flex-basis: 100%;
+  }
+  .sub-status {
+    margin-left: 0;
   }
 }
 </style>

@@ -79,6 +79,14 @@ function handleBizError(code: number, message: string) {
     ElMessage.error(message || '账号已被封禁')
     return
   }
+  if (code === 43010) {
+    ElMessage.error(message || '本令已有成果提交，不可全额退回取消，须进入分配')
+    return
+  }
+  if (code === 43011) {
+    ElMessage.error(message || '有成果取消待分配尚未完成，请先完成分配或勿重复取消')
+    return
+  }
   ElMessage.error(message || '请求失败')
 }
 

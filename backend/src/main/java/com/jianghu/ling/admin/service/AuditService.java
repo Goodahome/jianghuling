@@ -30,9 +30,20 @@ public class AuditService {
         auditLogMapper.insert(row);
     }
 
-    public PageResult<Map<String, Object>> page(long page, long pageSize) {
-        Page<AuditLog> p = auditLogMapper.selectPage(new Page<>(page, pageSize),
-                new LambdaQueryWrapper<AuditLog>().orderByDesc(AuditLog::getId));
+    public PageResult<Map<String, Object>> page(long page, long pageSize,
+                                                  String operator, String action, String keyword) {
+        LambdaQueryWrapper<AuditLog> q = new LambdaQueryWrapper<AuditLog>().orderByDesc(AuditLog::getId);
+        if (operator != null && !operator.isBlank()) {
+            q.like(AuditLog::getOperator, operator.trim());
+        }
+        if (action != null && !action.isBlank()) {
+            q.like(AuditLog::getAction, action.trim());
+        }
+        if (keyword != null && !keyword.isBlank()) {
+            String kw = keyword.trim();
+            q.and(w -> w.like(AuditLog::getAction, kw).or().like(AuditLog::getDetail, kw));
+        }
+        Page<AuditLog> p = auditLogMapper.selectPage(new Page<>(page, pageSize), q);
         return PageResult.of(p.getRecords().stream().map(a -> {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("id", a.getId());

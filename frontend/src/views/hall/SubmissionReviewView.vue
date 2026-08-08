@@ -2,21 +2,20 @@
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { listSubmissionReviews } from '@/api/hall'
-import type { Submission } from '@/types/models'
+import type { ReviewSubmissionListItem } from '@/types/models'
+import { resolveSubmissionStatusLabel } from '@/utils/labels'
 import EmptyState from '@/components/EmptyState.vue'
 import JhPageHeader from '@/components/JhPageHeader.vue'
 
-type Row = Submission & { bountyId?: number; bountyTitle?: string }
-
 const router = useRouter()
-const list = ref<Row[]>([])
+const list = ref<ReviewSubmissionListItem[]>([])
 const loading = ref(false)
 
 async function load() {
   loading.value = true
   try {
     const data = await listSubmissionReviews({ status: 'PENDING', page: 1, pageSize: 50 })
-    list.value = (data.list || []) as Row[]
+    list.value = data.list || []
   } finally {
     loading.value = false
   }
@@ -32,23 +31,25 @@ onMounted(load)
 <template>
   <section class="jh-section">
     <div class="jh-container">
-      <JhPageHeader title="验功队列" subtitle="待审成果 · 点进详情可阅清单与举证" />
+      <JhPageHeader title="验功队列" />
 
       <div v-loading="loading" class="list">
         <EmptyState v-if="!loading && !list.length" title="暂无待审成果" />
         <button
           v-for="item in list"
-          :key="item.id"
+          :key="item.submissionId"
           type="button"
           class="item jh-panel"
-          @click="goDetail(Number(item.id))"
+          @click="goDetail(item.submissionId)"
         >
           <div class="row">
             <strong>{{ item.bountyTitle || `悬赏 #${item.bountyId || '—'}` }}</strong>
-            <span class="pill">成果 #{{ item.id }}</span>
+            <span class="pill">#{{ item.submissionId }} · {{ resolveSubmissionStatusLabel(item.status) }}</span>
           </div>
-          <p class="jh-muted summary">{{ item.contentSummary || '（无摘要）' }}</p>
-          <p class="jh-muted time">{{ item.createdAt }}</p>
+          <p class="jh-muted summary">{{ item.summary || '（无摘要）' }}</p>
+          <p class="jh-muted time">
+            {{ item.claimerNickname || `侠士#${item.claimerUserId}` }} · {{ item.createdAt }}
+          </p>
         </button>
       </div>
     </div>
@@ -56,10 +57,6 @@ onMounted(load)
 </template>
 
 <style scoped>
-h1 {
-  margin: 0 0 6px;
-  font-size: 32px;
-}
 .list {
   display: grid;
   gap: 10px;
@@ -71,7 +68,7 @@ h1 {
   width: 100%;
   text-align: left;
   border: 1px solid var(--jh-line);
-  background: #fff;
+  background: transparent;
   cursor: pointer;
   font: inherit;
   color: inherit;

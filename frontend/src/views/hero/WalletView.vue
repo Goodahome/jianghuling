@@ -55,7 +55,7 @@ onMounted(async () => {
 <template>
   <section class="jh-section">
     <div class="jh-container">
-      <JhPageHeader title="模拟钱庄" subtitle="单位：两 · 非真实货币 · 发令将冻结赏银" />
+      <JhPageHeader title="模拟钱庄" />
       <p class="jh-muted tip">银两主要由注册赠送、邀新奖励、管理员发放与悬赏流转构成。</p>
 
       <div class="stats">

@@ -19,5 +19,7 @@ public class Settlement {
     private BigDecimal fee;
     private BigDecimal distributable;
     private String status;
+    /** COMPLETE | CANCEL_ALLOCATE */
+    private String kind;
     private LocalDateTime createdAt;
 }

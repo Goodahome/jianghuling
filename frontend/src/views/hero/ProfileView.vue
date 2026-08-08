@@ -3,6 +3,7 @@ import { onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { submitRealName, updateProfile } from '@/api/user'
 import { getLevelProgress } from '@/api/growth'
+import { applyLord, getMyLordApplication } from '@/api/rank'
 import { useAuthStore } from '@/stores/auth'
 import type { LevelProgress } from '@/types/models'
 import { formatAmount } from '@/utils/labels'
@@ -14,6 +15,9 @@ const level = ref<LevelProgress | null>(null)
 const form = reactive({ nickname: '', bio: '', avatarUrl: '' })
 const realName = reactive({ realName: '', idNumber: '' })
 const avatarUrls = ref<string[]>([])
+const lordApp = ref<Record<string, unknown> | null>(null)
+const lordStatement = ref('')
+const lordSubmitting = ref(false)
 
 onMounted(async () => {
   await auth.fetchMe()
@@ -22,6 +26,7 @@ onMounted(async () => {
   form.avatarUrl = auth.me?.avatarUrl || ''
   avatarUrls.value = form.avatarUrl ? [form.avatarUrl] : []
   level.value = await getLevelProgress().catch(() => null)
+  lordApp.value = await getMyLordApplication().catch(() => null)
 })
 
 async function saveProfile() {
@@ -36,12 +41,23 @@ async function saveRealName() {
   ElMessage.success(`实名已提交：${res.status}`)
   await auth.fetchMe()
 }
+
+async function onApplyLord() {
+  lordSubmitting.value = true
+  try {
+    await applyLord(lordStatement.value || '愿行侠仗义，护航同城互助。')
+    ElMessage.success('盟主申请已提交')
+    lordApp.value = await getMyLordApplication().catch(() => null)
+  } finally {
+    lordSubmitting.value = false
+  }
+}
 </script>
 
 <template>
   <section class="jh-section">
     <div class="jh-container narrow">
-      <JhPageHeader title="侠士资料" subtitle="名号与江湖履历" />
+      <JhPageHeader title="侠士资料" />
       <div class="jh-panel block">
         <p>
           等级：{{ level?.levelTitle || auth.me?.levelTitle }} · 侠义
@@ -63,6 +79,7 @@ async function saveRealName() {
           <RouterLink to="/invites">邀请同道</RouterLink>
           <RouterLink to="/offices">职司申请</RouterLink>
           <RouterLink to="/disputes">我的纠纷</RouterLink>
+          <RouterLink to="/feedbacks">意见反馈</RouterLink>
         </div>
       </div>
 
@@ -91,14 +108,38 @@ async function saveRealName() {
         </el-form-item>
         <el-button native-type="submit">提交实名</el-button>
       </el-form>
+
+      <div class="jh-panel block lord-apply">
+        <h2>申请武林盟主</h2>
+        <p class="jh-muted">默认需声望榜第 1；是否任命由武林盟审批。现任盟主荣耀位见英雄榜。</p>
+        <p v-if="auth.me?.isLord" class="status ok">你已是现任武林盟主。</p>
+        <template v-else>
+          <p v-if="lordApp" class="status">
+            当前申请状态：{{ lordApp.status || '无' }}
+            <span v-if="lordApp.rejectReason"> · {{ lordApp.rejectReason }}</span>
+          </p>
+          <el-input
+            v-model="lordStatement"
+            type="textarea"
+            :rows="3"
+            placeholder="申请陈述（可选）"
+          />
+          <el-button
+            type="primary"
+            class="jh-btn-seal"
+            style="margin-top: 10px"
+            :loading="lordSubmitting"
+            @click="onApplyLord"
+          >
+            提交申请
+          </el-button>
+        </template>
+      </div>
     </div>
   </section>
 </template>
 
 <style scoped>
-.narrow {
-  max-width: 720px;
-}
 h1 {
   margin: 0 0 14px;
   font-size: 32px;
@@ -119,5 +160,12 @@ h2 {
 }
 .links a {
   color: var(--jh-seal);
+}
+.status {
+  color: var(--jh-muted);
+  margin: 0 0 8px;
+}
+.status.ok {
+  color: var(--jh-ok);
 }
 </style>

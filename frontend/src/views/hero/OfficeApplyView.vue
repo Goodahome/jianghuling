@@ -35,7 +35,7 @@ onMounted(load)
 <template>
   <section class="jh-section">
     <div class="jh-container narrow">
-      <JhPageHeader title="职司申请" subtitle="令审使 / 验功使 · 由武林盟授予 · 持职后可进入执事堂" />
+      <JhPageHeader title="职司申请" />
       <div v-if="mine.length" class="jh-panel block">
         <h2>我的职司</h2>
         <el-tag v-for="o in mine" :key="o.code" style="margin-right: 8px">
@@ -69,9 +69,6 @@ onMounted(load)
 </template>
 
 <style scoped>
-.narrow {
-  max-width: 720px;
-}
 h1 {
   margin: 0 0 6px;
   font-size: 32px;

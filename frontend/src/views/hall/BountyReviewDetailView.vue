@@ -4,10 +4,11 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getBounty } from '@/api/bounty'
 import { reviewBounty } from '@/api/hall'
+import { useHallAttentionStore } from '@/stores/hallAttention'
 import { getWarrantTemplates } from '@/api/meta'
 import type { BountyDetail, WarrantFieldDef, WarrantTemplate } from '@/types/models'
 import {
-  bountyTypeLabel,
+  resolveBountyTypeLabel,
   difficultyLabel,
   formatAmount,
   formatWarrantValue,
@@ -82,6 +83,7 @@ async function decide(result: 'APPROVE' | 'REJECT') {
   try {
     await reviewBounty(bountyId.value, { result, reason })
     ElMessage.success(result === 'APPROVE' ? '已通过' : '已驳回')
+    void useHallAttentionStore().refresh()
     router.push('/hall/bounty-reviews')
   } finally {
     submitting.value = false
@@ -93,7 +95,7 @@ onMounted(load)
 
 <template>
   <section class="jh-section" v-loading="loading">
-    <div class="jh-container" v-if="detail">
+    <div class="jh-container narrow" v-if="detail">
       <HallBackBar
         :items="[
           { label: '令审队列', to: '/hall/bounty-reviews' },
@@ -107,7 +109,7 @@ onMounted(load)
       <div class="head jh-panel">
         <div class="tags">
           <div class="tags-left">
-            <span class="type">{{ bountyTypeLabel[detail.type] }}</span>
+            <span class="type">{{ resolveBountyTypeLabel(detail.type, detail.typeDisplayName) }}</span>
             <StatusTag :status="detail.status" />
           </div>
           <span class="difficulty">{{ difficultyLabel[detail.difficulty] }}</span>
@@ -121,7 +123,7 @@ onMounted(load)
 
       <div class="cols">
         <div class="jh-panel block">
-          <h2>租房令状</h2>
+          <h2>{{ resolveBountyTypeLabel(detail.type, detail.typeDisplayName).replace('悬赏', '令状') }}</h2>
           <el-empty v-if="!warrantRows.length" description="暂无令状信息" />
           <el-descriptions v-else :column="1" border>
             <el-descriptions-item v-for="row in warrantRows" :key="row.key" :label="row.label">

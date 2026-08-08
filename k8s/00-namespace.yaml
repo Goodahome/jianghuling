@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: jianghu-ling
+  labels:
+    app.kubernetes.io/name: jianghu-ling
+    app.kubernetes.io/part-of: jianghu-ling

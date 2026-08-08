@@ -32,9 +32,6 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.narrow {
-  max-width: 760px;
-}
 .article {
   padding: 24px;
 }

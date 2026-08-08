@@ -2,12 +2,14 @@ package com.jianghu.ling.review.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.jianghu.ling.admin.service.AuditService;
 import com.jianghu.ling.bounty.domain.Bounty;
 import com.jianghu.ling.bounty.domain.BountyClaim;
 import com.jianghu.ling.bounty.domain.Submission;
 import com.jianghu.ling.bounty.mapper.BountyClaimMapper;
 import com.jianghu.ling.bounty.mapper.BountyMapper;
 import com.jianghu.ling.bounty.mapper.SubmissionMapper;
+import com.jianghu.ling.bounty.service.BountyService;
 import com.jianghu.ling.common.api.PageResult;
 import com.jianghu.ling.common.error.BizException;
 import com.jianghu.ling.common.error.ErrorCode;
@@ -17,7 +19,9 @@ import com.jianghu.ling.review.domain.ReviewRecord;
 import com.jianghu.ling.review.mapper.ReviewRecordMapper;
 import com.jianghu.ling.security.AuthContext;
 import com.jianghu.ling.user.domain.UserOffice;
+import com.jianghu.ling.user.domain.UserProfile;
 import com.jianghu.ling.user.mapper.UserOfficeMapper;
+import com.jianghu.ling.user.mapper.UserProfileMapper;
 import com.jianghu.ling.wallet.service.WalletService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,9 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -42,8 +44,11 @@ public class ReviewService {
     private final SubmissionMapper submissionMapper;
     private final ReviewRecordMapper reviewRecordMapper;
     private final UserOfficeMapper userOfficeMapper;
+    private final UserProfileMapper userProfileMapper;
     private final WalletService walletService;
     private final NotifyService notifyService;
+    private final BountyService bountyService;
+    private final AuditService auditService;
 
     public void requireOffice(Long userId, String officeCode) {
         UserOffice office = userOfficeMapper.selectOne(new LambdaQueryWrapper<UserOffice>()
@@ -63,22 +68,19 @@ public class ReviewService {
         if ("PENDING".equals(status)) {
             st = "PENDING_REVIEW";
         }
-        Page<Bounty> p = bountyMapper.selectPage(new Page<>(page, pageSize),
-                new LambdaQueryWrapper<Bounty>()
-                        .eq(Bounty::getStatus, st)
-                        .ne(Bounty::getPublisherId, userId)
-                        .orderByAsc(Bounty::getId));
-        List<Bounty> records = p.getRecords();
-        // also exclude claimed by reviewer
-        List<Bounty> filtered = records.stream()
-                .filter(b -> claimMapper.selectCount(new LambdaQueryWrapper<BountyClaim>()
-                        .eq(BountyClaim::getBountyId, b.getId())
-                        .eq(BountyClaim::getUserId, userId)) == 0)
+        // 先取全量候选再套回避，保证 total 与 list 一致（避免「先分页再过滤」导致统计偏大）
+        List<Bounty> candidates = bountyMapper.selectList(new LambdaQueryWrapper<Bounty>()
+                .eq(Bounty::getStatus, st)
+                .ne(Bounty::getPublisherId, userId)
+                .orderByAsc(Bounty::getId));
+        Set<Long> claimedIds = claimedBountyIds(userId, candidates.stream().map(Bounty::getId).toList());
+        List<Bounty> visible = candidates.stream()
+                .filter(b -> !claimedIds.contains(b.getId()))
                 .toList();
 
         Map<Long, Long> claimCountMap;
-        if (!filtered.isEmpty()) {
-            List<Long> bountyIds = filtered.stream().map(Bounty::getId).toList();
+        if (!visible.isEmpty()) {
+            List<Long> bountyIds = visible.stream().map(Bounty::getId).toList();
             claimCountMap = claimMapper.selectList(
                     new LambdaQueryWrapper<BountyClaim>()
                             .in(BountyClaim::getBountyId, bountyIds)
@@ -88,7 +90,8 @@ public class ReviewService {
             claimCountMap = Map.of();
         }
 
-        List<Map<String, Object>> list = filtered.stream()
+        List<Bounty> pageRows = pageSlice(visible, page, pageSize);
+        List<Map<String, Object>> list = pageRows.stream()
                 .map(b -> {
                     Map<String, Object> m = new LinkedHashMap<>();
                     m.put("id", b.getId());
@@ -102,7 +105,7 @@ public class ReviewService {
                     m.put("claimCount", claimCountMap.getOrDefault(b.getId(), 0L));
                     return m;
                 }).collect(Collectors.toList());
-        return PageResult.of(list, p.getTotal(), page, pageSize);
+        return PageResult.of(list, visible.size(), page, pageSize);
     }
 
     @Transactional
@@ -118,7 +121,6 @@ public class ReviewService {
         if (!admin) {
             assertAvoidance(reviewerId, bounty);
         }
-        // 发令审核仅对待审核状态生效（管理员也不例外，避免「通过」重复点）
         if (!"PENDING_REVIEW".equals(bounty.getStatus())) {
             throw new BizException(ErrorCode.BIZ_RULE, "仅待审核状态可审核通过/驳回，其它状态请用强制关闭");
         }
@@ -147,36 +149,113 @@ public class ReviewService {
         return Map.of("bountyId", bountyId, "status", bounty.getStatus());
     }
 
+    /** 执事堂成果审核列表（api.md §15.3） */
     public PageResult<Map<String, Object>> pendingSubmissions(String status, long page, long pageSize) {
         Long userId = AuthContext.requireUserId();
         requireOffice(userId, OFFICE_FEAT);
-        String st = "PENDING".equalsIgnoreCase(status) || !StringUtils.hasText(status) ? "PENDING" : status;
-        Page<Submission> p = submissionMapper.selectPage(new Page<>(page, pageSize),
-                new LambdaQueryWrapper<Submission>()
-                        .eq(Submission::getStatus, st)
-                        .ne(Submission::getUserId, userId)
-                        .orderByAsc(Submission::getId));
-        List<Map<String, Object>> list = p.getRecords().stream()
+        LambdaQueryWrapper<Submission> q = new LambdaQueryWrapper<Submission>()
+                .ne(Submission::getUserId, userId)
+                .orderByAsc(Submission::getId);
+        applySubmissionStatusFilter(q, status);
+        // 先取全量候选再套回避，保证 total 与 list 一致（首页/红点用 total，队列用 list）
+        List<Submission> candidates = submissionMapper.selectList(q);
+        Set<Long> bountyIds = candidates.stream().map(Submission::getBountyId).collect(Collectors.toSet());
+        Map<Long, Bounty> bountyMap = bountyIds.isEmpty() ? Map.of()
+                : bountyMapper.selectBatchIds(bountyIds).stream()
+                .collect(Collectors.toMap(Bounty::getId, b -> b, (a, b) -> a));
+        Set<Long> claimedIds = claimedBountyIds(userId, bountyIds);
+        List<Submission> visible = candidates.stream()
                 .filter(s -> {
-                    Bounty bounty = bountyMapper.selectById(s.getBountyId());
-                    return bounty != null && !userId.equals(bounty.getPublisherId())
-                            && claimMapper.selectCount(new LambdaQueryWrapper<BountyClaim>()
-                            .eq(BountyClaim::getBountyId, s.getBountyId())
-                            .eq(BountyClaim::getUserId, userId)) == 0;
+                    Bounty bounty = bountyMap.get(s.getBountyId());
+                    return bounty != null
+                            && !userId.equals(bounty.getPublisherId())
+                            && !claimedIds.contains(s.getBountyId());
                 })
-                .map(s -> {
-                    Map<String, Object> m = new LinkedHashMap<>();
-                    m.put("id", s.getId());
-                    m.put("bountyId", s.getBountyId());
-                    m.put("claimId", s.getClaimId());
-                    m.put("userId", s.getUserId());
-                    m.put("versionNo", s.getVersionNo());
-                    m.put("summary", s.getContentSummary());
-                    m.put("status", s.getStatus());
-                    m.put("createdAt", s.getCreatedAt());
-                    return m;
-                }).collect(Collectors.toList());
+                .toList();
+        List<Map<String, Object>> list = pageSlice(visible, page, pageSize).stream()
+                .map(this::toHallListItem)
+                .collect(Collectors.toList());
+        return PageResult.of(list, visible.size(), page, pageSize);
+    }
+
+    /** 执事堂成果详情（api.md §15.3.1 = §8.0） */
+    public Map<String, Object> hallSubmissionDetail(Long submissionId) {
+        Long userId = AuthContext.requireUserId();
+        requireOffice(userId, OFFICE_FEAT);
+        Submission submission = submissionMapper.selectById(submissionId);
+        if (submission == null) {
+            throw new BizException(ErrorCode.NOT_FOUND);
+        }
+        Bounty bounty = bountyMapper.selectById(submission.getBountyId());
+        if (bounty == null) {
+            throw new BizException(ErrorCode.NOT_FOUND);
+        }
+        assertAvoidance(userId, bounty);
+        if (userId.equals(submission.getUserId())) {
+            throw new BizException(ErrorCode.OFFICE_FORBIDDEN, "不可查看自己的成果审核详情");
+        }
+        return bountyService.buildSubmissionDetailVo(submission);
+    }
+
+    /** Admin 成果审核列表（api.md §16.12.1） */
+    public PageResult<Map<String, Object>> adminSubmissionReviews(String status, Long bountyId,
+                                                                  String keyword, long page, long pageSize) {
+        LambdaQueryWrapper<Submission> q = new LambdaQueryWrapper<Submission>()
+                .eq(bountyId != null, Submission::getBountyId, bountyId)
+                .orderByDesc(Submission::getId);
+        applySubmissionStatusFilter(q, status);
+
+        if (StringUtils.hasText(keyword)) {
+            String kw = keyword.trim();
+            Set<Long> bountyIdsByTitle = bountyMapper.selectList(new LambdaQueryWrapper<Bounty>()
+                            .like(Bounty::getTitle, kw))
+                    .stream().map(Bounty::getId).collect(Collectors.toSet());
+            Set<Long> userIdsByNick = userProfileMapper.selectList(new LambdaQueryWrapper<UserProfile>()
+                            .like(UserProfile::getNickname, kw))
+                    .stream().map(UserProfile::getUserId).collect(Collectors.toSet());
+            Long userIdExact = null;
+            try {
+                userIdExact = Long.parseLong(kw);
+            } catch (NumberFormatException ignored) {
+                // not a numeric id
+            }
+            final Long uid = userIdExact;
+            q.and(w -> {
+                boolean any = false;
+                if (!bountyIdsByTitle.isEmpty()) {
+                    w.in(Submission::getBountyId, bountyIdsByTitle);
+                    any = true;
+                }
+                if (!userIdsByNick.isEmpty()) {
+                    if (any) {
+                        w.or();
+                    }
+                    w.in(Submission::getUserId, userIdsByNick);
+                    any = true;
+                }
+                if (uid != null) {
+                    if (any) {
+                        w.or();
+                    }
+                    w.eq(Submission::getUserId, uid);
+                    any = true;
+                }
+                if (!any) {
+                    w.eq(Submission::getId, -1L);
+                }
+            });
+        }
+
+        Page<Submission> p = submissionMapper.selectPage(new Page<>(page, pageSize), q);
+        List<Map<String, Object>> list = p.getRecords().stream()
+                .map(this::toAdminListItem)
+                .collect(Collectors.toList());
         return PageResult.of(list, p.getTotal(), page, pageSize);
+    }
+
+    /** Admin 成果详情（api.md §16.12.2 = §8.0） */
+    public Map<String, Object> adminSubmissionDetail(Long submissionId) {
+        return bountyService.buildSubmissionDetailVo(submissionId);
     }
 
     @Transactional
@@ -199,16 +278,23 @@ public class ReviewService {
                 throw new BizException(ErrorCode.OFFICE_FORBIDDEN, "不可审核自己的成果");
             }
         }
-        if (!"PENDING".equals(submission.getStatus()) && !admin) {
+        boolean wasReviewed = !"PENDING".equals(submission.getStatus());
+        if (wasReviewed && !admin) {
             throw new BizException(ErrorCode.BIZ_RULE, "当前状态不可审核");
         }
         if ("APPROVE".equalsIgnoreCase(result)) {
             submission.setStatus("APPROVED");
+            submission.setRejectReason(null);
             submission.setUpdatedAt(LocalDateTime.now());
-            submissionMapper.updateById(submission);
+            submissionMapper.update(null, new com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper<Submission>()
+                    .eq(Submission::getId, submissionId)
+                    .set(Submission::getStatus, "APPROVED")
+                    .set(Submission::getRejectReason, null)
+                    .set(Submission::getUpdatedAt, submission.getUpdatedAt()));
             saveRecord("SUBMISSION", submissionId, "APPROVE", reason, reviewerId, admin ? "ADMIN" : "HALL", overrideBy);
+            // biz 指向悬赏，文案含标题「…」；前端可点标题进详情（from=mine）
             notifyService.send(submission.getUserId(), "成果审核通过",
-                    "你在悬赏#" + bounty.getId() + "的成果已通过", "SUBMISSION", submissionId);
+                    "你在悬赏「" + bounty.getTitle() + "」的成果已通过", "BOUNTY", bounty.getId());
         } else if ("REJECT".equalsIgnoreCase(result)) {
             if (!StringUtils.hasText(reason)) {
                 throw new BizException(ErrorCode.PARAM_INVALID, "驳回须填写原因");
@@ -219,11 +305,20 @@ public class ReviewService {
             submissionMapper.updateById(submission);
             saveRecord("SUBMISSION", submissionId, "REJECT", reason, reviewerId, admin ? "ADMIN" : "HALL", overrideBy);
             notifyService.send(submission.getUserId(), "成果审核驳回",
-                    "成果被驳回：" + reason, "SUBMISSION", submissionId);
+                    "你在悬赏「" + bounty.getTitle() + "」的成果被驳回：" + reason, "BOUNTY", bounty.getId());
         } else {
             throw new BizException(ErrorCode.PARAM_INVALID, "result无效");
         }
-        return Map.of("submissionId", submissionId, "status", submission.getStatus());
+        if (admin && wasReviewed) {
+            auditService.log("SUBMISSION_OVERRIDE",
+                    "submissionId=" + submissionId + ",result=" + result + ",reason=" + reason);
+        }
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("submissionId", submissionId);
+        data.put("status", submission.getStatus());
+        data.put("reviewReason", submission.getRejectReason());
+        data.put("reviewedAt", submission.getUpdatedAt());
+        return data;
     }
 
     public PageResult<ReviewRecord> myActions(long page, long pageSize) {
@@ -236,6 +331,61 @@ public class ReviewService {
         return PageResult.of(p.getRecords(), p.getTotal(), page, pageSize);
     }
 
+    private void applySubmissionStatusFilter(LambdaQueryWrapper<Submission> q, String status) {
+        String st = StringUtils.hasText(status) ? status.trim() : "PENDING";
+        if ("REVIEWED".equalsIgnoreCase(st)) {
+            q.in(Submission::getStatus, List.of("APPROVED", "REJECTED"));
+        } else if ("APPROVED".equalsIgnoreCase(st) || "REJECTED".equalsIgnoreCase(st) || "PENDING".equalsIgnoreCase(st)) {
+            q.eq(Submission::getStatus, st.toUpperCase(Locale.ROOT));
+        } else {
+            q.eq(Submission::getStatus, "PENDING");
+        }
+    }
+
+    private Map<String, Object> toHallListItem(Submission s) {
+        Bounty bounty = bountyMapper.selectById(s.getBountyId());
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("submissionId", s.getId());
+        m.put("bountyId", s.getBountyId());
+        m.put("bountyTitle", bounty == null ? null : bounty.getTitle());
+        m.put("claimId", s.getClaimId());
+        m.put("claimerUserId", s.getUserId());
+        m.put("claimerNickname", nickname(s.getUserId()));
+        m.put("versionNo", s.getVersionNo());
+        m.put("status", s.getStatus());
+        m.put("summary", s.getContentSummary());
+        m.put("createdAt", s.getCreatedAt());
+        // 兼容旧键
+        m.put("id", s.getId());
+        m.put("userId", s.getUserId());
+        return m;
+    }
+
+    private Map<String, Object> toAdminListItem(Submission s) {
+        Bounty bounty = bountyMapper.selectById(s.getBountyId());
+        boolean reviewed = "APPROVED".equals(s.getStatus()) || "REJECTED".equals(s.getStatus());
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("submissionId", s.getId());
+        m.put("bountyId", s.getBountyId());
+        m.put("bountyTitle", bounty == null ? null : bounty.getTitle());
+        m.put("claimId", s.getClaimId());
+        m.put("claimerUserId", s.getUserId());
+        m.put("claimerNickname", nickname(s.getUserId()));
+        m.put("versionNo", s.getVersionNo());
+        m.put("status", s.getStatus());
+        m.put("summary", s.getContentSummary());
+        m.put("createdAt", s.getCreatedAt());
+        m.put("reviewedAt", reviewed ? s.getUpdatedAt() : null);
+        m.put("reviewReason", s.getRejectReason());
+        return m;
+    }
+
+    private String nickname(Long userId) {
+        UserProfile p = userProfileMapper.selectOne(new LambdaQueryWrapper<UserProfile>()
+                .eq(UserProfile::getUserId, userId).last("LIMIT 1"));
+        return p == null ? "" : p.getNickname();
+    }
+
     private void assertAvoidance(Long reviewerId, Bounty bounty) {
         if (reviewerId.equals(bounty.getPublisherId())) {
             throw new BizException(ErrorCode.OFFICE_FORBIDDEN, "不可审核本人发布的令");
@@ -245,6 +395,30 @@ public class ReviewService {
                 .eq(BountyClaim::getUserId, reviewerId)) > 0) {
             throw new BizException(ErrorCode.OFFICE_FORBIDDEN, "不可审核本人揭榜的令");
         }
+    }
+
+    /** 当前用户已揭榜的悬赏 id（用于执事堂回避过滤） */
+    private Set<Long> claimedBountyIds(Long userId, Collection<Long> bountyIds) {
+        if (bountyIds == null || bountyIds.isEmpty()) {
+            return Set.of();
+        }
+        return claimMapper.selectList(new LambdaQueryWrapper<BountyClaim>()
+                        .eq(BountyClaim::getUserId, userId)
+                        .in(BountyClaim::getBountyId, bountyIds))
+                .stream()
+                .map(BountyClaim::getBountyId)
+                .collect(Collectors.toSet());
+    }
+
+    private static <T> List<T> pageSlice(List<T> all, long page, long pageSize) {
+        long p = page < 1 ? 1 : page;
+        long size = pageSize < 1 ? 20 : pageSize;
+        int from = (int) ((p - 1) * size);
+        if (from >= all.size()) {
+            return List.of();
+        }
+        int to = (int) Math.min(from + size, all.size());
+        return all.subList(from, to);
     }
 
     private void saveRecord(String type, Long targetId, String result, String reason,

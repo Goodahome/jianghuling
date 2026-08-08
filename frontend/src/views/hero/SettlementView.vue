@@ -26,6 +26,13 @@ const allocated = computed(() =>
 )
 const remain = computed(() => (preview.value?.distributable || 0) - allocated.value)
 
+const isCancelAllocate = computed(() => {
+  const kind = preview.value?.settlementKind || String(route.query.settlementKind || '')
+  return kind === 'CANCEL_ALLOCATE' || preview.value?.cancelAllocationPending === true
+})
+
+const pageTitle = computed(() => (isCancelAllocate.value ? '取消后分配' : '完结分配'))
+
 onMounted(async () => {
   preview.value = await previewSettlement(route.params.id as string)
   preview.value.claimants.forEach((c) => {
@@ -49,7 +56,7 @@ async function onSettle() {
         chivalryBonus: Number(chivalry.value[c.userId] || 0),
       })),
     )
-    ElMessage.success('结算成功，赏银已入账')
+    ElMessage.success(isCancelAllocate.value ? '分配完成，悬赏已取消结案' : '结算成功，赏银已入账')
     router.replace(`/bounties/${route.params.id}`)
   } finally {
     loading.value = false
@@ -67,8 +74,20 @@ async function onEval() {
   <section class="jh-section">
     <div class="jh-container narrow" v-if="preview">
       <PageBreadcrumb :items="crumbs" />
-      <h1 class="brand-title">完结分配</h1>
+      <h1 class="brand-title">{{ pageTitle }}</h1>
+      <el-alert
+        v-if="isCancelAllocate"
+        class="kind-alert"
+        type="warning"
+        show-icon
+        :closable="false"
+        title="有成果取消 · 须分配（CANCEL_ALLOCATE）"
+        description="本令已进入取消待分配：须将托管赏银分给有任意提交记录的揭榜侠（不以审核通过为门槛），分完后悬赏结为已取消。"
+      />
       <div class="jh-panel block">
+        <p v-if="preview.settlementKind" class="jh-muted">
+          结算类型 {{ preview.settlementKind }}
+        </p>
         <p>托管赏银 {{ formatAmount(preview.rewardB) }} 两</p>
         <p>服务费 {{ (preview.feeRate * 100).toFixed(0) }}% = {{ formatAmount(preview.fee) }} 两</p>
         <p>
@@ -80,16 +99,21 @@ async function onEval() {
         <div v-for="c in preview.claimants" :key="c.userId" class="row">
           <div>
             <strong>{{ c.nickname }}</strong>
-            <div class="jh-muted">通过成果 {{ c.approvedSubmissionCount }} 条</div>
+            <div class="jh-muted">
+              <template v-if="isCancelAllocate">
+                提交 {{ c.submissionCount ?? '—' }} 条 · 通过 {{ c.approvedSubmissionCount }} 条
+              </template>
+              <template v-else> 通过成果 {{ c.approvedSubmissionCount }} 条 </template>
+            </div>
           </div>
           <el-input-number v-model="amounts[c.userId]" :min="0" :step="10" />
           <el-input-number v-model="chivalry[c.userId]" :min="0" :step="1" placeholder="侠义奖励" />
         </div>
         <el-button type="primary" class="jh-btn-seal" :loading="loading" @click="onSettle">
-          确认全额分配并结算
+          {{ isCancelAllocate ? '确认分配并取消结案' : '确认全额分配并结算' }}
         </el-button>
       </div>
-      <div class="jh-panel block">
+      <div v-if="!isCancelAllocate" class="jh-panel block">
         <h2>互评（结算后）</h2>
         <el-select v-model="evalForm.toUserId" placeholder="评价对象" style="width: 100%; margin-bottom: 8px">
           <el-option
@@ -108,12 +132,12 @@ async function onEval() {
 </template>
 
 <style scoped>
-.narrow {
-  max-width: 760px;
-}
 h1 {
   margin: 0 0 12px;
   font-size: 32px;
+}
+.kind-alert {
+  margin-bottom: 12px;
 }
 .block {
   padding: 16px;

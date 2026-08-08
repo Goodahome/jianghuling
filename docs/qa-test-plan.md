@@ -576,3 +576,76 @@
 | NAV-05 | Admin 纠纷详情弹层可关闭 | **Pass** |
 
 **结论：抽查项 Pass**（无阻断缺陷；已回填 `requirements.md` §9.11）
+
+---
+
+## 18. requirements §9.13（v1.8.9）页眉 / 会话 / 令种 / 告示
+
+> 对照 §6.24–§6.27 / §9.13。实测 2026-08-07。证据 `docs/_qa_run/v189_summary.txt`。
+
+| ID | 验收项 | 结果 |
+|----|--------|------|
+| V189-01 | 金榜页眉无 subtitle；分割线统一固定长 | **Fail**（11 处仍传 subtitle；底边随容器宽） |
+| V189-02 | 令主↔揭榜侠会话互见 | **Pass**（实现对齐共享流；建议补双账号烟测） |
+| V189-03 | 令种名：租房/出租/转租悬赏 | **Pass**（筛/发令/标签） |
+| V189-04 | 告示 N1–N3 正文完整；防骗行非空 | **Fail**（库内短摘要；防骗行非空） |
+
+### 缺陷
+
+| ID | 级别 | 标题 | 归属 |
+|----|------|------|------|
+| D-V189-01 | P1 | 多页 `JhPageHeader` 仍展示 subtitle | `@frontend` |
+| D-V189-02 | P2 | 页眉底部分割线随容器宽度变化 | `@frontend` |
+| D-V189-03 | P1 | N1–N3 未按 `docs/notices/standard-notices.md` 入库全文 | `@backend`（或后台发布） |
+
+**§9.13 结论：Fail**（阻断 D-V189-01 / D-V189-03）
+
+```text
+@frontend
+D-V189-01/02：去掉所有 JhPageHeader 的 subtitle 传参（说明改普通段落）；分割线改为固定长度（勿随容器宽）。
+验收：各金榜页无副题；悬赏榜/钱庄/告示栏等分割线视觉等长。
+
+@backend
+D-V189-03：将 standard-notices.md 的 N1–N3（建议含 N4–N6）写入 notice 表 content（patch 或后台发布）。
+验收：告示详情可见「一、张贴悬赏须按令状…」等完整条款；广场防骗行仍非空。
+```
+
+---
+
+## 19. requirements §9.14（v1.8.10）全生命周期 / api §7.9
+
+> 对照 §6.28 / §9.14 / `api.md` v1.0.7 §7.9。实测 2026-08-07。证据 `docs/_qa_run/v1810_summary.txt`、`v1810_results.json`。
+
+| ID | 验收项 | 结果 |
+|----|--------|------|
+| V1810-01 | 令主 IN_COLLAB/PENDING_SETTLE：会话/成果/完结/取消入口 | **Fail**（无 `capabilities` → 按钮全隐；FE 接线静态 Pass） |
+| V1810-02 | 揭榜侠互发可见；可提交；可退出；退出后禁发禁交 | **部分**（互发 Pass；提交/退出未闭环） |
+| V1810-03 | CANCELLED/COMPLETED/REJECTED → messages `43008`、submissions `43009`；历史只读 | **Fail**（取消/驳回后 messages=`0`） |
+| V1810-04 | 无成果取消全额退；有成果取消进分配；之后禁写 | **Fail**（有成果仍全额退+CANCELLED） |
+| V1810-05 | PENDING_SETTLE 令主可取消 | **Fail**（未稳定验完） |
+| V1810-06 | 写接口非法状态业务错误码（非仅藏按钮） | **Fail** |
+| V1810-07 | capabilities 三方比对（api ↔ 响应 ↔ FE types） | **Fail**（响应缺字段） |
+
+### 缺陷
+
+| ID | 级别 | 标题 | 归属 |
+|----|------|------|------|
+| D-V1810-01 | P0 | 有成果取消未进分配，仍 `CANCELLED`+全额退 | `@backend`（`SettleService.cancel`） |
+| D-V1810-02 | P0 | 详情缺 `capabilities`；终态 messages 未稳定 `43008` | `@backend`（部署/拦截复测） |
+| D-V1810-03 | P1 | `capabilities` 缺失时详情入口全隐 | `@frontend`（依赖 02；可选提示） |
+| D-V1810-04 | P2 | 空/无效 checklist 提交成果返回 `50000` | `@backend` |
+
+**§9.14 结论：Fail**（阻断 D-V1810-01 / D-V1810-02）
+
+```text
+@backend
+请修 D-V1810-01/02/04（对照 docs/api.md v1.0.7 §7.9 与 requirements §6.23/§6.28/§9.14）：
+1) SettleService.cancel：无成果 → CANCELLED+全额退；有成果 → 进分配（托管不退光），之后禁聊禁交（43008/43009）
+2) GET /bounties/{id} 必返 capabilities（9 键）；POST messages/submissions 非法状态硬拦 43008/43009
+3) 提交成果参数/清单非法时返回业务错误，勿 50000
+验收：重跑 docs/_qa_run/run_v1810_lifecycle.ps1，V1810-01~07 全 Pass。
+
+@frontend
+D-V1810-03：确认详情按钮仅认 capabilities；后端修复后抽查令主四入口与揭榜退出/禁发。
+（可选）capabilities 缺失时提示「能力状态加载失败」而非静默藏光所有入口。
+```

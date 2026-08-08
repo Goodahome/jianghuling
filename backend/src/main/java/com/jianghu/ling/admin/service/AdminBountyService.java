@@ -81,9 +81,23 @@ public class AdminBountyService {
         Map<String, Object> data = bountyService.detail(id);
         data.put("claims", claimMapper.selectList(new LambdaQueryWrapper<BountyClaim>()
                 .eq(BountyClaim::getBountyId, id)));
-        data.put("submissions", submissionMapper.selectList(new LambdaQueryWrapper<Submission>()
+        List<Submission> submissions = submissionMapper.selectList(new LambdaQueryWrapper<Submission>()
                 .eq(Submission::getBountyId, id)
-                .orderByDesc(Submission::getId)));
+                .orderByDesc(Submission::getId));
+        data.put("submissions", submissions.stream().map(s -> {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("submissionId", s.getId());
+            m.put("id", s.getId());
+            m.put("bountyId", s.getBountyId());
+            m.put("claimId", s.getClaimId());
+            m.put("claimerUserId", s.getUserId());
+            m.put("userId", s.getUserId());
+            m.put("versionNo", s.getVersionNo());
+            m.put("status", s.getStatus());
+            m.put("summary", s.getContentSummary());
+            m.put("createdAt", s.getCreatedAt());
+            return m;
+        }).toList());
         return data;
     }
 

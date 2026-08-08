@@ -2,17 +2,19 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { getSubmission } from '@/api/bounty'
-import { reviewSubmission } from '@/api/hall'
+import { getHallSubmission, reviewSubmission } from '@/api/hall'
+import { useHallAttentionStore } from '@/stores/hallAttention'
 import type { ReviewResult } from '@/types/api'
-import type { Submission } from '@/types/models'
+import type { SubmissionDetail } from '@/types/models'
+import { resolveSubmissionStatusLabel } from '@/utils/labels'
 import HallBackBar from '@/components/HallBackBar.vue'
+import SubmissionBody from '@/components/SubmissionBody.vue'
 
 const route = useRoute()
 const router = useRouter()
 const loading = ref(false)
 const submitting = ref(false)
-const current = ref<(Submission & { bountyTitle?: string; bountyId?: number }) | null>(null)
+const current = ref<SubmissionDetail | null>(null)
 
 const submissionId = computed(() => String(route.params.id))
 
@@ -22,10 +24,12 @@ const form = reactive({
   itemComments: [] as { itemCode: string; comment: string }[],
 })
 
+const canJudge = computed(() => current.value?.status === 'PENDING')
+
 async function load() {
   loading.value = true
   try {
-    current.value = (await getSubmission(submissionId.value)) as typeof current.value
+    current.value = await getHallSubmission(submissionId.value)
     form.result = 'APPROVE'
     form.reason = ''
     form.itemComments = (current.value?.items || []).map((it) => ({
@@ -39,17 +43,21 @@ async function load() {
 
 async function submitReview() {
   if (!current.value) return
+  if (!canJudge.value) {
+    return ElMessage.warning('仅待审成果可审核（职司不可改判）')
+  }
   if (form.result === 'REJECT' && !form.reason.trim()) {
     return ElMessage.warning('驳回请填写原因')
   }
   submitting.value = true
   try {
-    await reviewSubmission(current.value.id, {
+    await reviewSubmission(current.value.submissionId, {
       result: form.result,
       reason: form.reason,
       itemComments: form.itemComments.filter((c) => c.comment.trim()),
     })
     ElMessage.success('已处理')
+    void useHallAttentionStore().refresh()
     router.push('/hall/submission-reviews')
   } finally {
     submitting.value = false
@@ -61,57 +69,57 @@ onMounted(load)
 
 <template>
   <section class="jh-section" v-loading="loading">
-    <div class="jh-container" v-if="current">
+    <div class="jh-container narrow" v-if="current">
       <HallBackBar
         :items="[
           { label: '验功队列', to: '/hall/submission-reviews' },
           { label: '验功详情' },
         ]"
       >
-        <el-button class="jh-btn-seal" :loading="submitting" @click="submitReview">提交审核</el-button>
+        <el-button
+          v-if="canJudge"
+          class="jh-btn-seal"
+          :loading="submitting"
+          @click="submitReview"
+        >
+          提交审核
+        </el-button>
       </HallBackBar>
 
       <div class="head jh-panel">
         <div class="tags">
           <div class="tags-left">
             <span class="type">验功</span>
-            <span class="pill">成果 #{{ current.id }}</span>
+            <el-tag size="small">{{ resolveSubmissionStatusLabel(current.status) }}</el-tag>
+            <span class="pill">成果 #{{ current.submissionId }} · v{{ current.versionNo }}</span>
           </div>
         </div>
-        <h1>{{ current.bountyTitle || `悬赏 #${current.bountyId || '—'}` }}</h1>
-        <p class="jh-muted">摘要：{{ current.contentSummary || '（无）' }}</p>
-        <p v-if="current.bountyId" class="jh-muted">
-          关联悬赏 #{{ current.bountyId }}
+        <h1>{{ current.bountyTitle || `悬赏 #${current.bountyId}` }}</h1>
+        <p class="jh-muted">
+          提交人 {{ current.claimerNickname || `侠士#${current.claimerUserId}` }}
+          · {{ current.createdAt }}
         </p>
+        <p v-if="current.reviewedAt" class="jh-muted">审核 {{ current.reviewedAt }}</p>
+        <p v-if="current.reviewReason" class="reason">审核说明：{{ current.reviewReason }}</p>
+      </div>
+
+      <div class="jh-panel block">
+        <h2>成果摘要</h2>
+        <p class="summary">{{ current.summary || '（无）' }}</p>
       </div>
 
       <div class="jh-panel block">
         <h2>清单举证</h2>
-        <div v-for="it in current.items || []" :key="it.itemCode" class="item">
-          <div class="item-head">
-            <strong>{{ it.itemName || it.itemCode }}</strong>
-            <el-tag size="small" :type="it.done ? 'success' : 'info'">
-              {{ it.done ? '已完成' : '未完成' }}
-            </el-tag>
+        <SubmissionBody :items="current.items || []" />
+        <div v-if="canJudge" class="comments">
+          <div v-for="c in form.itemComments" :key="c.itemCode" class="item-comment">
+            <label class="jh-muted">{{ c.itemCode }} 单项意见</label>
+            <el-input v-model="c.comment" placeholder="可选" />
           </div>
-          <p>{{ it.text || '—' }}</p>
-          <div v-if="it.mediaUrls?.length" class="imgs">
-            <a v-for="u in it.mediaUrls" :key="u" :href="u" target="_blank" rel="noreferrer">
-              <img :src="u" alt="" />
-            </a>
-          </div>
-          <el-input
-            v-for="c in form.itemComments"
-            v-show="c.itemCode === it.itemCode"
-            :key="c.itemCode"
-            v-model="c.comment"
-            placeholder="单项意见（可选）"
-            style="margin-top: 6px"
-          />
         </div>
       </div>
 
-      <div class="jh-panel block">
+      <div v-if="canJudge" class="jh-panel block">
         <h2>落判</h2>
         <el-radio-group v-model="form.result" class="result-group">
           <el-radio-button value="APPROVE">通过</el-radio-button>
@@ -124,6 +132,13 @@ onMounted(load)
           :placeholder="form.result === 'REJECT' ? '驳回原因（必填）' : '审核意见（可选）'"
         />
       </div>
+      <el-alert
+        v-else
+        type="info"
+        :closable="false"
+        title="已审成果仅可只读查看（职司不可改判）。"
+        class="block-alert"
+      />
     </div>
   </section>
 </template>
@@ -145,6 +160,7 @@ onMounted(load)
   gap: 8px;
   align-items: center;
   color: var(--jh-seal);
+  flex-wrap: wrap;
 }
 .type {
   font-size: 13px;
@@ -160,6 +176,15 @@ h1 {
   margin: 0 0 8px;
   font-size: clamp(24px, 4vw, 34px);
 }
+.reason {
+  margin: 6px 0 0;
+  color: var(--jh-seal);
+}
+.summary {
+  margin: 0;
+  white-space: pre-wrap;
+  line-height: 1.7;
+}
 .block {
   padding: 18px;
   margin-bottom: 16px;
@@ -169,30 +194,24 @@ h2 {
   font-size: 18px;
   font-family: var(--jh-font-display);
 }
-.item {
-  padding: 12px 0;
-  border-bottom: 1px solid var(--jh-line);
+.item-comment {
+  margin-top: 10px;
 }
-.item-head {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 6px;
+.item-comment label {
+  display: block;
+  font-size: 12px;
+  margin-bottom: 4px;
 }
-.imgs {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  margin-top: 6px;
-}
-.imgs img {
-  width: 72px;
-  height: 54px;
-  object-fit: cover;
-  border-radius: var(--jh-radius);
+.comments {
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--jh-line);
 }
 .result-group {
   margin-bottom: 12px;
+}
+.block-alert {
+  margin-bottom: 16px;
 }
 @media (max-width: 768px) {
   .head,

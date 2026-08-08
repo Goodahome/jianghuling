@@ -65,21 +65,9 @@
   max-width: min(40rem, 58%);
   padding: 18px 0 16px;
   position: relative;
-  position: relative;
   z-index: 1;
-}
-.copy::before {
-  content: '';
-  position: absolute;
-  inset: 0 -12px 0 -26px;
-  border-radius: 14px;
-  background:
-    linear-gradient(90deg, rgba(16, 11, 7, 0.5) 0%, rgba(16, 11, 7, 0.22) 62%, rgba(16, 11, 7, 0) 100%);
-  border: 1px solid rgba(228, 200, 120, 0.12);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 244, 210, 0.06),
-    0 12px 28px rgba(10, 7, 4, 0.16);
-  pointer-events: none;
+  background: none;
+  border: none;
 }
 /* 金榜色 + 轻阴刻；字号按内容区缩放反补，避免嵌套 zoom 叠影 */
 .entry-mark,
@@ -166,9 +154,19 @@
     0 6px 14px rgba(18, 12, 6, 0.22);
 }
 .btn.ghost {
-  border-color: rgba(228, 200, 120, 0.55);
-  color: var(--jh-gold-bright);
-  background: linear-gradient(180deg, rgba(68, 49, 28, 0.46), rgba(38, 28, 18, 0.28));
+  border-color: rgba(160, 120, 55, 0.45);
+  color: var(--jh-wood-text-paint);
+  background-color: var(--jh-wood-base);
+  background-image: var(--jh-wood-overlay), var(--jh-wood-grain), var(--jh-wood-image);
+  background-size: auto, auto, 140px 140px;
+  background-position: center, center, center;
+  background-repeat: no-repeat, repeat, repeat;
+  background-blend-mode: normal, normal, soft-light;
+  text-shadow: var(--jh-wood-text-shine);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 236, 190, 0.35),
+    inset 0 -1px 2px rgba(150, 110, 50, 0.12),
+    0 1px 0 rgba(120, 90, 40, 0.14);
 }
 .hero-stats {
   display: grid;
@@ -231,10 +229,6 @@
     max-width: 100%;
     padding: 10px 0 0;
     box-sizing: border-box;
-  }
-  .copy::before {
-    inset: 0;
-    border-radius: 10px;
   }
   .entry-mark {
     margin-bottom: 8px;

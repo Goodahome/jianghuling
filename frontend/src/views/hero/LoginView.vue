@@ -120,7 +120,7 @@ async function onSubmit() {
   color: rgba(247, 240, 221, 0.85);
 }
 .panel :deep(.el-input__wrapper) {
-  background: rgba(255, 253, 246, 0.2);
+  background: transparent;
   box-shadow: 0 0 0 1px rgba(196, 163, 90, 0.45) inset;
 }
 .panel :deep(.el-input__wrapper:hover),

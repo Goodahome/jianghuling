@@ -20,6 +20,17 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class MetaService {
 
+    private static final Map<String, String> TEMPLATE_NAME = Map.of(
+            "RENT_SEEK", "租房令状",
+            "RENT_OUT", "出租令状",
+            "RENT_TRANSFER", "转租令状"
+    );
+    private static final Map<String, String> TYPE_DISPLAY_NAME = Map.of(
+            "RENT_SEEK", "租房悬赏",
+            "RENT_OUT", "出租悬赏",
+            "RENT_TRANSFER", "转租悬赏"
+    );
+
     private final RewardSuggestConfigMapper rewardSuggestConfigMapper;
     private final ChecklistTemplateMapper checklistTemplateMapper;
     private final WarrantFieldConfigMapper warrantFieldConfigMapper;
@@ -55,30 +66,27 @@ public class MetaService {
         }
         Map<String, List<WarrantFieldConfig>> grouped = fields.stream()
                 .collect(Collectors.groupingBy(WarrantFieldConfig::getTemplateCode, LinkedHashMap::new, Collectors.toList()));
-        List<Map<String, Object>> templates = new ArrayList<>();
-        for (Map.Entry<String, List<WarrantFieldConfig>> e : grouped.entrySet()) {
-            List<WarrantFieldConfig> list = e.getValue();
-            Map<String, Object> t = new LinkedHashMap<>();
-            t.put("type", e.getKey());
-            t.put("code", e.getKey());
-            t.put("name", list.get(0).getTemplateName());
-            List<Map<String, Object>> fieldViews = new ArrayList<>();
-            for (WarrantFieldConfig f : list) {
-                Map<String, Object> fv = new LinkedHashMap<>();
-                fv.put("key", f.getFieldKey());
-                // label 契约：extra 固定补充说明
-                fv.put("label", "extra".equals(f.getFieldKey()) ? "补充说明" : f.getLabel());
-                fv.put("type", f.getFieldType());
-                fv.put("required", Boolean.TRUE.equals(f.getRequired()));
-                if (Boolean.TRUE.equals(f.getMaskUntilClaimed())) {
-                    fv.put("maskUntilClaimed", true);
-                }
-                fieldViews.add(fv);
+        // 保证三套模板齐全；库缺 RENT_TRANSFER 时用 fallback 补齐
+        LinkedHashMap<String, Map<String, Object>> byCode = new LinkedHashMap<>();
+        for (String code : List.of("RENT_SEEK", "RENT_OUT", "RENT_TRANSFER")) {
+            List<WarrantFieldConfig> list = grouped.get(code);
+            if (list == null || list.isEmpty()) {
+                byCode.put(code, fallbackTemplate(code));
+            } else {
+                byCode.put(code, toTemplateView(code, list));
             }
-            t.put("fields", fieldViews);
-            templates.add(t);
         }
-        return templates;
+        // 其它自定义模板（若有）追加在后
+        for (Map.Entry<String, List<WarrantFieldConfig>> e : grouped.entrySet()) {
+            if (!byCode.containsKey(e.getKey())) {
+                byCode.put(e.getKey(), toTemplateView(e.getKey(), e.getValue()));
+            }
+        }
+        return new ArrayList<>(byCode.values());
+    }
+
+    public String typeDisplayName(String type) {
+        return TYPE_DISPLAY_NAME.getOrDefault(type, type == null ? "" : type);
     }
 
     public List<Map<String, Object>> checklistTemplates(String tags) {
@@ -158,18 +166,50 @@ public class MetaService {
         }
     }
 
+    private Map<String, Object> toTemplateView(String code, List<WarrantFieldConfig> list) {
+        Map<String, Object> t = new LinkedHashMap<>();
+        t.put("type", code);
+        t.put("code", code);
+        t.put("name", TEMPLATE_NAME.getOrDefault(code, list.get(0).getTemplateName()));
+        t.put("displayName", TYPE_DISPLAY_NAME.getOrDefault(code, list.get(0).getTemplateName()));
+        List<Map<String, Object>> fieldViews = new ArrayList<>();
+        for (WarrantFieldConfig f : list) {
+            Map<String, Object> fv = new LinkedHashMap<>();
+            fv.put("key", f.getFieldKey());
+            fv.put("label", "extra".equals(f.getFieldKey()) ? "补充说明" : f.getLabel());
+            fv.put("type", f.getFieldType());
+            fv.put("required", Boolean.TRUE.equals(f.getRequired()));
+            if (Boolean.TRUE.equals(f.getMaskUntilClaimed())) {
+                fv.put("maskUntilClaimed", true);
+            }
+            fieldViews.add(fv);
+        }
+        t.put("fields", fieldViews);
+        return t;
+    }
+
     private List<Map<String, Object>> fallbackWarrantTemplates() {
-        List<Map<String, Object>> templates = new ArrayList<>();
-        templates.add(rentSeekTemplate());
-        templates.add(rentOutTemplate());
-        return templates;
+        return List.of(
+                fallbackTemplate("RENT_SEEK"),
+                fallbackTemplate("RENT_OUT"),
+                fallbackTemplate("RENT_TRANSFER")
+        );
+    }
+
+    private Map<String, Object> fallbackTemplate(String code) {
+        return switch (code) {
+            case "RENT_OUT" -> rentOutTemplate();
+            case "RENT_TRANSFER" -> rentTransferTemplate();
+            default -> rentSeekTemplate();
+        };
     }
 
     private Map<String, Object> rentSeekTemplate() {
         Map<String, Object> t = new LinkedHashMap<>();
         t.put("type", "RENT_SEEK");
         t.put("code", "RENT_SEEK");
-        t.put("name", "求租令状");
+        t.put("name", "租房令状");
+        t.put("displayName", "租房悬赏");
         t.put("fields", List.of(
                 field("district", "区域", "text", true, null),
                 field("rentBudgetMin", "预算下限(元/月)", "number", true, null),
@@ -187,12 +227,32 @@ public class MetaService {
         t.put("type", "RENT_OUT");
         t.put("code", "RENT_OUT");
         t.put("name", "出租令状");
+        t.put("displayName", "出租悬赏");
         t.put("fields", List.of(
                 field("district", "区域", "text", true, null),
                 field("exactAddress", "精确位置", "text", true, Map.of("maskUntilClaimed", true)),
                 field("rentPrice", "租金(元/月)", "number", true, null),
                 field("layout", "户型", "text", true, null),
                 field("availableDate", "可入住日期", "date", true, null),
+                field("furniture", "家具家电", "text", false, null),
+                field("extra", "补充说明", "textarea", false, null)
+        ));
+        return t;
+    }
+
+    private Map<String, Object> rentTransferTemplate() {
+        Map<String, Object> t = new LinkedHashMap<>();
+        t.put("type", "RENT_TRANSFER");
+        t.put("code", "RENT_TRANSFER");
+        t.put("name", "转租令状");
+        t.put("displayName", "转租悬赏");
+        t.put("fields", List.of(
+                field("district", "区域", "text", true, null),
+                field("exactAddress", "精确位置", "text", true, Map.of("maskUntilClaimed", true)),
+                field("rentPrice", "租金(元/月)", "number", true, null),
+                field("layout", "户型", "text", true, null),
+                field("availableDate", "可入住日期", "date", true, null),
+                field("complianceNote", "转租合规说明", "textarea", false, null),
                 field("furniture", "家具家电", "text", false, null),
                 field("extra", "补充说明", "textarea", false, null)
         ));

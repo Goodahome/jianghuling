@@ -1,8 +1,10 @@
 <script setup lang="ts">
+import type { RouteLocationRaw } from 'vue-router'
+
 export type CrumbItem = {
   label: string
   /** 有 to 则可点击跳转；末级通常不传 */
-  to?: string
+  to?: RouteLocationRaw
 }
 
 defineProps<{
@@ -11,89 +13,87 @@ defineProps<{
 </script>
 
 <template>
-  <nav class="wood-crumbs" aria-label="页面路径">
+  <nav class="page-crumbs" aria-label="页面路径">
     <ol class="crumb-list">
       <li v-for="(item, i) in items" :key="`${item.label}-${i}`" class="crumb-item">
+        <template v-if="i > 0">
+          <span class="crumb-sep" aria-hidden="true"> / </span>
+        </template>
         <RouterLink
           v-if="item.to && i < items.length - 1"
           :to="item.to"
-          class="wood-block link"
+          class="crumb-link"
         >
           {{ item.label }}
         </RouterLink>
-        <span v-else class="wood-block current" aria-current="page">{{ item.label }}</span>
+        <span v-else class="crumb-current" aria-current="page">{{ item.label }}</span>
       </li>
     </ol>
   </nav>
 </template>
 
 <style scoped>
-.wood-crumbs {
-  margin-bottom: 14px;
+.page-crumbs {
+  display: block;
+  width: fit-content;
   max-width: 100%;
+  margin: 0 0 14px;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
 }
 .crumb-list {
   display: flex;
   flex-wrap: nowrap;
-  align-items: stretch;
-  gap: 0;
+  align-items: baseline;
   list-style: none;
   margin: 0;
   padding: 0;
   width: max-content;
-  min-width: 100%;
+  /* 禁止通栏拉满：勿设 min-width: 100% */
 }
 .crumb-item {
-  display: flex;
-  align-items: stretch;
-  position: relative;
-}
-.crumb-item + .crumb-item {
-  margin-left: -1px;
-}
-.wood-block {
   display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 36px;
-  padding: 6px 14px;
-  font-family: var(--jh-font-display);
-  font-size: 14px;
-  letter-spacing: 0.08em;
+  align-items: baseline;
+  min-width: 0;
+  font-family: var(--jh-font-body);
+  font-size: 13px;
+  line-height: 1.5;
+  letter-spacing: 0.02em;
   white-space: nowrap;
-  color: #3a2a18;
+}
+.crumb-sep {
+  color: rgba(196, 163, 90, 0.55);
+  user-select: none;
+}
+.crumb-link {
+  color: rgba(228, 200, 120, 0.88);
   text-decoration: none;
-  border: 1px solid rgba(90, 66, 40, 0.4);
-  border-radius: 0;
+  max-width: 12em;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.crumb-item:first-child .wood-block {
-  border-radius: var(--jh-wood-radius) 0 0 var(--jh-wood-radius);
+.crumb-link:hover {
+  color: var(--jh-gold-bright);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
-.crumb-item:last-child .wood-block {
-  border-radius: 0 var(--jh-wood-radius) var(--jh-wood-radius) 0;
-}
-.crumb-item:only-child .wood-block {
-  border-radius: var(--jh-wood-radius);
-}
-.wood-block.link {
-  cursor: pointer;
-  color: #3a2a18;
-}
-.wood-block.link:hover {
-  color: var(--jh-seal);
-  z-index: 1;
-}
-.wood-block.current {
-  font-weight: 600;
+.crumb-current {
+  color: rgba(247, 240, 221, 0.72);
+  font-weight: 500;
+  max-width: 16em;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 @media (max-width: 480px) {
-  .wood-block {
-    min-height: 34px;
-    padding: 5px 10px;
-    font-size: 13px;
-    letter-spacing: 0.04em;
+  .crumb-item {
+    font-size: 12px;
+  }
+  .crumb-link {
+    max-width: 8em;
+  }
+  .crumb-current {
+    max-width: 10em;
   }
 }
 </style>

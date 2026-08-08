@@ -40,6 +40,11 @@ public class HallController {
         return ApiResponse.ok(reviewService.pendingSubmissions(status, page, pageSize));
     }
 
+    @GetMapping("/submission-reviews/{submissionId}")
+    public ApiResponse<Map<String, Object>> submissionReviewDetail(@PathVariable Long submissionId) {
+        return ApiResponse.ok(reviewService.hallSubmissionDetail(submissionId));
+    }
+
     @PostMapping("/submission-reviews/{submissionId}")
     public ApiResponse<Map<String, Object>> reviewSubmission(@PathVariable Long submissionId,
                                                              @Valid @RequestBody ReviewRequest req) {

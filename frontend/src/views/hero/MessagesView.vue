@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import type { RouteLocationRaw } from 'vue-router'
 import { listMessages, markAllRead, markRead } from '@/api/message'
 import { useMessageStore } from '@/stores/message'
 import type { SiteMessage } from '@/types/models'
@@ -11,12 +12,38 @@ const list = ref<SiteMessage[]>([])
 const loading = ref(false)
 const unreadOnly = ref(false)
 
-function bizLink(m: SiteMessage) {
-  if (!m.bizType || !m.bizId) return ''
-  if (m.bizType.includes('BOUNTY') || m.bizType === 'BOUNTY') return `/bounties/${m.bizId}`
+/** 悬赏类消息进详情时带 from=mine，面包屑为「我的悬赏 / 悬赏详情」 */
+function bountyDetailTo(bountyId: number | string): RouteLocationRaw {
+  return { path: `/bounties/${bountyId}`, query: { from: 'mine' } }
+}
+
+function bizLink(m: SiteMessage): RouteLocationRaw | '' {
+  if (!m.bizType || m.bizId == null) return ''
+  if (m.bizType === 'BOUNTY' || m.bizType.includes('BOUNTY')) return bountyDetailTo(m.bizId)
   if (m.bizType.includes('DISPUTE')) return `/disputes/${m.bizId}`
   if (m.bizType === 'WALLET') return '/wallet'
   return ''
+}
+
+type ContentPart = { text: string; to?: RouteLocationRaw }
+
+/** 将 content 中「悬赏标题」做成可点链接（约定书名号内为标题） */
+function contentParts(m: SiteMessage): ContentPart[] {
+  const content = m.content || ''
+  const link = bizLink(m)
+  if (!link || typeof link === 'string' || !('path' in link) || !String(link.path || '').startsWith('/bounties/')) {
+    return [{ text: content }]
+  }
+  const re = /「([^」]+)」/
+  const match = content.match(re)
+  if (!match || match.index == null) return [{ text: content }]
+  const i = match.index
+  const parts: ContentPart[] = []
+  if (i > 0) parts.push({ text: content.slice(0, i) })
+  parts.push({ text: match[1], to: link })
+  const after = content.slice(i + match[0].length)
+  if (after) parts.push({ text: after })
+  return parts
 }
 
 async function load() {
@@ -46,7 +73,7 @@ onMounted(load)
 <template>
   <section class="jh-section">
     <div class="jh-container narrow">
-      <JhPageHeader title="站内消息" subtitle="江湖往来 · 未读须知" />
+      <JhPageHeader title="站内消息" />
       <div class="head">
         <div class="actions">
           <el-checkbox v-model="unreadOnly" @change="load">仅未读</el-checkbox>
@@ -63,7 +90,12 @@ onMounted(load)
             </div>
             <el-button v-if="!m.read" link type="primary" @click="onRead(m.id)">标为已读</el-button>
           </div>
-          <p :class="{ 'unread-body': !m.read }">{{ m.content }}</p>
+          <p :class="{ 'unread-body': !m.read }">
+            <template v-for="(part, idx) in contentParts(m)" :key="`${m.id}-${idx}`">
+              <RouterLink v-if="part.to" :to="part.to" class="bounty-link">{{ part.text }}</RouterLink>
+              <template v-else>{{ part.text }}</template>
+            </template>
+          </p>
           <p class="jh-muted">
             {{ m.createdAt }}
             <RouterLink v-if="bizLink(m)" :to="bizLink(m)" class="jump">查看相关</RouterLink>
@@ -75,9 +107,6 @@ onMounted(load)
 </template>
 
 <style scoped>
-.narrow {
-  max-width: 760px;
-}
 .head {
   display: flex;
   justify-content: flex-end;
@@ -98,11 +127,11 @@ onMounted(load)
 }
 .item {
   padding: 14px;
-  background: #fff;
+  background: transparent;
 }
 .item.unread {
   border-color: var(--jh-seal);
-  background: color-mix(in srgb, var(--jh-seal) 6%, #fff);
+  background: rgba(178, 58, 45, 0.12);
 }
 .title-wrap {
   display: flex;
@@ -140,5 +169,14 @@ onMounted(load)
 .jump {
   margin-left: 8px;
   color: var(--jh-seal);
+}
+.bounty-link {
+  color: var(--jh-seal);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  font-weight: 600;
+}
+.bounty-link:hover {
+  opacity: 0.88;
 }
 </style>

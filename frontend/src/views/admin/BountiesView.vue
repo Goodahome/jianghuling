@@ -1,17 +1,23 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   adminForceCloseBounty,
   adminListBounties,
   adminReviewBounty,
-  adminReviewSubmission,
 } from '@/api/admin'
 import { bountyStatusLabel } from '@/utils/labels'
 import type { BountyStatus } from '@/types/api'
 
+const route = useRoute()
+const router = useRouter()
 const list = ref<Record<string, unknown>[]>([])
-const query = reactive({ page: 1, pageSize: 20, status: '' })
+const query = reactive({
+  page: 1,
+  pageSize: 20,
+  status: (typeof route.query.status === 'string' ? route.query.status : '') as string,
+})
 const loading = ref(false)
 
 const statusOptions = computed(() =>
@@ -66,11 +72,12 @@ async function reviewBounty(id: number, result: string) {
   await load()
 }
 
-async function reviewSubmissionPrompt() {
-  const { value } = await ElMessageBox.prompt('成果ID,APPROVE|REJECT,原因', '成果审核')
-  const [id, result, reason] = value.split(',')
-  await adminReviewSubmission(id.trim(), { result: result.trim(), reason: reason?.trim() })
-  ElMessage.success('已处理')
+function openDetail(id: number) {
+  router.push(`/admin/bounties/${id}`)
+}
+
+function onRowDblClick(row: Record<string, unknown>) {
+  openDetail(Number(row.id))
 }
 
 onMounted(load)
@@ -79,24 +86,30 @@ onMounted(load)
 <template>
   <div>
     <h2>悬赏与双审核</h2>
-    <div style="margin-bottom: 12px; display: flex; gap: 8px; flex-wrap: wrap">
+    <p class="hint">审核请先进入详情查看令状与清单；列表可快捷通过/驳回。</p>
+    <div class="filters">
       <el-select v-model="query.status" clearable placeholder="全部状态" style="width: 160px">
         <el-option v-for="opt in statusOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
       </el-select>
       <el-button type="primary" :loading="loading" @click="load">查询</el-button>
-      <el-button @click="reviewSubmissionPrompt">审核成果…</el-button>
     </div>
-    <el-table v-loading="loading" :data="list">
+    <el-table v-loading="loading" :data="list" @row-dblclick="onRowDblClick">
       <el-table-column prop="id" label="ID" width="80" />
-      <el-table-column prop="title" label="标题" min-width="160" />
+      <el-table-column prop="title" label="标题" min-width="160">
+        <template #default="{ row }">
+          <el-button link type="primary" @click="openDetail(Number(row.id))">{{ row.title }}</el-button>
+        </template>
+      </el-table-column>
       <el-table-column label="状态" width="120">
         <template #default="{ row }">
           {{ statusText(row.status) }}
         </template>
       </el-table-column>
       <el-table-column prop="rewardAmount" label="赏银" width="100" />
-      <el-table-column label="操作" width="300" fixed="right">
+      <el-table-column prop="claimCount" label="揭榜" width="80" />
+      <el-table-column label="操作" width="340" fixed="right">
         <template #default="{ row }">
+          <el-button size="small" type="primary" @click="openDetail(Number(row.id))">详情</el-button>
           <el-button
             size="small"
             type="success"
@@ -126,3 +139,17 @@ onMounted(load)
     </el-table>
   </div>
 </template>
+
+<style scoped>
+.hint {
+  margin: -4px 0 12px;
+  color: #909399;
+  font-size: 13px;
+}
+.filters {
+  margin-bottom: 12px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+</style>

@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.git/
+.idea/
+*.log
+*.md
+src/components.d.ts
+src/auto-imports.d.ts

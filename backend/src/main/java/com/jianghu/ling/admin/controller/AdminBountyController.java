@@ -54,14 +54,6 @@ public class AdminBountyController {
         return ApiResponse.ok(reviewService.reviewBounty(bountyId, req.getResult(), req.getReason(), true, adminId));
     }
 
-    @PostMapping("/submission-reviews/{submissionId}")
-    @RequireAdminPerm("submission:review")
-    public ApiResponse<Map<String, Object>> reviewSubmission(@PathVariable Long submissionId,
-                                                             @Valid @RequestBody ReviewRequest req) {
-        Long adminId = AuthContext.requireAdminId();
-        return ApiResponse.ok(reviewService.reviewSubmission(submissionId, req.getResult(), req.getReason(), true, adminId));
-    }
-
     @GetMapping("/bounties/{id}/messages")
     @RequireAdminPerm("bounty:read")
     public ApiResponse<PageResult<BountyMessage>> messages(

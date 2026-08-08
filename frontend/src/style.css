@@ -48,6 +48,26 @@ video {
   --el-table-border-color: #ebeef5;
 }
 
+/* 全站：字数计数器 / 数字加减 — 透明底（含后台浅色页） */
+.el-input__count,
+.el-input__count-inner,
+.el-textarea .el-input__count {
+  background: transparent !important;
+}
+.el-input-number {
+  --el-fill-color-blank: transparent;
+  --el-fill-color-light: transparent;
+}
+.el-input-number__decrease,
+.el-input-number__increase {
+  background-color: transparent !important;
+  background-image: none !important;
+}
+.el-input-number.is-controls-right .el-input-number__decrease,
+.el-input-number.is-controls-right .el-input-number__increase {
+  background-color: transparent !important;
+}
+
 @media (max-width: 768px) {
   .el-message-box,
   .el-dialog {

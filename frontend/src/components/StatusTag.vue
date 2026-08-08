@@ -1,8 +1,15 @@
 <script setup lang="ts">
 import type { BountyStatus } from '@/types/api'
-import { bountyStatusLabel } from '@/utils/labels'
+import { resolveBountyStatusLabel, type BountyStatusScene } from '@/utils/labels'
 
-const props = defineProps<{ status: BountyStatus | string }>()
+const props = withDefaults(
+  defineProps<{
+    status: BountyStatus | string
+    /** plaza=悬赏中；mine=进行中；default=协作中 */
+    scene?: BountyStatusScene
+  }>(),
+  { scene: 'default' },
+)
 
 const typeMap: Record<string, '' | 'success' | 'warning' | 'info' | 'danger'> = {
   PENDING_REVIEW: 'warning',
@@ -18,6 +25,6 @@ const typeMap: Record<string, '' | 'success' | 'warning' | 'info' | 'danger'> = 
 
 <template>
   <el-tag :type="typeMap[props.status] || 'info'" effect="plain" size="small">
-    {{ bountyStatusLabel[props.status as BountyStatus] || props.status }}
+    {{ resolveBountyStatusLabel(props.status, props.scene) }}
   </el-tag>
 </template>

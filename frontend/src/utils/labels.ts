@@ -1,4 +1,12 @@
-import type { BountyStatus, BountyType, Difficulty, NoticeCategory } from '@/types/api'
+import type {
+  BountyStatus,
+  BountyType,
+  Difficulty,
+  FeedbackStatus,
+  FeedbackType,
+  NoticeCategory,
+  SubmissionStatus,
+} from '@/types/api'
 
 export const bountyStatusLabel: Record<BountyStatus, string> = {
   PENDING_REVIEW: '待审核',
@@ -11,9 +19,61 @@ export const bountyStatusLabel: Record<BountyStatus, string> = {
   IN_DISPUTE: '纠纷中',
 }
 
+/** 场景化状态文案：榜=悬赏中；我的=进行中 */
+export type BountyStatusScene = 'default' | 'plaza' | 'mine'
+
+export function resolveBountyStatusLabel(
+  status: BountyStatus | string | undefined | null,
+  scene: BountyStatusScene = 'default',
+) {
+  if (!status) return '—'
+  if (status === 'IN_COLLAB') {
+    if (scene === 'plaza') return '悬赏中'
+    if (scene === 'mine') return '进行中'
+  }
+  if (status in bountyStatusLabel) return bountyStatusLabel[status as BountyStatus]
+  return String(status)
+}
+
+/** 我的悬赏列表排序：进行中优先 */
+export function mineBountySortRank(status: string | undefined | null): number {
+  switch (status) {
+    case 'IN_COLLAB':
+      return 0
+    case 'PENDING_SETTLE':
+      return 1
+    case 'OPEN':
+      return 2
+    case 'PENDING_REVIEW':
+      return 3
+    case 'IN_DISPUTE':
+      return 4
+    case 'COMPLETED':
+      return 5
+    case 'CANCELLED':
+      return 6
+    case 'REJECTED':
+      return 7
+    default:
+      return 9
+  }
+}
+
+/** 令种界面武侠名（api.md §5.2）；禁止「求租」「出租/转租」 */
 export const bountyTypeLabel: Record<BountyType, string> = {
-  RENT_SEEK: '求租',
-  RENT_OUT: '出租/转租',
+  RENT_SEEK: '租房悬赏',
+  RENT_OUT: '出租悬赏',
+  RENT_TRANSFER: '转租悬赏',
+}
+
+export function resolveBountyTypeLabel(
+  type: BountyType | string | undefined | null,
+  typeDisplayName?: string | null,
+) {
+  const fromApi = (typeDisplayName || '').trim()
+  if (fromApi) return fromApi
+  if (type && type in bountyTypeLabel) return bountyTypeLabel[type as BountyType]
+  return type || ''
 }
 
 export const difficultyLabel: Record<Difficulty, string> = {
@@ -28,6 +88,46 @@ export const noticeCategoryLabel: Record<NoticeCategory, string> = {
   ANTI_FRAUD: '防骗须知',
   ZUNYI_RENT: '遵义租房须知',
   ANNOUNCE: '公告',
+}
+
+/** §14.5.0 反馈类型展示名 */
+export const feedbackTypeLabel: Record<FeedbackType, string> = {
+  BUG: '缺陷反馈',
+  SUGGEST: '功能建议',
+  COMPLAINT: '投诉举报',
+  OTHER: '其他',
+}
+
+/** §14.5.0 反馈状态展示名 */
+export const feedbackStatusLabel: Record<FeedbackStatus, string> = {
+  NEW: '待处理',
+  PROCESSING: '处理中',
+  RESOLVED: '已完结',
+  CLOSED: '已关闭',
+}
+
+export function resolveFeedbackTypeLabel(type: string | undefined | null) {
+  if (type && type in feedbackTypeLabel) return feedbackTypeLabel[type as FeedbackType]
+  return type || '—'
+}
+
+export function resolveFeedbackStatusLabel(status: string | undefined | null) {
+  if (status && status in feedbackStatusLabel) return feedbackStatusLabel[status as FeedbackStatus]
+  return status || '—'
+}
+
+/** §8.0 成果状态展示 */
+export const submissionStatusLabel: Record<SubmissionStatus, string> = {
+  PENDING: '待审核',
+  APPROVED: '已通过',
+  REJECTED: '已驳回',
+}
+
+export function resolveSubmissionStatusLabel(status: string | undefined | null) {
+  if (status && status in submissionStatusLabel) {
+    return submissionStatusLabel[status as SubmissionStatus]
+  }
+  return status || '—'
 }
 
 export const ledgerTypeLabel: Record<string, string> = {

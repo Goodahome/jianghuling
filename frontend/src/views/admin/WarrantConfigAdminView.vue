@@ -10,9 +10,15 @@ import {
 
 const list = ref<Record<string, unknown>[]>([])
 const templateCode = ref('')
+const typeNameMap: Record<string, string> = {
+  RENT_SEEK: '租房悬赏',
+  RENT_OUT: '出租悬赏',
+  RENT_TRANSFER: '转租悬赏',
+}
+
 const form = reactive({
   templateCode: 'RENT_SEEK',
-  templateName: '求租',
+  templateName: '租房悬赏',
   fieldKey: '',
   label: '',
   fieldType: 'text',
@@ -20,6 +26,10 @@ const form = reactive({
   sortNo: 0,
   status: 'ACTIVE',
 })
+
+function onTemplateCodeChange(code: string) {
+  form.templateName = typeNameMap[code] || code
+}
 
 async function load() {
   const data = await adminListWarrantConfigs({
@@ -67,16 +77,18 @@ onMounted(load)
     <div style="margin-bottom: 12px; display: flex; gap: 8px">
       <el-select v-model="templateCode" clearable placeholder="模板筛选" style="width: 180px" @change="load">
         <el-option label="全部" value="" />
-        <el-option label="求租 RENT_SEEK" value="RENT_SEEK" />
-        <el-option label="出租 RENT_OUT" value="RENT_OUT" />
+        <el-option label="租房悬赏 RENT_SEEK" value="RENT_SEEK" />
+        <el-option label="出租悬赏 RENT_OUT" value="RENT_OUT" />
+        <el-option label="转租悬赏 RENT_TRANSFER" value="RENT_TRANSFER" />
       </el-select>
       <el-button @click="load">刷新</el-button>
     </div>
     <el-form :inline="true" style="margin-bottom: 12px">
       <el-form-item label="模板">
-        <el-select v-model="form.templateCode" style="width: 140px">
-          <el-option label="RENT_SEEK" value="RENT_SEEK" />
-          <el-option label="RENT_OUT" value="RENT_OUT" />
+        <el-select v-model="form.templateCode" style="width: 180px" @change="onTemplateCodeChange">
+          <el-option label="租房悬赏 RENT_SEEK" value="RENT_SEEK" />
+          <el-option label="出租悬赏 RENT_OUT" value="RENT_OUT" />
+          <el-option label="转租悬赏 RENT_TRANSFER" value="RENT_TRANSFER" />
         </el-select>
       </el-form-item>
       <el-form-item label="key"><el-input v-model="form.fieldKey" /></el-form-item>

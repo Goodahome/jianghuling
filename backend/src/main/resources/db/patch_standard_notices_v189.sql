@@ -1,0 +1,108 @@
+USE jianghu_ling;
+
+-- D-V189-03：将 docs/notices/standard-notices.md N1–N6 写入 notice.content
+-- 已有短摘要种子：按 category+title 更新；缺行则插入（幂等）
+
+-- N1 江湖规矩摘要（RULES · 置顶）
+UPDATE notice
+SET title = '江湖规矩摘要',
+    content = '一、张贴悬赏须按令状填写，赏银以「两」计，发令即托管；未满建议档须二次确认，硬性最低二百两。
+二、揭榜即入协作，同令仅可揭一次；每日揭榜有上限，且消耗体力。
+三、完结须将可分配赏银（扣除一成堂口服务费后）全部分完；允许某侠零两，可另赏侠义值。
+四、严禁虚假房源、假带看、刷侠义、诱导私下大额转账。违者可被驳回、封禁或强制关令。
+五、本平台为悬赏协作工具，非房屋中介，不成交担保。线下看房风险自负，且须遵守防骗箴言。
+六、银两为模拟记账，非法定货币；内测阶段充值提现暂不开放。',
+    pinned = 1,
+    status = 'PUBLISHED'
+WHERE category = 'RULES' AND title = '江湖规矩摘要';
+
+INSERT INTO notice (category, title, content, pinned, status)
+SELECT 'RULES', '江湖规矩摘要',
+'一、张贴悬赏须按令状填写，赏银以「两」计，发令即托管；未满建议档须二次确认，硬性最低二百两。
+二、揭榜即入协作，同令仅可揭一次；每日揭榜有上限，且消耗体力。
+三、完结须将可分配赏银（扣除一成堂口服务费后）全部分完；允许某侠零两，可另赏侠义值。
+四、严禁虚假房源、假带看、刷侠义、诱导私下大额转账。违者可被驳回、封禁或强制关令。
+五、本平台为悬赏协作工具，非房屋中介，不成交担保。线下看房风险自负，且须遵守防骗箴言。
+六、银两为模拟记账，非法定货币；内测阶段充值提现暂不开放。', 1, 'PUBLISHED'
+WHERE NOT EXISTS (SELECT 1 FROM notice WHERE category = 'RULES' AND title = '江湖规矩摘要');
+
+-- N2 防骗箴言（ANTI_FRAUD · 置顶；兼容旧标题「防骗须知」）
+UPDATE notice
+SET title = '防骗箴言',
+    content = '一、线下看房选白天与公共场所，告知亲友行程；勿独自前往偏僻处所。
+二、切勿向陌生人预付定金、房租或「跑腿费」至私人账户以绕开平台托管。
+三、平台内「两」均为模拟银两，任何人声称可兑成人民币或要求站外充值，皆为欺诈。
+四、勿轻信「内部房源」「内部折扣」；验房、核验按探子清单留证，勿只看口头承诺。
+五、证件、合同原件勿交不相识之人；拍照留证时注意脱敏，勿泄露他人隐私。
+六、遇可疑情形立即终止会面，并向武林盟举报或发起纠纷。',
+    pinned = 1,
+    status = 'PUBLISHED'
+WHERE category = 'ANTI_FRAUD' AND title IN ('防骗须知', '防骗箴言');
+
+INSERT INTO notice (category, title, content, pinned, status)
+SELECT 'ANTI_FRAUD', '防骗箴言',
+'一、线下看房选白天与公共场所，告知亲友行程；勿独自前往偏僻处所。
+二、切勿向陌生人预付定金、房租或「跑腿费」至私人账户以绕开平台托管。
+三、平台内「两」均为模拟银两，任何人声称可兑成人民币或要求站外充值，皆为欺诈。
+四、勿轻信「内部房源」「内部折扣」；验房、核验按探子清单留证，勿只看口头承诺。
+五、证件、合同原件勿交不相识之人；拍照留证时注意脱敏，勿泄露他人隐私。
+六、遇可疑情形立即终止会面，并向武林盟举报或发起纠纷。', 1, 'PUBLISHED'
+WHERE NOT EXISTS (SELECT 1 FROM notice WHERE category = 'ANTI_FRAUD' AND title = '防骗箴言');
+
+-- N3 遵义租房须知（ZUNYI_RENT · 置顶）
+UPDATE notice
+SET title = '遵义租房须知',
+    content = '一、本平台首发范围为遵义单城试点；令状请如实填写片区、户型、租金预算或挂牌租金、入住时间等。
+二、遵义民间常见「押一付三」等习惯仅供参考，具体以双方约定与合同为准，本告示不构成法律意见。
+三、求租发「租房悬赏」，房东发「出租悬赏」，转租发「转租悬赏」；赏银用于酬谢带看、核验等劳动，与房租（元/月）分开计算。
+四、建议赏银覆盖同城交通与合理时间成本，勿亏待行侠同道。
+五、转租须确认原租约是否允许转租，平台不审核产权合法性，令主自行担责。',
+    pinned = 1,
+    status = 'PUBLISHED'
+WHERE category = 'ZUNYI_RENT' AND title = '遵义租房须知';
+
+INSERT INTO notice (category, title, content, pinned, status)
+SELECT 'ZUNYI_RENT', '遵义租房须知',
+'一、本平台首发范围为遵义单城试点；令状请如实填写片区、户型、租金预算或挂牌租金、入住时间等。
+二、遵义民间常见「押一付三」等习惯仅供参考，具体以双方约定与合同为准，本告示不构成法律意见。
+三、求租发「租房悬赏」，房东发「出租悬赏」，转租发「转租悬赏」；赏银用于酬谢带看、核验等劳动，与房租（元/月）分开计算。
+四、建议赏银覆盖同城交通与合理时间成本，勿亏待行侠同道。
+五、转租须确认原租约是否允许转租，平台不审核产权合法性，令主自行担责。', 1, 'PUBLISHED'
+WHERE NOT EXISTS (SELECT 1 FROM notice WHERE category = 'ZUNYI_RENT' AND title = '遵义租房须知');
+
+-- N4 开山告示（ANNOUNCE）
+UPDATE notice
+SET title = '开山告示',
+    content = '江湖令遵义试点开启。持有效邀请方可入江湖。张贴悬赏、揭榜行侠、钱庄托管、声望成长，皆在告示板内。内测期间功能与规则或有调整，以告示与站内通知为准。天下有悬赏，江湖有侠士。江湖不让善意吃亏。',
+    pinned = 0,
+    status = 'PUBLISHED'
+WHERE category = 'ANNOUNCE' AND title = '开山告示';
+
+INSERT INTO notice (category, title, content, pinned, status)
+SELECT 'ANNOUNCE', '开山告示',
+'江湖令遵义试点开启。持有效邀请方可入江湖。张贴悬赏、揭榜行侠、钱庄托管、声望成长，皆在告示板内。内测期间功能与规则或有调整，以告示与站内通知为准。天下有悬赏，江湖有侠士。江湖不让善意吃亏。', 0, 'PUBLISHED'
+WHERE NOT EXISTS (SELECT 1 FROM notice WHERE category = 'ANNOUNCE' AND title = '开山告示');
+
+-- N5 赏银托管与分配说明（RULES）
+UPDATE notice
+SET content = '发令成功后赏银冻结于模拟钱庄。审核驳回或超时未成，按规则解冻退回。验功通过后令主完结分配：一成服务费归堂口，九成可分配池须在揭榜侠士间分完。协作中取消且已有成果提交的，进入分配页处理；无成果则全额退回。细则见用户协议与站内规则。',
+    pinned = 0,
+    status = 'PUBLISHED'
+WHERE category = 'RULES' AND title = '赏银托管与分配说明';
+
+INSERT INTO notice (category, title, content, pinned, status)
+SELECT 'RULES', '赏银托管与分配说明',
+'发令成功后赏银冻结于模拟钱庄。审核驳回或超时未成，按规则解冻退回。验功通过后令主完结分配：一成服务费归堂口，九成可分配池须在揭榜侠士间分完。协作中取消且已有成果提交的，进入分配页处理；无成果则全额退回。细则见用户协议与站内规则。', 0, 'PUBLISHED'
+WHERE NOT EXISTS (SELECT 1 FROM notice WHERE category = 'RULES' AND title = '赏银托管与分配说明');
+
+-- N6 邀请制与执事堂简说（ANNOUNCE）
+UPDATE notice
+SET content = '注册须持邀请码或邀请链接。侠士可在额度内邀同道入江湖。达到等级可申请令审使、验功使等职司，由武林盟授予后进入执事堂履职。武林盟主为声望荣誉顶点，不自动获得后台超管之权。',
+    pinned = 0,
+    status = 'PUBLISHED'
+WHERE category = 'ANNOUNCE' AND title = '邀请制与执事堂简说';
+
+INSERT INTO notice (category, title, content, pinned, status)
+SELECT 'ANNOUNCE', '邀请制与执事堂简说',
+'注册须持邀请码或邀请链接。侠士可在额度内邀同道入江湖。达到等级可申请令审使、验功使等职司，由武林盟授予后进入执事堂履职。武林盟主为声望荣誉顶点，不自动获得后台超管之权。', 0, 'PUBLISHED'
+WHERE NOT EXISTS (SELECT 1 FROM notice WHERE category = 'ANNOUNCE' AND title = '邀请制与执事堂简说');

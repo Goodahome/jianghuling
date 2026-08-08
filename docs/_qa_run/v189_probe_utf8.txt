@@ -1,0 +1,18 @@
+id=3 cat=ZUNYI_RENT title=遵义租房须知 len=33 pinned=True
+  试点城市遵义。求租/出租请填写结构化令状，赏银建议不低于难度区间。
+id=2 cat=ANTI_FRAUD title=防骗须知 len=34 pinned=True
+  线下看房注意人身与财产安全；切勿提前转账给陌生人；平台银两均为模拟。
+id=1 cat=RULES title=江湖规矩摘要 len=29 pinned=True
+  发令须托管赏银；揭榜耗体力；完结按九一分配；严禁虚假房源。
+id=4 cat=ANNOUNCE title=开山告示 len=19 pinned=False
+  江湖互助平台遵义试点开启，邀请制注册。
+--- full-body markers ---
+RULES: has_full_marker=False len=29
+ANTI_FRAUD: has_full_marker=False len=34
+ZUNYI_RENT: has_full_marker=False len=33
+--- plaza ---
+id=3 type=RENT_SEEK typeDisplayName=None status=IN_COLLAB
+--- warrant-templates ---
+code=RENT_OUT name=出租令状 displayName=None
+code=RENT_SEEK name=租房令状 displayName=None
+code=RENT_TRANSFER name=转租令状 displayName=None

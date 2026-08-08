@@ -1,0 +1,181 @@
+﻿{
+    "ADM-LOGIN":  {
+                      "detail":  {
+                                     "code":  -1
+                                 },
+                      "pass":  false
+                  },
+    "REG":  {
+                "detail":  {
+                               "C":  -1,
+                               "P":  -1
+                           },
+                "pass":  false
+            },
+    "CREATE":  {
+                   "detail":  {
+                                  "status":  null,
+                                  "checklist":  1,
+                                  "id":  null
+                              },
+                   "pass":  false
+               },
+    "APPROVE":  {
+                    "detail":  {
+                                   "code":  -1,
+                                   "msg":  "无法连接到远程服务器"
+                               },
+                    "pass":  false
+                },
+    "CLAIM":  {
+                  "detail":  {
+                                 "code":  -1,
+                                 "status":  null
+                             },
+                  "pass":  false
+              },
+    "PUB-CAPS-IN_COLLAB":  {
+                               "detail":  {
+                                              "status":  null,
+                                              "missing":  [
+                                                              "canCancel",
+                                                              "canSendMessage",
+                                                              "canReadMessages",
+                                                              "canViewSubmissions",
+                                                              "canSubmit",
+                                                              "canSettle",
+                                                              "canQuitClaim",
+                                                              "canRepublish",
+                                                              "canDispute"
+                                                          ],
+                                              "caps":  null
+                                          },
+                               "pass":  false
+                           },
+    "FE-DETAIL-CAPS":  {
+                           "detail":  {
+                                          "types":  true,
+                                          "detail":  true
+                                      },
+                           "pass":  true
+                       },
+    "CLM-CAPS-IN_COLLAB":  {
+                               "detail":  {
+                                              "caps":  null
+                                          },
+                               "pass":  false
+                           },
+    "CHAT-MUTUAL":  {
+                        "detail":  {
+                                       "m1":  -1,
+                                       "totalC":  null,
+                                       "m2":  -1,
+                                       "totalP":  null
+                                   },
+                        "pass":  false
+                    },
+    "SUBMIT-OK":  {
+                      "detail":  {
+                                     "code":  -1,
+                                     "id":  null,
+                                     "msg":  "无法连接到远程服务器"
+                                 },
+                      "pass":  false
+                  },
+    "PUB-VIEW-SUBS":  {
+                          "detail":  {
+                                         "code":  -1,
+                                         "total":  null
+                                     },
+                          "pass":  false
+                      },
+    "QUIT-THEN-DENY-WRITE":  {
+                                 "detail":  {
+                                                "stamina":  null,
+                                                "caps":  null,
+                                                "subCode":  -1,
+                                                "hist":  -1,
+                                                "quit":  -1,
+                                                "msgCode":  -1
+                                            },
+                                 "pass":  false
+                             },
+    "CANCEL-NO-SUB-THEN-43008-09":  {
+                                        "detail":  {
+                                                       "caps":  null,
+                                                       "balAfter":  0,
+                                                       "balBefore":  0,
+                                                       "sub":  -1,
+                                                       "msg":  -1,
+                                                       "cancel":  -1,
+                                                       "status":  null
+                                                   },
+                                        "pass":  false
+                                    },
+    "REJECTED-43008-09":  {
+                              "detail":  {
+                                             "status":  null,
+                                             "msg":  -1,
+                                             "sub":  -1,
+                                             "caps":  null
+                                         },
+                              "pass":  false
+                          },
+    "COMPLETED-43008-09-READONLY":  {
+                                        "detail":  {
+                                                       "sr":  -1,
+                                                       "caps":  null,
+                                                       "sub":  -1,
+                                                       "msg":  -1,
+                                                       "preCaps":  null,
+                                                       "settle":  -1,
+                                                       "status":  null
+                                                   },
+                                        "pass":  false
+                                    },
+    "CANCEL-WITH-SUB-TO-ALLOC":  {
+                                     "detail":  {
+                                                    "note":  "expect PENDING_SETTLE/alloc; CANCELLED+refund is Fail",
+                                                    "balAfter":  0,
+                                                    "balBefore":  0,
+                                                    "cancel":  40100,
+                                                    "status":  null,
+                                                    "msg":  40100
+                                                },
+                                     "pass":  false
+                                 },
+    "PENDING_SETTLE-OR-COLLAB-CANCEL":  {
+                                            "detail":  {
+                                                           "before":  null,
+                                                           "note":  "unexpected status after submission approve"
+                                                       },
+                                            "pass":  false
+                                        },
+    "TRIAD-CAPABILITIES":  {
+                               "detail":  {
+                                              "apiSample":  [
+                                                                null
+                                                            ],
+                                              "fe":  [
+                                                         "canCancel",
+                                                         "canSendMessage",
+                                                         "canReadMessages",
+                                                         "canViewSubmissions",
+                                                         "canSubmit",
+                                                         "canSettle",
+                                                         "canQuitClaim",
+                                                         "canRepublish",
+                                                         "canDispute"
+                                                     ]
+                                          },
+                               "pass":  false
+                           },
+    "meta":  {
+                 "ts":  "2026-08-07T13:12:01",
+                 "bid4":  null,
+                 "bid":  null,
+                 "bid6":  null,
+                 "bid5":  null,
+                 "bid2":  null
+             }
+}

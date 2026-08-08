@@ -26,6 +26,9 @@ public class Bounty {
     private String taskTagsJson;
     private String frozenBizNo;
     private String cancelReason;
+    /** 有成果取消后待分配；对应表字段 cancel_allocation_pending */
+    @TableField("cancel_allocation_pending")
+    private Boolean cancelAllocationPending;
     /** 再发一令来源悬赏 ID；普通发令为 null */
     private Long sourceBountyId;
     /** 表字段 remind_24h_sent；默认驼峰会变成 remind24h_sent */

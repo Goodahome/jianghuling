@@ -1,0 +1,8 @@
+﻿id=3 cat=ZUNYI_RENT title=éµä¹ç§æ¿é¡»ç¥ contentLen=97 pinned=True
+  contentPreview=è¯ç¹åå¸éµä¹ãæ±ç§/åºç§è¯·å¡«åç»æåä»¤ç¶ï¼èµé¶å»ºè®®ä¸ä½ä
+id=2 cat=ANTI_FRAUD title=é²éªé¡»ç¥ contentLen=102 pinned=True
+  contentPreview=çº¿ä¸çæ¿æ³¨æäººèº«ä¸è´¢äº§å®å¨ï¼åå¿æåè½¬è´¦ç»éçäººï¼å¹³å
+id=1 cat=RULES title=æ±æ¹è§ç©æè¦ contentLen=87 pinned=True
+  contentPreview=åä»¤é¡»æç®¡èµé¶ï¼æ­æ¦èä½åï¼å®ç»æä¹ä¸åéï¼ä¸¥ç¦èåæ
+id=4 cat=ANNOUNCE title=å¼å±±åç¤º contentLen=57 pinned=False
+  contentPreview=æ±æ¹äºå©å¹³å°éµä¹è¯ç¹å¼å¯ï¼éè¯·å¶æ³¨åã

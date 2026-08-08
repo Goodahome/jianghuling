@@ -17,6 +17,7 @@ DROP TABLE IF EXISTS redeem_order;
 DROP TABLE IF EXISTS reward_product;
 DROP TABLE IF EXISTS warrant_field_config;
 DROP TABLE IF EXISTS user_level_config;
+DROP TABLE IF EXISTS user_feedback;
 DROP TABLE IF EXISTS site_message;
 DROP TABLE IF EXISTS evaluation;
 DROP TABLE IF EXISTS settlement_item;
@@ -213,7 +214,7 @@ CREATE TABLE notice (
 CREATE TABLE bounty (
   id              BIGINT PRIMARY KEY AUTO_INCREMENT,
   publisher_id    BIGINT         NOT NULL,
-  type            VARCHAR(32)    NOT NULL COMMENT 'RENT_SEEK|RENT_OUT',
+  type            VARCHAR(32)    NOT NULL COMMENT 'RENT_SEEK|RENT_OUT|RENT_TRANSFER',
   title           VARCHAR(128)   NOT NULL,
   status          VARCHAR(32)    NOT NULL,
   city            VARCHAR(64)    NOT NULL DEFAULT '遵义',
@@ -224,6 +225,7 @@ CREATE TABLE bounty (
   task_tags_json  VARCHAR(512)   NULL,
   frozen_biz_no   VARCHAR(64)    NULL,
   cancel_reason   VARCHAR(255)   NULL,
+  cancel_allocation_pending TINYINT(1) NOT NULL DEFAULT 0 COMMENT '有成果取消待分配',
   source_bounty_id BIGINT        NULL COMMENT '再发来源悬赏ID',
   remind_24h_sent TINYINT(1)     NOT NULL DEFAULT 0,
   remind_2h_sent  TINYINT(1)     NOT NULL DEFAULT 0,
@@ -318,6 +320,7 @@ CREATE TABLE settlement (
   fee           DECIMAL(12,2)  NOT NULL,
   distributable DECIMAL(12,2)  NOT NULL,
   status        VARCHAR(20)    NOT NULL DEFAULT 'DONE',
+  kind          VARCHAR(32)    NOT NULL DEFAULT 'COMPLETE' COMMENT 'COMPLETE|CANCEL_ALLOCATE',
   created_at    DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE KEY uk_settle_bounty (bounty_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -352,6 +355,26 @@ CREATE TABLE site_message (
   read_flag  TINYINT(1)   NOT NULL DEFAULT 0,
   created_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   KEY idx_msg_user (user_id, read_flag, id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE user_feedback (
+  id                         BIGINT PRIMARY KEY AUTO_INCREMENT,
+  user_id                    BIGINT        NOT NULL,
+  type                       VARCHAR(20)   NOT NULL COMMENT 'BUG|SUGGEST|COMPLAINT|OTHER',
+  title                      VARCHAR(100)  NOT NULL,
+  content                    VARCHAR(2000) NOT NULL,
+  contact                    VARCHAR(64)   NULL,
+  related_ref                VARCHAR(128)  NULL,
+  attachment_urls_json       TEXT          NULL,
+  status                     VARCHAR(20)   NOT NULL DEFAULT 'NEW' COMMENT 'NEW|PROCESSING|RESOLVED|CLOSED',
+  handle_remark              VARCHAR(1000) NULL,
+  status_changed_at          DATETIME      NULL,
+  status_changed_by_admin_id BIGINT        NULL,
+  status_history_json        TEXT          NULL,
+  created_at                 DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at                 DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  KEY idx_feedback_user (user_id, id),
+  KEY idx_feedback_status (status, created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE admin_user (

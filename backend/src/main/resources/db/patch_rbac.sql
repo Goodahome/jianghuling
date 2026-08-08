@@ -76,6 +76,7 @@ SELECT v.code, v.name, v.module, v.type FROM (
   UNION ALL SELECT 'bounty:read', '悬赏只读', 'bounty', 'API'
   UNION ALL SELECT 'bounty:write', '悬赏强制关闭', 'bounty', 'API'
   UNION ALL SELECT 'bounty:review', '发令审核', 'bounty', 'API'
+  UNION ALL SELECT 'submission:read', '成果审核只读', 'submission', 'API'
   UNION ALL SELECT 'submission:review', '成果审核', 'submission', 'API'
   UNION ALL SELECT 'wallet:read', '钱庄只读', 'wallet', 'API'
   UNION ALL SELECT 'wallet:flag', '流水标记', 'wallet', 'API'
@@ -98,6 +99,8 @@ SELECT v.code, v.name, v.module, v.type FROM (
   UNION ALL SELECT 'audit:read', '审计只读', 'audit', 'API'
   UNION ALL SELECT 'report:read', '举报只读', 'report', 'API'
   UNION ALL SELECT 'report:write', '举报处理', 'report', 'API'
+  UNION ALL SELECT 'feedback:read', '用户反馈只读', 'feedback', 'API'
+  UNION ALL SELECT 'feedback:write', '用户反馈写', 'feedback', 'API'
   UNION ALL SELECT 'job:read', '任务只读', 'job', 'API'
   UNION ALL SELECT 'admin:read', '管理员只读', 'admin', 'API'
   UNION ALL SELECT 'admin:write', '管理员写', 'admin', 'API'
@@ -133,7 +136,7 @@ JOIN admin_permission p ON p.code IN (
   'dashboard:view',
   'user:read','user:write','user:asset_adjust','user:real_name',
   'invite:read','invite:write',
-  'bounty:read','bounty:write','bounty:review','submission:review',
+  'bounty:read','bounty:write','bounty:review','submission:read','submission:review',
   'wallet:read','wallet:flag',
   'dispute:read',
   'notice:read','notice:write',
@@ -143,7 +146,7 @@ JOIN admin_permission p ON p.code IN (
   'product:read','product:write',
   'checklist:read','checklist:write',
   'warrant_config:read','warrant_config:write',
-  'audit:read','report:read','report:write','job:read',
+  'audit:read','report:read','report:write','feedback:read','feedback:write','job:read',
   'admin:read','role:read','menu:read'
 )
 WHERE r.code = 'OPS_ADMIN'
@@ -156,7 +159,7 @@ INSERT INTO admin_role_permission (role_id, permission_id)
 SELECT r.id, p.id FROM admin_role r
 JOIN admin_permission p ON p.code IN (
   'dashboard:view','user:read',
-  'bounty:read','bounty:review','submission:review',
+  'bounty:read','bounty:review','submission:read','submission:review',
   'wallet:read','dispute:read','dispute:verdict','audit:read','menu:read'
 )
 WHERE r.code = 'ARBITER'
@@ -168,10 +171,10 @@ WHERE r.code = 'ARBITER'
 INSERT INTO admin_role_permission (role_id, permission_id)
 SELECT r.id, p.id FROM admin_role r
 JOIN admin_permission p ON p.code IN (
-  'dashboard:view','user:read','invite:read','bounty:read','wallet:read','dispute:read',
+  'dashboard:view','user:read','invite:read','bounty:read','submission:read','wallet:read','dispute:read',
   'notice:read','office:read','lord:read','config:read',
   'product:read','checklist:read','warrant_config:read',
-  'audit:read','report:read','job:read','admin:read','role:read','menu:read'
+  'audit:read','report:read','feedback:read','job:read','admin:read','role:read','menu:read'
 )
 WHERE r.code = 'OBSERVER'
   AND NOT EXISTS (
@@ -185,26 +188,27 @@ SELECT * FROM (
   UNION ALL SELECT 2, 0, 'MENU', '侠士管理', '/admin/users', 'admin/UsersView', 'User', 20, 1, 'user:read', 'ACTIVE'
   UNION ALL SELECT 3, 0, 'MENU', '邀请管理', '/admin/invites', 'admin/InvitesView', 'Ticket', 30, 1, 'invite:read', 'ACTIVE'
   UNION ALL SELECT 4, 0, 'MENU', '悬赏管理', '/admin/bounties', 'admin/BountiesView', 'Document', 40, 1, 'bounty:read', 'ACTIVE'
+  UNION ALL SELECT 27, 0, 'MENU', '成果审核', '/admin/submission-reviews', 'admin/SubmissionReviewsAdminView', 'DocumentChecked', 45, 1, 'submission:read', 'ACTIVE'
   UNION ALL SELECT 5, 0, 'MENU', '钱庄流水', '/admin/wallet', 'admin/WalletLedgersView', 'Wallet', 50, 1, 'wallet:read', 'ACTIVE'
   UNION ALL SELECT 6, 0, 'MENU', '纠纷仲裁', '/admin/disputes', 'admin/DisputesView', 'Warning', 60, 1, 'dispute:read', 'ACTIVE'
   UNION ALL SELECT 7, 0, 'MENU', '告示管理', '/admin/notices', 'admin/NoticesAdminView', 'Bell', 70, 1, 'notice:read', 'ACTIVE'
+  UNION ALL SELECT 25, 0, 'MENU', '用户反馈', '/admin/feedbacks', 'admin/FeedbacksAdminView', 'ChatDotRound', 75, 1, 'feedback:read', 'ACTIVE'
   UNION ALL SELECT 8, 0, 'MENU', '职司管理', '/admin/offices', 'admin/OfficesAdminView', 'Stamp', 80, 1, 'office:read', 'ACTIVE'
   UNION ALL SELECT 9, 0, 'MENU', '盟主管理', '/admin/lord', 'admin/LordAdminView', 'Trophy', 90, 1, 'lord:read', 'ACTIVE'
   UNION ALL SELECT 10, 0, 'DIR', '运营配置', '', '', 'Setting', 100, 1, 'config:read', 'ACTIVE'
-  UNION ALL SELECT 11, 10, 'MENU', '等级配置', '/admin/configs/levels', 'admin/ConfigLevelsView', '', 101, 1, 'config:read', 'ACTIVE'
-  UNION ALL SELECT 12, 10, 'MENU', '成长参数', '/admin/configs/growth', 'admin/ConfigGrowthView', '', 102, 1, 'config:read', 'ACTIVE'
-  UNION ALL SELECT 13, 10, 'MENU', '英雄谱规则', '/admin/configs/ranks', 'admin/ConfigRanksView', '', 103, 1, 'config:read', 'ACTIVE'
-  UNION ALL SELECT 14, 10, 'MENU', '赏银建议', '/admin/configs/reward-suggest', 'admin/ConfigRewardView', '', 104, 1, 'config:read', 'ACTIVE'
+  UNION ALL SELECT 11, 10, 'MENU', '运营参数', '/admin/ops', 'admin/OpsConfigView', '', 101, 1, 'config:read', 'ACTIVE'
   UNION ALL SELECT 15, 10, 'MENU', '奖品管理', '/admin/products', 'admin/ProductsView', '', 105, 1, 'product:read', 'ACTIVE'
-  UNION ALL SELECT 16, 10, 'MENU', '探子清单', '/admin/checklist-templates', 'admin/ChecklistView', '', 106, 1, 'checklist:read', 'ACTIVE'
-  UNION ALL SELECT 17, 10, 'MENU', '令状字段', '/admin/warrant-field-configs', 'admin/WarrantConfigView', '', 107, 1, 'warrant_config:read', 'ACTIVE'
-  UNION ALL SELECT 18, 0, 'MENU', '系统配置', '/admin/system', 'admin/SystemView', 'Tools', 110, 1, 'config:read', 'ACTIVE'
+  UNION ALL SELECT 16, 10, 'MENU', '探子清单', '/admin/checklist', 'admin/ChecklistAdminView', '', 106, 1, 'checklist:read', 'ACTIVE'
+  UNION ALL SELECT 17, 10, 'MENU', '令状字段', '/admin/warrant-config', 'admin/WarrantConfigAdminView', '', 107, 1, 'warrant_config:read', 'ACTIVE'
+  UNION ALL SELECT 18, 0, 'MENU', '审计日志', '/admin/audit-logs', 'admin/AuditLogsView', 'Document', 110, 1, 'audit:read', 'ACTIVE'
   UNION ALL SELECT 19, 0, 'DIR', '权限管理', '', '', 'Lock', 120, 1, 'admin:read', 'ACTIVE'
   UNION ALL SELECT 20, 19, 'MENU', '管理员账号', '/admin/admins', 'admin/AdminsView', '', 121, 1, 'admin:read', 'ACTIVE'
   UNION ALL SELECT 21, 19, 'MENU', '角色权限', '/admin/roles', 'admin/RolesView', '', 122, 1, 'role:read', 'ACTIVE'
   UNION ALL SELECT 22, 19, 'MENU', '菜单管理', '/admin/menus', 'admin/MenusView', '', 123, 1, 'menu:read', 'ACTIVE'
   UNION ALL SELECT 23, 2, 'BUTTON', '资产调账', '', '', '', 1, 1, 'user:asset_adjust', 'ACTIVE'
   UNION ALL SELECT 24, 6, 'BUTTON', '终裁执行', '', '', '', 1, 1, 'dispute:verdict', 'ACTIVE'
+  UNION ALL SELECT 26, 25, 'BUTTON', '改状态', '', '', '', 1, 1, 'feedback:write', 'ACTIVE'
+  UNION ALL SELECT 28, 27, 'BUTTON', '通过驳回', '', '', '', 1, 1, 'submission:review', 'ACTIVE'
 ) t
 WHERE NOT EXISTS (SELECT 1 FROM admin_menu LIMIT 1);
 

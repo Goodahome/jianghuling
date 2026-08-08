@@ -35,7 +35,10 @@ public class AdminSystemController {
     @RequireAdminPerm("audit:read")
     public ApiResponse<PageResult<Map<String, Object>>> auditLogs(
             @RequestParam(defaultValue = "1") long page,
-            @RequestParam(defaultValue = "20") long pageSize) {
-        return ApiResponse.ok(auditService.page(page, pageSize));
+            @RequestParam(defaultValue = "20") long pageSize,
+            @RequestParam(required = false) String operator,
+            @RequestParam(required = false) String action,
+            @RequestParam(required = false) String keyword) {
+        return ApiResponse.ok(auditService.page(page, pageSize, operator, action, keyword));
     }
 }

@@ -193,14 +193,7 @@ async function onSubmit() {
   <section class="jh-section" v-loading="draftLoading">
     <div class="jh-container narrow">
       <PageBreadcrumb :items="crumbs" />
-      <JhPageHeader
-        :title="isRepublish ? '再发一令' : '张贴悬赏令'"
-        :subtitle="
-          isRepublish
-            ? `基于原令 #${republishFromId} 复制新建 · 须重新托管赏银并审核 · 原单不变`
-            : `结构化租房令状 · 最低赏银 ${suggest?.minReward ?? 200} 两 · 模拟银两托管`
-        "
-      />
+      <JhPageHeader :title="isRepublish ? '再发一令' : '张贴悬赏令'" />
 
       <div v-if="tops.length" class="tips jh-panel">
         <strong>发令前必读</strong>
@@ -209,10 +202,20 @@ async function onSubmit() {
 
       <el-form class="jh-panel form" label-position="top" @submit.prevent="onSubmit">
         <el-form-item label="令种">
-          <el-radio-group v-model="form.type" :disabled="isRepublish" @change="onTypeChange">
-            <el-radio-button value="RENT_SEEK">求租</el-radio-button>
-            <el-radio-button value="RENT_OUT">出租/转租</el-radio-button>
-          </el-radio-group>
+          <el-tabs
+            v-model="form.type"
+            class="tabs type-tabs"
+            :class="{ 'is-locked': isRepublish }"
+            :before-leave="() => !isRepublish"
+            @tab-change="onTypeChange"
+          >
+            <el-tab-pane label="租房悬赏" name="RENT_SEEK" />
+            <el-tab-pane label="出租悬赏" name="RENT_OUT" />
+            <el-tab-pane label="转租悬赏" name="RENT_TRANSFER" />
+          </el-tabs>
+          <p v-if="currentTemplate?.complianceNote" class="jh-muted compliance-note">
+            {{ currentTemplate.complianceNote }}
+          </p>
         </el-form-item>
         <el-form-item label="标题" required>
           <el-input v-model="form.title" maxlength="60" show-word-limit />
@@ -312,9 +315,6 @@ async function onSubmit() {
 </template>
 
 <style scoped>
-.narrow {
-  max-width: 760px;
-}
 h1 {
   margin: 0 0 6px;
   font-size: 36px;
@@ -328,6 +328,31 @@ h1 {
 }
 .tips a {
   color: var(--jh-seal);
+}
+.compliance-note {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.tabs {
+  margin-bottom: 0;
+  width: 100%;
+}
+.tabs :deep(.el-tabs__item) {
+  color: rgba(247, 240, 221, 0.75);
+}
+.tabs :deep(.el-tabs__item.is-active) {
+  color: var(--jh-gold-bright);
+}
+.tabs :deep(.el-tabs__active-bar) {
+  background-color: var(--jh-gold);
+}
+.tabs :deep(.el-tabs__nav-wrap::after) {
+  background-color: rgba(196, 163, 90, 0.25);
+}
+.type-tabs.is-locked :deep(.el-tabs__item) {
+  cursor: not-allowed;
+  opacity: 0.85;
 }
 .form {
   padding: 20px;

@@ -50,7 +50,7 @@ async function onRedeem(id: number) {
 <template>
   <section class="jh-section">
     <div class="jh-container">
-      <JhPageHeader title="成长与兑换" subtitle="等级、体力与奖品兑换" />
+      <JhPageHeader title="成长与兑换" />
       <div class="jh-panel block">
         <p>
           当前 {{ level?.levelTitle }} · 侠义 {{ level?.chivalry }} · 体力 {{ auth.me?.stamina }}

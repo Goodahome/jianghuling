@@ -1,8 +1,7 @@
 <script setup lang="ts">
-/** 页眉大标题：对齐悬赏金榜样式 */
+/** 页眉大标题：对齐悬赏金榜样式（无副题；两侧分割线固定等长） */
 defineProps<{
   title: string
-  subtitle?: string
 }>()
 </script>
 
@@ -11,7 +10,6 @@ defineProps<{
     <span class="ornament" aria-hidden="true" />
     <div class="copy">
       <h1 class="title">{{ title }}</h1>
-      <p v-if="subtitle" class="sub">{{ subtitle }}</p>
     </div>
     <span class="ornament mirror" aria-hidden="true" />
   </header>
@@ -24,11 +22,24 @@ defineProps<{
   justify-content: center;
   gap: 16px;
   margin-bottom: 18px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid rgba(196, 163, 90, 0.35);
+  padding-bottom: 14px;
+  /* 底部分割线：固定长度居中，不随容器宽 / 标题字数变化 */
+  position: relative;
+}
+.jh-page-header::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  /* 对齐原全宽 jh-container（1120），按视口封顶，不随 narrow/全宽内容区变化 */
+  width: min(1120px, calc(100vw - 64px));
+  height: 1px;
+  transform: translateX(-50%);
+  background: rgba(196, 163, 90, 0.35);
 }
 .copy {
   text-align: center;
+  min-width: 0;
 }
 .title {
   margin: 0;
@@ -40,16 +51,11 @@ defineProps<{
   text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
   font-weight: normal;
 }
-.sub {
-  margin: 6px 0 0;
-  font-size: 13px;
-  letter-spacing: 0.2em;
-  color: rgba(247, 240, 221, 0.7);
-}
+/* 左右装饰线固定等长 */
 .ornament {
   width: 48px;
   height: 2px;
-  flex-shrink: 0;
+  flex: 0 0 48px;
   background: linear-gradient(90deg, transparent, var(--jh-gold), transparent);
 }
 .ornament.mirror {
@@ -64,9 +70,6 @@ defineProps<{
   .title {
     letter-spacing: 0.22em;
     text-indent: 0.22em;
-  }
-  .ornament {
-    width: 28px;
   }
 }
 </style>

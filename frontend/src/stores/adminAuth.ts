@@ -11,6 +11,13 @@ export const useAdminAuthStore = defineStore('adminAuth', () => {
 
   const isLoggedIn = computed(() => !!token.value)
 
+  /** 权限码精确匹配；含 `*` 通配则全放行 */
+  function hasPermission(code: string) {
+    const perms = admin.value?.permissions || []
+    if (perms.includes('*')) return true
+    return perms.includes(code)
+  }
+
   async function login(username: string, password: string) {
     loading.value = true
     try {
@@ -41,5 +48,5 @@ export const useAdminAuthStore = defineStore('adminAuth', () => {
     clearAdminToken()
   }
 
-  return { token, admin, loading, isLoggedIn, login, fetchMe, logout }
+  return { token, admin, loading, isLoggedIn, hasPermission, login, fetchMe, logout }
 })

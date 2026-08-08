@@ -31,8 +31,15 @@ public enum ErrorCode {
     CLAIM_NOT_ALLOWED(43005, "不可揭榜"),
     SUBMISSION_INVALID(43006, "成果提交被限流或内容非法"),
     BOUNTY_REPUBLISH_DENIED(43007, "不可再发一令"),
+    MESSAGE_NOT_ALLOWED(43008, "当前状态不可发送协作消息"),
+    SUBMISSION_STATUS_DENIED(43009, "当前状态不可提交成果"),
+    CANCEL_REFUND_WITH_SUBMISSIONS(43010, "本令已有成果提交，禁止全额退回取消（须走分配分支）"),
+    CANCEL_ALLOCATE_PENDING(43011, "有成果取消待分配未完成（不可重复取消或错分支结案）"),
 
-    INVITE_INVALID(44001, "邀请码无效/已用尽/过期");
+    INVITE_INVALID(44001, "邀请码无效/已用尽/过期"),
+
+    FEEDBACK_COOLDOWN(45001, "反馈提交过于频繁（短时冷却未到）"),
+    FEEDBACK_DAILY_LIMIT(45002, "今日反馈条数已达上限");
 
     private final int code;
     private final String message;

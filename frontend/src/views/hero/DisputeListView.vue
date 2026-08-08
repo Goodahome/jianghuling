@@ -56,7 +56,7 @@ watch(
 <template>
   <section class="jh-section">
     <div class="jh-container narrow">
-      <JhPageHeader title="我的纠纷" subtitle="结算后七日之内可发起" />
+      <JhPageHeader title="我的纠纷" />
       <el-form class="jh-panel block" label-position="top" @submit.prevent="onCreate">
         <h2>发起纠纷</h2>
         <el-form-item label="悬赏令 ID" required>
@@ -89,9 +89,6 @@ watch(
 </template>
 
 <style scoped>
-.narrow {
-  max-width: 720px;
-}
 h1 {
   margin: 0 0 12px;
   font-size: 32px;

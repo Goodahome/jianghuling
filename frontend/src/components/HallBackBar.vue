@@ -1,5 +1,5 @@
 <script setup lang="ts">
-/** 执事堂顶栏：木块面包屑 + 右侧操作（通过/驳回等） */
+/** 执事堂顶栏：文字面包屑 + 右侧/下方操作（通过/驳回等） */
 import PageBreadcrumb, { type CrumbItem } from '@/components/PageBreadcrumb.vue'
 
 defineProps<{
@@ -19,15 +19,15 @@ defineProps<{
 <style scoped>
 .hall-crumb-bar {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
-  margin-bottom: 4px;
+  margin-bottom: 14px;
 }
-.hall-crumb-bar :deep(.wood-crumbs) {
-  margin-bottom: 10px;
-  flex: 1;
+.hall-crumb-bar :deep(.page-crumbs) {
+  margin-bottom: 0;
+  flex: 0 1 auto;
   min-width: 0;
 }
 .hall-crumb-actions {
@@ -36,6 +36,6 @@ defineProps<{
   gap: 8px;
   align-items: center;
   flex-shrink: 0;
-  margin-bottom: 10px;
+  margin-left: auto;
 }
 </style>

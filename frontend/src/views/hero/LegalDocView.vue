@@ -81,9 +81,6 @@ watchEffect(() => {
 .legal-page {
   padding-bottom: 32px;
 }
-.narrow {
-  max-width: 780px;
-}
 .legal {
   padding: 24px 22px 28px;
 }
@@ -197,7 +194,7 @@ watchEffect(() => {
   color: var(--jh-seal);
 }
 @media (max-width: 480px) {
-  .narrow {
+  .legal {
     padding: 16px 12px 22px;
   }
   .legal-body {
